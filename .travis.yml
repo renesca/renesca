@@ -4,8 +4,10 @@ scala:
 jdk:
 - oraclejdk7
 - oraclejdk8
+- openjdk6
+- openjdk7
 script:
-- sbt scoverage:test
+- sbt coverage test
 - sbt coveralls
 env:
   global:

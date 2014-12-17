@@ -1,0 +1,42 @@
+package renesca
+
+import renesca.helpers._
+
+trait Label
+
+case class Node(id:Long) { thisNode =>
+  // case class because we want equals and hashcode depending on id
+
+  // when setting graph, update reference in labels and properties
+  var _graph: Graph = null
+  def graph = _graph
+  def graph_=(newGraph:Graph) {
+    _graph = newGraph
+    labels.graph = newGraph
+    properties.graph = newGraph
+  }
+
+  val labels = new NodeLabels {
+    override val id = thisNode.id
+  }
+
+  val properties = new Properties {
+    override val id = thisNode.id
+    override val setPropertyChange = NodeSetProperty.apply _
+    override val removePropertyChange = NodeRemoveProperty.apply _
+  }
+
+  def delete() = {
+    graph.nodes -= this
+    graph.relations --= this.relations
+    graph.changes += NodeDelete(id)
+  }
+
+  def outRelations = graph.relations.filter(this == _.start)
+  def inRelations = graph.relations.filter(this == _.end)
+  def relations = inRelations ++ outRelations
+  def neighbours = relations.map(_.other(this))
+  def successors = outRelations.map(_.end)
+  def predecessors = outRelations.map(_.start)
+}
+

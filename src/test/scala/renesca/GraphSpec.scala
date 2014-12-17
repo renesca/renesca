@@ -1,7 +1,7 @@
 package renesca
 
-import org.specs2.mutable._
 import org.specs2.mock._
+import org.specs2.mutable._
 import org.specs2.specification.BeforeExample
 
 class GraphSpec extends Specification with Mockito with BeforeExample {

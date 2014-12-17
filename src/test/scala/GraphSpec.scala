@@ -2,23 +2,41 @@ package renesca
 
 import org.specs2.mutable._
 import org.specs2.mock._
+import org.specs2.specification.BeforeExample
 
-class GraphSpec extends Specification with Mockito {
+class GraphSpec extends Specification with Mockito with BeforeExample {
+  sequential
+
+  var A:Node = null
+  var B:Node = null
+  var ArB:Relation = null
+  var nodes:List[Node] = null
+  var relations:List[Relation] = null
+
+  override def before {
+    A = mock[Node]
+    B = mock[Node]
+    ArB = mock[Relation]
+
+    nodes = List(A,B)
+    relations = List(ArB)
+  }
 
   "Graph" should {
-    "run a test" in {
-      "Hello world" must have size(11)
+    "create graphs with nodes and relations" in {
+      val graph = Graph(nodes, relations)
+
+      graph.nodes.toSet mustEqual nodes.toSet
+      graph.relations.toSet mustEqual relations.toSet
     }
 
-    "run a test with mock" in {
-      class A {
-        val a = 5
-      }
-      val mockA = mock[A]
+    "pass a graph instance to each node and relation" in {
+      val graph = Graph(nodes, relations)
 
-      mockA.a returns 6
+      there was one(A).graph_=(graph)
+      there was one(B).graph_=(graph)
+      there was one(ArB).graph_=(graph)
 
-      mockA.a mustEqual 6
     }
   }
 }

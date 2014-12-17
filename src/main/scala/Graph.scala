@@ -47,22 +47,31 @@ class GraphManager {
   }
 }
 
-class Graph(val nodes:mutable.HashSet[ReadWriteNode], val relations:mutable.HashSet[Relation]) {
-  nodes.foreach{_.graph = this}
-  relations.foreach{_.graph = this}
+object Graph {
+  def apply(nodes:Iterable[Node], relations:Iterable[Relation]) = {
+    val graph = new Graph(
+      mutable.HashSet.empty ++ nodes,
+      mutable.HashSet.empty ++ relations
+    )
+
+    nodes.foreach{ (n) => n.graph = graph}
+    relations.foreach{ (r) => r.graph = graph}
+
+    graph
+  }
+}
+
+class Graph private (val nodes:mutable.Set[Node], val relations:mutable.Set[Relation]) {
 
   val changes = new mutable.ArrayBuffer[GraphChange]
 }
 
-trait Node {
-  def id:Long
-  def labels:collection.Set[Label]
-  def properties:collection.Map[String,PropertyValue]
-}
+case class Node(id:Long) { thisNode =>
+  // case class because we want equals and hashcode depending on id
 
-case class ReadOnlyNode(id:Long, labels:Set[Label], properties:Map[String,PropertyValue]) extends Node
-
-case class ReadWriteNode(id:Long) extends Node with GraphRef { thisNode =>
+  // when setting graph, update reference in labels and properties
+  var _graph: Graph = null
+  def graph = _graph
   def graph_=(newGraph:Graph) {
     _graph = newGraph
     labels.graph = newGraph
@@ -80,27 +89,34 @@ case class ReadWriteNode(id:Long) extends Node with GraphRef { thisNode =>
   }
 
   def delete() = {
-    graph.nodes -= this //TODO: delete relations
+    graph.nodes -= this
+    graph.relations --= this.relations
     graph.changes += NodeDelete(id)
   }
 
-  def outRelations = graph.relations.filter(this == _.startNode)
-  def inRelations = graph.relations.filter(this == _.endNode)
+  def outRelations = graph.relations.filter(this == _.start)
+  def inRelations = graph.relations.filter(this == _.end)
   def relations = inRelations ++ outRelations
   def neighbours = relations.map(_.other(this))
-  def successors = outRelations.map(_.endNode)
-  def predecessors = outRelations.map(_.startNode)
+  def successors = outRelations.map(_.end)
+  def predecessors = outRelations.map(_.start)
 }
 
-case class Relation(id:Long) extends GraphRef { thisRelation =>
+case class Relation(id:Long) { thisRelation =>
+  // case class because we want equals and hashcode depending on id
+  // TODO: implement equals and hashcode manually to have constructor with start/end
+
+  // when setting graph, update reference in labels and properties
+  var _graph: Graph = null
+  def graph = _graph
   def graph_=(newGraph:Graph) {
     _graph = newGraph
     properties.graph = newGraph
   }
 
   var relationType:RelationType = null
-  var startNode: Node = null
-  var endNode: Node = null
+  var start: Node = null
+  var end: Node = null
   val properties = new Properties {
     override val id = thisRelation.id
     override val setPropertyChange = RelationSetProperty.apply _
@@ -112,14 +128,9 @@ case class Relation(id:Long) extends GraphRef { thisRelation =>
     graph.changes += RelationDelete(id)
   }
 
-  def other(node:Node) = if(startNode == node) endNode else startNode
+  def other(node:Node) = if(start == node) end else start
 }
 
-trait GraphRef {
-  var _graph: Graph = null
-  def graph = _graph
-  def graph_=(newGraph:Graph)
-}
 
 abstract class NodeLabels extends mutable.HashSet[Label] {
   var graph: Graph = null

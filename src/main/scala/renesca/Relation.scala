@@ -4,9 +4,17 @@ import renesca.helpers._
 
 trait RelationType
 
-case class Relation(id:Long) { thisRelation =>
+object Relation {
+  def apply(id:Long, start:Node, end:Node) = {
+    val relation = new Relation(id)
+    relation.start = start
+    relation.end = end
+    relation
+  }
+}
+
+case class Relation private (id:Long) { thisRelation =>
   // case class because we want equals and hashcode depending on id
-  // TODO: implement equals and hashcode manually to have constructor with start/end
 
   // when setting graph, update reference in labels and properties
   var _graph: Graph = null

@@ -26,8 +26,8 @@ class GraphSpec extends Specification with Mockito with BeforeExample {
     "create graphs with nodes and relations" in {
       val graph = Graph(nodes, relations)
 
-      graph.nodes.toSet mustEqual nodes.toSet
-      graph.relations.toSet mustEqual relations.toSet
+      graph.nodes must containTheSameElementsAs(nodes)
+      graph.relations must containTheSameElementsAs(relations)
     }
 
     "pass a graph instance to each node and relation" in {

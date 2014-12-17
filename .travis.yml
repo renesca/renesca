@@ -1,5 +1,12 @@
- language: scala
- scala:
-   - "2.11.4"
- jdk:
-   - oraclejdk7
+language: scala
+scala:
+- 2.11.4
+jdk:
+- oraclejdk7
+- oraclejdk8
+script:
+- sbt scoverage:test
+- sbt coveralls
+env:
+  global:
+    secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=

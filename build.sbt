@@ -8,7 +8,10 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2" % "2.4.2" % "test"
 )
 
+// Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+coverallsSettings
 
 scalacOptions ++= Seq(
 "-encoding", "UTF-8",

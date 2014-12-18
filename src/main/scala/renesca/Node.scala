@@ -6,6 +6,7 @@ trait Label
 
 case class Node(id:Long) { thisNode =>
   // case class because we want equals and hashcode depending on id
+  // TODO: Factory like in relation
 
   // when setting graph, update reference in labels and properties
   var _graph: Graph = null
@@ -37,6 +38,6 @@ case class Node(id:Long) { thisNode =>
   def relations = inRelations ++ outRelations
   def neighbours = relations.map(_.other(this))
   def successors = outRelations.map(_.end)
-  def predecessors = outRelations.map(_.start)
+  def predecessors = inRelations.map(_.start)
 }
 

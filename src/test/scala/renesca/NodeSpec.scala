@@ -53,7 +53,28 @@ class NodeSpec extends Specification with Mockito {
     }
 
     "provide access to neighbours" in {
-      todo
+      // A-->B-->C
+      //  \_____7
+      val A = Node(1)
+      val B = Node(2)
+      val C = Node(3)
+      val ArB = Relation(4, A, B)
+      val ArC = Relation(5, A, C)
+      val BrC = Relation(6, B, C)
+
+      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+
+      A.predecessors must beEmpty
+      B.predecessors must contain(exactly(A))
+      C.predecessors must contain(exactly(A,B))
+
+      A.successors must contain(exactly(B,C))
+      B.successors must contain(exactly(C))
+      C.successors must beEmpty
+
+      A.neighbours must contain(exactly(B,C))
+      B.neighbours must contain(exactly(A,C))
+      C.neighbours must contain(exactly(A,B))
     }
 
     "delete itself from graph" in {

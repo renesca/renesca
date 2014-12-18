@@ -2,6 +2,7 @@ package renesca
 
 import org.specs2.mock._
 import org.specs2.mutable._
+import org.specs2.specification.Scope
 
 class NodeSpec extends Specification with Mockito {
 
@@ -26,7 +27,7 @@ class NodeSpec extends Specification with Mockito {
       node.properties.id mustEqual nodeId
     }
 
-    "provide access to relations" in {
+    trait ExampleGraph extends Scope {
       // A-->B-->C
       //  \_____7
       val A = Node(1)
@@ -37,8 +38,9 @@ class NodeSpec extends Specification with Mockito {
       val BrC = Relation(6, B, C)
 
       val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+    }
 
-
+    "provide access to relations" in new ExampleGraph {
       A.outRelations must contain(exactly(ArB, ArC))
       B.outRelations must contain(exactly(BrC))
       C.outRelations must beEmpty
@@ -52,18 +54,7 @@ class NodeSpec extends Specification with Mockito {
       C.relations must contain(exactly(ArC, BrC))
     }
 
-    "provide access to neighbours" in {
-      // A-->B-->C
-      //  \_____7
-      val A = Node(1)
-      val B = Node(2)
-      val C = Node(3)
-      val ArB = Relation(4, A, B)
-      val ArC = Relation(5, A, C)
-      val BrC = Relation(6, B, C)
-
-      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
-
+    "provide access to neighbours" in new ExampleGraph {
       A.predecessors must beEmpty
       B.predecessors must contain(exactly(A))
       C.predecessors must contain(exactly(A,B))

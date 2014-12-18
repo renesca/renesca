@@ -69,7 +69,21 @@ class NodeSpec extends Specification with Mockito {
     }
 
     "delete itself from graph" in {
-      todo
+      // A-->B-->C
+      //  \_____7
+      val A = Node(1)
+      val B = Node(2)
+      val C = Node(3)
+      val ArB = Relation(4, A, B)
+      val ArC = Relation(5, A, C)
+      val BrC = Relation(6, B, C)
+
+      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+
+      B.delete()
+
+      graph.nodes must contain(exactly(A,C))
+      graph.relations must contain(exactly(ArC))
     }
 
     "delete incident relations from graph" in {

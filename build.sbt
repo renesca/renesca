@@ -1,6 +1,6 @@
 name := "renesca"
 
-version := "1.0-SNAPSHOT"
+version := "0.1"
 
 scalaVersion := "2.11.4"
 
@@ -11,7 +11,6 @@ libraryDependencies ++= Seq(
 // Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")
 
-coverallsSettings
 
 scalacOptions ++= Seq(
 "-encoding", "UTF-8",

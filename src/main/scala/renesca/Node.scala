@@ -17,15 +17,8 @@ case class Node(id:Long) { thisNode =>
     properties.graph = newGraph
   }
 
-  val labels = new NodeLabels {
-    override val id = thisNode.id
-  }
-
-  val properties = new Properties {
-    override val id = thisNode.id
-    override val setPropertyChange = NodeSetProperty.apply _
-    override val removePropertyChange = NodeRemoveProperty.apply _
-  }
+  val labels = new NodeLabels(id)
+  val properties = new Properties(id, NodeSetProperty, NodeRemoveProperty)
 
   def delete() = {
     graph.nodes -= this

@@ -27,11 +27,7 @@ case class Relation private (id:Long) { thisRelation =>
   var relationType:RelationType = null
   var start: Node = null
   var end: Node = null
-  val properties = new Properties {
-    override val id = thisRelation.id
-    override val setPropertyChange = RelationSetProperty.apply _
-    override val removePropertyChange = RelationRemoveProperty.apply _
-  }
+  val properties = new Properties(id, RelationSetProperty, RelationRemoveProperty)
 
   def delete() = {
     graph.relations -= this

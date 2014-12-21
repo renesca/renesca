@@ -11,6 +11,7 @@ object Graph {
       mutable.HashSet.empty ++ relations
     )
 
+    // TODO: is it possible to eliminate the circular references?
     nodes.foreach{ (n) => n.graph = graph}
     relations.foreach{ (r) => r.graph = graph}
 

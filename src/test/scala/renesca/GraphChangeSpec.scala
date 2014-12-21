@@ -8,14 +8,9 @@ import scala.collection.mutable
 
 class GraphChangeSpec extends Specification with Mockito {
 
-  trait ExampleGraph extends Scope {
-    val A = Node(1)
-    val graph = Graph(List(A), Nil)
-  }
-
   trait GraphChangesMock extends Scope {
-    val graph = mock[Graph].smart
-    graph.changes returns mock[mutable.ArrayBuffer[GraphChange]].smart
+    val graph = mock[Graph]
+    graph.changes returns mock[mutable.ArrayBuffer[GraphChange]]
   }
 
   "Node" should {
@@ -25,28 +20,11 @@ class GraphChangeSpec extends Specification with Mockito {
       A.graph = graph
     }
 
-    "store property" in new ExampleGraph {
-      A.properties("key") = "value"
-
-      A.properties("key") mustEqual StringPropertyValue("value")
-    }
-
-    "remove property" in new ExampleGraph {
-      todo
-    }
-
     "emit change when setting property" in new NodeGraphChangesMock {
       A.properties("key") = "value"
+      A.properties += ("key" -> "value")
 
-      there was one(graph.changes).+=(NodeSetProperty(1, "key", "value"))
-    }
-
-    "store label" in {
-      todo
-    }
-
-    "remove label" in {
-      todo
+      there were two(graph.changes).+=(NodeSetProperty(1, "key", "value"))
     }
 
     "emit change when setting label" in new NodeGraphChangesMock {

@@ -40,6 +40,20 @@ class NodeSpec extends Specification with Mockito {
       val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
     }
 
+    "store property" in new ExampleGraph {
+      A.properties("key") = "value"
+
+      A.properties("key") mustEqual StringPropertyValue("value")
+    }
+
+    "remove property" in new ExampleGraph {
+      A.properties("key") = "value"
+
+      A.properties -= "key"
+
+      A.properties.isDefinedAt("key") must beFalse
+    }
+
     "provide access to relations" in new ExampleGraph {
       A.outRelations must contain(exactly(ArB, ArC))
       B.outRelations must contain(exactly(BrC))
@@ -68,42 +82,32 @@ class NodeSpec extends Specification with Mockito {
       C.neighbours must contain(exactly(A,B))
     }
 
-    "delete itself from graph" in {
-      // A-->B-->C
-      //  \_____7
-      val A = Node(1)
-      val B = Node(2)
-      val C = Node(3)
-      val ArB = Relation(4, A, B)
-      val ArC = Relation(5, A, C)
-      val BrC = Relation(6, B, C)
-
-      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
-
+    "delete itself from graph" in new ExampleGraph {
       B.delete()
 
       graph.nodes must contain(exactly(A,C))
+    }
+
+    "delete incident relations from graph" in new ExampleGraph {
+      B.delete()
+
       graph.relations must contain(exactly(ArC))
     }
 
-    "delete incident relations from graph" in {
-      todo
-    }
-
     "be equal to other nodes with same id" in {
-      todo
+      Node(1) mustEqual Node(1)
     }
 
     "not be equal to other nodes different id" in {
-      todo
+      Node(1) mustNotEqual Node(2)
     }
 
     "have the same hashcode as nodes with the same id" in {
-      todo
+      Node(1).hashCode mustEqual Node(1).hashCode
     }
 
     "not have the same hashcode as nodes with a different id" in {
-      todo
+      Node(1).hashCode mustNotEqual Node(2).hashCode
     }
   }
 }

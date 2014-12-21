@@ -17,7 +17,7 @@ class NodeLabels(val id: Long, self: mutable.Set[Label] = mutable.HashSet.empty[
 
   override def -=(elem: Label) = {
     graph.changes += NodeRemoveLabel(id, elem)
-    self += elem
+    self -= elem
     this
   }
 

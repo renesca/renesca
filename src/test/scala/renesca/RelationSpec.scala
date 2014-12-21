@@ -37,23 +37,6 @@ class RelationSpec extends Specification with Mockito {
       val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
     }
 
-    "store label" in new ExampleGraph {
-      val label = mock[Label]
-
-      A.labels += label
-
-      A.labels must contain(exactly(label))
-    }
-
-    "remove label" in new ExampleGraph {
-      val label = mock[Label]
-      A.labels += label
-
-      A.labels -= label
-
-      A.labels must beEmpty
-    }
-
     "delete itself from graph" in new ExampleGraph {
       ArB.delete()
 

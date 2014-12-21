@@ -24,7 +24,7 @@ class Properties(val id: Long,
     this
   }
 
-  override def empty: Properties = new Properties(id, setPropertyChange, removePropertyChange, self.empty)
   override def get(key: String): Option[PropertyValue] = self.get(key)
+  override def empty: Properties = new Properties(id, setPropertyChange, removePropertyChange, self.empty)
   override def iterator: Iterator[(String, PropertyValue)] = self.iterator
 }

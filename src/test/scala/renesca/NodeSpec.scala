@@ -40,20 +40,6 @@ class NodeSpec extends Specification with Mockito {
       val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
     }
 
-    "store property" in new ExampleGraph {
-      A.properties("key") = "value"
-
-      A.properties("key") mustEqual StringPropertyValue("value")
-    }
-
-    "remove property" in new ExampleGraph {
-      A.properties("key") = "value"
-
-      A.properties -= "key"
-
-      A.properties.isDefinedAt("key") must beFalse
-    }
-
     "provide access to relations" in new ExampleGraph {
       A.outRelations must contain(exactly(ArB, ArC))
       B.outRelations must contain(exactly(BrC))

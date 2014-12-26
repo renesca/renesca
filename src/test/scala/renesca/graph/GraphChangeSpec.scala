@@ -1,4 +1,4 @@
-package renesca
+package renesca.graph
 
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
@@ -17,7 +17,9 @@ class GraphChangeSpec extends Specification with Mockito {
 
     trait NodeGraphChangesMock extends GraphChangesMock with Scope {
       val A = Node(1)
-      A.graph = graph
+      A.properties._graph = graph
+      A.labels._graph = graph
+      A._graph = graph
     }
 
     "emit change when setting property" in new NodeGraphChangesMock {

@@ -1,6 +1,6 @@
-package renesca.helpers
+package renesca.graph.helpers
 
-import renesca.{Graph, GraphChange, PropertyValue}
+import renesca.graph.{Graph, GraphChange, PropertyValue}
 
 import scala.collection.mutable
 
@@ -10,7 +10,8 @@ class Properties(val id: Long,
                  self: mutable.Map[String, PropertyValue] = mutable.HashMap.empty[String, PropertyValue])
   extends mutable.Map[String, PropertyValue] with mutable.MapLike[String, PropertyValue, Properties] {
 
-  var graph: Graph = null
+  private[graph] var _graph: Graph = null
+  def graph = _graph
 
   override def +=(keyValue: (String, PropertyValue)) = {
     self += keyValue

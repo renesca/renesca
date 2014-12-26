@@ -1,4 +1,4 @@
-package renesca
+package renesca.graph
 
 sealed trait GraphChange
 case class NodeSetProperty(nodeId:Long, key:String, value:PropertyValue) extends GraphChange

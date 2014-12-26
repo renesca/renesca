@@ -1,4 +1,4 @@
-package renesca
+package renesca.graph
 
 import org.specs2.mock._
 import org.specs2.mutable._
@@ -7,16 +7,21 @@ import org.specs2.specification.Scope
 class NodeSpec extends Specification with Mockito {
 
   "Node" should {
+
+    "create Node with labels and properties" in {
+      val label = mock[Label]
+      val A = Node(1, labels = List(label), properties = Map("key" -> "value"))
+
+      A.labels must contain(exactly(label))
+      A.properties must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+    }
+
     "pass on graph reference to labels-Set and properties-Map" in {
-      val node = Node(1)
+      val node = Node(1, Nil, Map.empty)
+      val graph = Graph(List(node), Nil)
 
-      node.labels.graph mustEqual null
-      node.properties.graph mustEqual null
-
-      node.graph = mock[Graph]
-
-      node.labels.graph mustEqual node.graph
-      node.properties.graph mustEqual node.graph
+      node.labels.graph mustEqual graph
+      node.properties.graph mustEqual graph
     }
 
     "pass on node id to labels-Set and properties-Map" in {

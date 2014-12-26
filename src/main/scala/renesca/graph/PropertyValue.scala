@@ -1,6 +1,4 @@
-package renesca
-
-
+package renesca.graph
 
 trait PropertyValue
 case class LongPropertyValue(value:Long) extends PropertyValue

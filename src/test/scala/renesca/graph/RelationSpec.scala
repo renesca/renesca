@@ -1,18 +1,24 @@
-package renesca
+package renesca.graph
 
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
+import renesca.graph.helpers.{NodeLabels, Properties}
 
 class RelationSpec extends Specification with Mockito {
 
   "Relation" should {
     "pass on graph reference to properties-Map" in {
-      val relation = Relation(1, mock[Node], mock[Node])
+      val A = mock[Node]
+      A.labels returns mock[NodeLabels]
+      A.properties returns mock[Properties]
 
-      relation.properties.graph mustEqual null
+      val B = mock[Node]
+      B.labels returns mock[NodeLabels]
+      B.properties returns mock[Properties]
 
-      relation.graph = mock[Graph]
+      val relation = Relation(1, A, B)
+      val graph = Graph(List(A,B), List(relation))
 
       relation.properties.graph mustEqual relation.graph
     }

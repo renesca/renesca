@@ -1,8 +1,9 @@
-package renesca
+package renesca.graph
 
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
+import renesca.graph.helpers.NodeLabels
 
 import scala.collection.mutable
 
@@ -10,7 +11,10 @@ class NodeLabelsSpec extends Specification with Mockito {
 
   trait MockNode extends Scope {
     val A = Node(1)
-    A.graph = mock[Graph]
+    val graph = mock[Graph]
+    A._graph = graph
+    A._labels = new NodeLabels(A.id)
+    A._labels._graph = graph
     A.graph.changes returns mock[mutable.ArrayBuffer[GraphChange]]
 
     val label = mock[Label]

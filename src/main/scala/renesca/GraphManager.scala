@@ -1,5 +1,7 @@
 package renesca
 
+import renesca.graph.Graph
+
 class GraphManager {
   var dbService:DbService = null
 

@@ -73,6 +73,20 @@ class NodeSpec extends Specification with Mockito {
       C.neighbours must contain(exactly(A,B))
     }
 
+    "provide access to degrees" in new ExampleGraph {
+      A.inDegree mustEqual 0
+      B.inDegree mustEqual 1
+      C.inDegree mustEqual 2
+
+      A.outDegree mustEqual 2
+      B.outDegree mustEqual 1
+      C.outDegree mustEqual 0
+
+      A.degree mustEqual 2
+      B.degree mustEqual 2
+      C.degree mustEqual 2
+    }
+
     "delete itself from graph" in new ExampleGraph {
       B.delete()
 

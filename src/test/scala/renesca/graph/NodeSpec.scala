@@ -6,7 +6,6 @@ import org.specs2.specification.Scope
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {
 
@@ -28,73 +27,6 @@ class NodeSpec extends Specification with Mockito {
       node.properties.id mustEqual nodeId
     }
 
-    trait ExampleGraph extends Scope {
-      // A-->B-->C
-      //  \_____7
-      val A = Node(1)
-      val B = Node(2)
-      val C = Node(3)
-      val ArB = Relation(4, A, B)
-      val ArC = Relation(5, A, C)
-      val BrC = Relation(6, B, C)
-
-      implicit val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
-    }
-
-    "provide access to relations" in new ExampleGraph {
-      A.outRelations must contain(exactly(ArB, ArC))
-      B.outRelations must contain(exactly(BrC))
-      C.outRelations must beEmpty
-
-      A.inRelations must beEmpty
-      B.inRelations must contain(ArB)
-      C.inRelations must contain(exactly(BrC, ArC))
-
-      A.relations must contain(exactly(ArB, ArC))
-      B.relations must contain(exactly(ArB, BrC))
-      C.relations must contain(exactly(ArC, BrC))
-    }
-
-    "provide access to neighbours" in new ExampleGraph {
-      A.predecessors must beEmpty
-      B.predecessors must contain(exactly(A))
-      C.predecessors must contain(exactly(A,B))
-
-      A.successors must contain(exactly(B,C))
-      B.successors must contain(exactly(C))
-      C.successors must beEmpty
-
-      A.neighbours must contain(exactly(B,C))
-      B.neighbours must contain(exactly(A,C))
-      C.neighbours must contain(exactly(A,B))
-    }
-
-    "provide access to degrees" in new ExampleGraph {
-      A.inDegree mustEqual 0
-      B.inDegree mustEqual 1
-      C.inDegree mustEqual 2
-
-      A.outDegree mustEqual 2
-      B.outDegree mustEqual 1
-      C.outDegree mustEqual 0
-
-      A.degree mustEqual 2
-      B.degree mustEqual 2
-      C.degree mustEqual 2
-    }
-
-    "delete itself from graph" in new ExampleGraph {
-      B.delete
-
-      graph.nodes must contain(exactly(A,C))
-    }
-
-    "delete incident relations from graph" in new ExampleGraph {
-      B.delete
-
-      graph.relations must contain(exactly(ArC))
-    }
-
     "be equal to other nodes with same id" in {
       Node(1) mustEqual Node(1)
     }
@@ -110,6 +42,58 @@ class NodeSpec extends Specification with Mockito {
     "not have the same hashcode as nodes with a different id" in {
       Node(1).hashCode mustNotEqual Node(2).hashCode
     }
+
+    trait ForwardTest extends Scope {
+      val graph = mock[Graph]
+      val node = Node(1)
+    }
+
+    "ask graph for in-relations" in new ForwardTest {
+      node.inRelations(graph)
+      there was one(graph).inRelations(node)
+    }
+
+    "ask graph for out-relations" in new ForwardTest {
+      node.outRelations(graph)
+      there was one(graph).outRelations(node)
+    }
+    
+    "ask graph for relations" in new ForwardTest {
+      node.relations(graph)
+      there was one(graph).incidentRelations(node)
+    }
+
+    "ask graph for neighbors" in new ForwardTest {
+      node.neighbours(graph)
+      there was one(graph).neighbours(node)
+    }
+
+    "ask graph for predecessors" in new ForwardTest {
+    	node.predecessors(graph)
+    	there was one(graph).predecessors(node)
+    }
+    
+    "ask graph for successors" in new ForwardTest {
+    	node.successors(graph)
+    	there was one(graph).successors(node)
+    }
+
+    "ask graph for inDegree" in new ForwardTest {
+    	node.inDegree(graph)
+    	there was one(graph).inDegree(node)
+    }
+    
+    "ask graph for outDegree" in new ForwardTest {
+    	node.outDegree(graph)
+      there was one(graph).outDegree(node)
+    }
+
+    "ask graph for degree" in new ForwardTest {
+    	node.degree(graph)
+    	there was one(graph).degree(node)
+    }
+
+
   }
 }
 

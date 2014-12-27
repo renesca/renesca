@@ -1,7 +1,5 @@
 package renesca.graph
 
-import renesca.graph.helpers._
-
 import scala.collection.mutable
 
 trait Label
@@ -20,24 +18,18 @@ class Node private[graph] (
     val properties: Properties
     ) {
 
-  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
   def changes:Seq[GraphChange] = localChanges ++ labels.localChanges ++ properties.localChanges
 
-  def delete(implicit graph: Graph) = {
-    graph.nodes -= this
-    graph.relations --= this.relations
-    localChanges += NodeDelete(id)
-  }
-
-  def outRelations(implicit graph: Graph) = graph.relations.filter(this == _.startNode)
-  def inRelations(implicit graph: Graph) = graph.relations.filter(this == _.endNode)
-  def relations(implicit graph: Graph) = inRelations ++ outRelations
-  def neighbours(implicit graph: Graph) = relations.map(_.other(this))
-  def successors(implicit graph: Graph) = outRelations.map(_.endNode)
-  def predecessors(implicit graph: Graph) = inRelations.map(_.startNode)
-  def inDegree(implicit graph: Graph) = inRelations.size
-  def outDegree(implicit graph: Graph) = outRelations.size
-  def degree(implicit graph: Graph) = inDegree + outDegree
+  def outRelations(implicit graph: Graph) = graph.outRelations(this)
+  def inRelations(implicit graph: Graph) = graph.inRelations(this)
+  def relations(implicit graph: Graph) = graph.incidentRelations(this)
+  def neighbours(implicit graph: Graph) = graph.neighbours(this)
+  def successors(implicit graph: Graph) = graph.successors(this)
+  def predecessors(implicit graph: Graph) = graph.predecessors(this)
+  def inDegree(implicit graph: Graph) = graph.inDegree(this)
+  def outDegree(implicit graph: Graph) = graph.outDegree(this)
+  def degree(implicit graph: Graph) = graph.degree(this)
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Node]
 

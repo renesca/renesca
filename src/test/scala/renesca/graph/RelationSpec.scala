@@ -31,7 +31,7 @@ class RelationSpec extends Specification with Mockito {
     }
 
     "delete itself from graph" in new ExampleGraph {
-      ArB.delete
+      graph.delete(ArB)
 
       graph.nodes must contain(exactly(A,B,C))
       graph.relations must contain(exactly(ArC, BrC))
@@ -48,7 +48,6 @@ class RelationSpec extends Specification with Mockito {
       ArB.other(A) mustEqual B
       ArB.other(B) mustEqual A
     }
-
 
     "be equal to other relations with same id" in new MockNodes {
       Relation(1, A, B) mustEqual Relation(1, A, B)

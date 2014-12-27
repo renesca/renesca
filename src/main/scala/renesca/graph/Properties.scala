@@ -1,18 +1,15 @@
-package renesca.graph.helpers
-
-import renesca.graph.{GraphChange, PropertyValue}
+package renesca.graph
 
 import scala.collection.mutable
 
 class Properties(val id: Long,
-                 setPropertyChange: (Long, String, PropertyValue) => GraphChange,
-                 removePropertyChange: (Long, String) => GraphChange,
-                 self: mutable.Map[String, PropertyValue] = mutable.HashMap.empty[String, PropertyValue]
-                 )
+  setPropertyChange: (Long, String, PropertyValue) => GraphChange,
+  removePropertyChange: (Long, String) => GraphChange,
+  self: mutable.Map[String, PropertyValue] = mutable.HashMap.empty[String, PropertyValue])
 
   extends mutable.Map[String, PropertyValue] with mutable.MapLike[String, PropertyValue, Properties] {
 
-  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(keyValue: (String, PropertyValue)) = {
     self += keyValue

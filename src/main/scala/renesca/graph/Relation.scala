@@ -1,7 +1,5 @@
 package renesca.graph
 
-import renesca.graph.helpers._
-
 import scala.collection.mutable
 
 trait RelationType
@@ -23,14 +21,9 @@ class Relation private[Relation] (
     ) {
   // private constructor to force usage of factory
 
-  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
   def changes:Seq[GraphChange] = localChanges ++ properties.localChanges
   
-  def delete(implicit graph:Graph) = {
-    graph.relations -= this
-    localChanges += RelationDelete(id)
-  }
-
   def other(node:Node) = if(startNode == node) endNode else startNode
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Relation]

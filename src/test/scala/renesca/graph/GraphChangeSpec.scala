@@ -6,14 +6,14 @@ import org.specs2.specification.Scope
 import scala.collection.mutable
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import renesca.graph.helpers.NodeLabels
-import renesca.graph.helpers.Properties
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
 
   "Graph" should {
     "collect all changes in one collection" in {
+      val graphChange = mock[GraphChange]
+      
       val nodeChange = mock[GraphChange]
       val nodeLabelChange = mock[GraphChange]
       val nodePropertiesChange = mock[GraphChange]
@@ -33,12 +33,14 @@ class GraphChangeSpec extends Specification with Mockito {
       ArB.properties.localChanges += relationPropertiesChange
 
       val graph = Graph(List(A,B), List(ArB))
+      graph.localChanges += graphChange
       
       A.changes must contain(exactly(nodeChange, nodeLabelChange, nodePropertiesChange))
       ArB.changes must contain(exactly(relationChange, relationPropertiesChange))
 
-      graph.changes.size mustEqual 5
+      graph.changes.size mustEqual 6
       graph.changes must contain(exactly(
+        graphChange,
         nodeChange,
         nodeLabelChange,
         nodePropertiesChange,

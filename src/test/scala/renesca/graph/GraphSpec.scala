@@ -4,7 +4,10 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
 import renesca.graph.helpers.{NodeLabels, Properties}
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class GraphSpec extends Specification with Mockito {
 
   trait ExampleGraph extends Scope {

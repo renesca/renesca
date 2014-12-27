@@ -3,9 +3,11 @@ package renesca.graph
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.specification.Scope
-
 import scala.collection.mutable
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
 
   "Graph" should {

@@ -4,8 +4,8 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
-import ResponseJsonProtocol._
 
 @RunWith(classOf[JUnitRunner])
 class ResponseSpec extends Specification with Mockito {

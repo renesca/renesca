@@ -14,9 +14,9 @@ object Graph {
 class Graph private[graph] (val nodes:mutable.Set[Node], val relations:mutable.Set[Relation]) {
   // private constructor to force usage of Factory
 
-  def changes:Traversable[GraphChange] = {
-    nodes.flatMap(node => node.changes ++ node.labels.changes ++ node.properties.changes) ++
-    relations.flatMap(relation => relation.changes ++ relation.properties.changes)
+  def changes:Seq[GraphChange] = {
+    (nodes.flatMap(node => node.changes) ++
+    relations.flatMap(relation => relation.changes)).toSeq
   }
 }
 

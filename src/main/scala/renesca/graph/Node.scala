@@ -7,46 +7,37 @@ import scala.collection.mutable
 trait Label
 
 object Node {
-  def apply(id:Long, labels:Traversable[Label] = Nil, properties:Map[String,PropertyValue] = Map.empty) = {
-    val node = new Node(id)
-    node._labels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
-    node._properties = new Properties(id, NodeSetProperty, NodeRemoveProperty,
-      mutable.HashMap.empty[String, PropertyValue] ++ properties)
-    node
+  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[String, PropertyValue] = Map.empty) = {
+    val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
+    val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[String, PropertyValue] ++ properties)
+    new Node(id, nodeLabels, nodeProperties)
   }
 }
 
-class Node private[graph] (val id:Long) { thisNode =>
-  // private constructor to force usage of factory
+class Node private[graph] (
+    val id: Long,
+    val labels: NodeLabels,
+    val properties: Properties
+    ) {
 
-  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
+  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+  def changes:Seq[GraphChange] = localChanges ++ labels.localChanges ++ properties.localChanges
 
-  // worth a read: https://stackoverflow.com/questions/5827510/how-to-override-apply-in-a-case-class-companion/25538287#25538287
-
-  private[graph] var _labels: NodeLabels = null
-  def labels = _labels
-
-  private[graph] var _properties:Properties = null
-  def properties = _properties
-
-  def delete(implicit graph:Graph) = {
+  def delete(implicit graph: Graph) = {
     graph.nodes -= this
     graph.relations --= this.relations
-    changes += NodeDelete(id)
+    localChanges += NodeDelete(id)
   }
 
-  def outRelations(implicit  graph:Graph) = graph.relations.filter(this == _.start)
-  def inRelations(implicit  graph:Graph) = graph.relations.filter(this == _.end)
-  def relations(implicit  graph:Graph) = inRelations ++ outRelations
-  def neighbours(implicit  graph:Graph) = relations.map(_.other(this))
-  def successors(implicit  graph:Graph) = outRelations.map(_.end)
-  def predecessors(implicit  graph:Graph) = inRelations.map(_.start)
-  def inDegree(implicit  graph:Graph) = inRelations.size
-  def outDegree(implicit  graph:Graph) = outRelations.size
-  def degree(implicit  graph:Graph) = inDegree + outDegree
-
-
-
+  def outRelations(implicit graph: Graph) = graph.relations.filter(this == _.startNode)
+  def inRelations(implicit graph: Graph) = graph.relations.filter(this == _.endNode)
+  def relations(implicit graph: Graph) = inRelations ++ outRelations
+  def neighbours(implicit graph: Graph) = relations.map(_.other(this))
+  def successors(implicit graph: Graph) = outRelations.map(_.endNode)
+  def predecessors(implicit graph: Graph) = inRelations.map(_.startNode)
+  def inDegree(implicit graph: Graph) = inRelations.size
+  def outDegree(implicit graph: Graph) = outRelations.size
+  def degree(implicit graph: Graph) = inDegree + outDegree
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Node]
 

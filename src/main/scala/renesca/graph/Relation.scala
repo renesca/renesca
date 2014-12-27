@@ -8,40 +8,30 @@ trait RelationType
 
 object Relation {
   def apply(id:Long, start:Node, end:Node, relationType:RelationType = null, properties:Map[String,PropertyValue] = Map.empty) = {
-    val relation = new Relation(id)
-    relation._start = start
-    relation._end = end
-    relation._relationType = relationType
-    relation._properties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[String, PropertyValue] ++ properties)
-    relation
+    val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty,
+        mutable.HashMap.empty[String, PropertyValue] ++ properties)
+    new Relation(id, start, end, relationType, relationProperties)
   }
 }
 
-class Relation private[Relation] (val id:Long) { thisRelation =>
+class Relation private[Relation] (
+    val id:Long,
+    val startNode:Node,
+    val endNode:Node,
+    val relationType:RelationType,
+    val properties:Properties
+    ) {
   // private constructor to force usage of factory
 
-  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
-
-  private[graph] var _relationType:RelationType = null
-  def relationType = _relationType
-
-  private[graph] var _start: Node = null
-  def start = _start
-
-  private[graph] var _end: Node = null
-  def end = _end
-
-  private[graph] var _properties:Properties = null
-  def properties = _properties
-
+  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+  def changes:Seq[GraphChange] = localChanges ++ properties.localChanges
+  
   def delete(implicit graph:Graph) = {
     graph.relations -= this
-    changes += RelationDelete(id)
+    localChanges += RelationDelete(id)
   }
 
-  def other(node:Node) = if(start == node) end else start
-
-
+  def other(node:Node) = if(startNode == node) endNode else startNode
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Relation]
 

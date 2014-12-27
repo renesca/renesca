@@ -7,20 +7,22 @@ import scala.collection.mutable
 class Properties(val id: Long,
                  setPropertyChange: (Long, String, PropertyValue) => GraphChange,
                  removePropertyChange: (Long, String) => GraphChange,
-                 self: mutable.Map[String, PropertyValue] = mutable.HashMap.empty[String, PropertyValue])
+                 self: mutable.Map[String, PropertyValue] = mutable.HashMap.empty[String, PropertyValue]
+                 )
+
   extends mutable.Map[String, PropertyValue] with mutable.MapLike[String, PropertyValue, Properties] {
 
-  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
+  val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(keyValue: (String, PropertyValue)) = {
     self += keyValue
-    changes += setPropertyChange(id, keyValue._1, keyValue._2)
+    localChanges += setPropertyChange(id, keyValue._1, keyValue._2)
     this
   }
 
   override def -=(key: String) = {
     self -= key
-    changes += removePropertyChange(id, key)
+    localChanges += removePropertyChange(id, key)
     this
   }
 

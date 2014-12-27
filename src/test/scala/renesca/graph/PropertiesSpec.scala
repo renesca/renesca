@@ -13,8 +13,6 @@ class PropertiesSpec extends Specification with Mockito {
   trait MockNode extends Scope {
     val A = Node(1)
     val graph = mock[Graph]
-    A._properties = new Properties(A.id, mock[(Long,String,PropertyValue) => GraphChange], mock[(Long,String) => GraphChange])
-
     val label = mock[Label]
   }
 

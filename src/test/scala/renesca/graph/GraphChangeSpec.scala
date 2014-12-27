@@ -6,6 +6,8 @@ import org.specs2.specification.Scope
 import scala.collection.mutable
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
+import renesca.graph.helpers.NodeLabels
+import renesca.graph.helpers.Properties
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
@@ -20,18 +22,22 @@ class GraphChangeSpec extends Specification with Mockito {
       val relationPropertiesChange = mock[GraphChange]
 
       val A = Node(1)
-      A.changes += nodeChange
-      A.labels.changes += nodeLabelChange
-      A.properties.changes += nodePropertiesChange
+      A.localChanges += nodeChange
+      A.labels.localChanges += nodeLabelChange
+      A.properties.localChanges += nodePropertiesChange
 
       val B = Node(2)
 
       val ArB = Relation(3, A, B)
-      ArB.changes += relationChange
-      ArB.properties.changes += relationPropertiesChange
+      ArB.localChanges += relationChange
+      ArB.properties.localChanges += relationPropertiesChange
 
       val graph = Graph(List(A,B), List(ArB))
+      
+      A.changes must contain(exactly(nodeChange, nodeLabelChange, nodePropertiesChange))
+      ArB.changes must contain(exactly(relationChange, relationPropertiesChange))
 
+      graph.changes.size mustEqual 5
       graph.changes must contain(exactly(
         nodeChange,
         nodeLabelChange,
@@ -45,25 +51,27 @@ class GraphChangeSpec extends Specification with Mockito {
   "Node" should {
 
     trait NodeChangesMock extends Scope {
-      val A = Node(1)
-      A.changes = mock[mutable.ArrayBuffer[GraphChange]]
-      A.properties.changes = mock[mutable.ArrayBuffer[GraphChange]]
-      A.labels.changes = mock[mutable.ArrayBuffer[GraphChange]]
+      val A = new Node(1, mock[NodeLabels], mock[Properties])
     }
 
-    "emit change when setting property" in new NodeChangesMock {
-      A.properties("key") = "value"
-      A.properties += ("key" -> "value")
+    "emit change when setting property" in {
+      val properties = new Properties(1, NodeSetProperty , NodeRemoveProperty)
+      properties("key") = "value"
+      properties += ("key" -> "value")
 
-      there were two(A.properties.changes).+=(NodeSetProperty(1, "key", "value"))
+      properties.localChanges must contain(exactly(
+          NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange],
+          NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange]
+          ))
     }
 
-    "emit change when setting label" in new NodeChangesMock {
+    "emit change when setting label" in  {
+      val labels = new NodeLabels(1)
       val label = mock[Label]
 
-      A.labels += label
+      labels += label
 
-      there was one(A.labels.changes).+=(NodeSetLabel(1, label))
+      labels.localChanges must contain(exactly(NodeSetLabel(1, label).asInstanceOf[GraphChange]))
     }
   }
 }

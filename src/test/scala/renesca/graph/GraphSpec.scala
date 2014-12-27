@@ -30,12 +30,5 @@ class GraphSpec extends Specification with Mockito {
       graph.nodes must containTheSameElementsAs(nodes)
       graph.relations must containTheSameElementsAs(relations)
     }
-
-    "pass a graph instance to each node and relation" in new ExampleGraph {
-      there was one(A)._graph_=(graph)
-      there was one(B)._graph_=(graph)
-      there was one(ArB)._graph_=(graph)
-    }
-
   }
 }

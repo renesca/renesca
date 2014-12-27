@@ -8,33 +8,60 @@ import scala.collection.mutable
 
 class GraphChangeSpec extends Specification with Mockito {
 
-  trait GraphChangesMock extends Scope {
-    val graph = mock[Graph]
-    graph.changes returns mock[mutable.ArrayBuffer[GraphChange]]
+  "Graph" should {
+    "collect all changes in one collection" in {
+      val nodeChange = mock[GraphChange]
+      val nodeLabelChange = mock[GraphChange]
+      val nodePropertiesChange = mock[GraphChange]
+
+      val relationChange = mock[GraphChange]
+      val relationPropertiesChange = mock[GraphChange]
+
+      val A = Node(1)
+      A.changes += nodeChange
+      A.labels.changes += nodeLabelChange
+      A.properties.changes += nodePropertiesChange
+
+      val B = Node(2)
+
+      val ArB = Relation(3, A, B)
+      ArB.changes += relationChange
+      ArB.properties.changes += relationPropertiesChange
+
+      val graph = Graph(List(A,B), List(ArB))
+
+      graph.changes must contain(exactly(
+        nodeChange,
+        nodeLabelChange,
+        nodePropertiesChange,
+        relationChange,
+        relationPropertiesChange
+      ))
+    }
   }
 
   "Node" should {
 
-    trait NodeGraphChangesMock extends GraphChangesMock with Scope {
+    trait NodeChangesMock extends Scope {
       val A = Node(1)
-      A.properties._graph = graph
-      A.labels._graph = graph
-      A._graph = graph
+      A.changes = mock[mutable.ArrayBuffer[GraphChange]]
+      A.properties.changes = mock[mutable.ArrayBuffer[GraphChange]]
+      A.labels.changes = mock[mutable.ArrayBuffer[GraphChange]]
     }
 
-    "emit change when setting property" in new NodeGraphChangesMock {
+    "emit change when setting property" in new NodeChangesMock {
       A.properties("key") = "value"
       A.properties += ("key" -> "value")
 
-      there were two(graph.changes).+=(NodeSetProperty(1, "key", "value"))
+      there were two(A.properties.changes).+=(NodeSetProperty(1, "key", "value"))
     }
 
-    "emit change when setting label" in new NodeGraphChangesMock {
+    "emit change when setting label" in new NodeChangesMock {
       val label = mock[Label]
 
       A.labels += label
 
-      there was one(graph.changes).+=(NodeSetLabel(1, label))
+      there was one(A.labels.changes).+=(NodeSetLabel(1, label))
     }
   }
 }

@@ -19,10 +19,9 @@ object Node {
 class Node private[graph] (val id:Long) { thisNode =>
   // private constructor to force usage of factory
 
-  // worth a read: https://stackoverflow.com/questions/5827510/how-to-override-apply-in-a-case-class-companion/25538287#25538287
+  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
 
-  private[graph] var _graph: Graph = null
-  def graph = _graph
+  // worth a read: https://stackoverflow.com/questions/5827510/how-to-override-apply-in-a-case-class-companion/25538287#25538287
 
   private[graph] var _labels: NodeLabels = null
   def labels = _labels
@@ -30,21 +29,21 @@ class Node private[graph] (val id:Long) { thisNode =>
   private[graph] var _properties:Properties = null
   def properties = _properties
 
-  def delete() = {
+  def delete(implicit graph:Graph) = {
     graph.nodes -= this
     graph.relations --= this.relations
-    graph.changes += NodeDelete(id)
+    changes += NodeDelete(id)
   }
 
-  def outRelations = graph.relations.filter(this == _.start)
-  def inRelations = graph.relations.filter(this == _.end)
-  def relations = inRelations ++ outRelations
-  def neighbours = relations.map(_.other(this))
-  def successors = outRelations.map(_.end)
-  def predecessors = inRelations.map(_.start)
-  def inDegree = inRelations.size
-  def outDegree = outRelations.size
-  def degree = inDegree + outDegree
+  def outRelations(implicit  graph:Graph) = graph.relations.filter(this == _.start)
+  def inRelations(implicit  graph:Graph) = graph.relations.filter(this == _.end)
+  def relations(implicit  graph:Graph) = inRelations ++ outRelations
+  def neighbours(implicit  graph:Graph) = relations.map(_.other(this))
+  def successors(implicit  graph:Graph) = outRelations.map(_.end)
+  def predecessors(implicit  graph:Graph) = inRelations.map(_.start)
+  def inDegree(implicit  graph:Graph) = inRelations.size
+  def outDegree(implicit  graph:Graph) = outRelations.size
+  def degree(implicit  graph:Graph) = inDegree + outDegree
 
 
 

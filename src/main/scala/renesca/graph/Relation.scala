@@ -20,8 +20,7 @@ object Relation {
 class Relation private[Relation] (val id:Long) { thisRelation =>
   // private constructor to force usage of factory
 
-  private[graph] var _graph: Graph = null
-  def graph = _graph
+  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
 
   private[graph] var _relationType:RelationType = null
   def relationType = _relationType
@@ -35,9 +34,9 @@ class Relation private[Relation] (val id:Long) { thisRelation =>
   private[graph] var _properties:Properties = null
   def properties = _properties
 
-  def delete() = {
+  def delete(implicit graph:Graph) = {
     graph.relations -= this
-    graph.changes += RelationDelete(id)
+    changes += RelationDelete(id)
   }
 
   def other(node:Node) = if(start == node) end else start

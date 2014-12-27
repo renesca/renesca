@@ -3,26 +3,10 @@ package renesca.graph
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
-import renesca.graph.helpers.{NodeLabels, Properties}
 
 class RelationSpec extends Specification with Mockito {
 
   "Relation" should {
-    "pass on graph reference to properties-Map" in {
-      val A = mock[Node]
-      A.labels returns mock[NodeLabels]
-      A.properties returns mock[Properties]
-
-      val B = mock[Node]
-      B.labels returns mock[NodeLabels]
-      B.properties returns mock[Properties]
-
-      val relation = Relation(1, A, B)
-      val graph = Graph(List(A,B), List(relation))
-
-      relation.properties.graph mustEqual relation.graph
-    }
-
     "pass on relation id to properties-Map" in {
       val relationId = 5
       val relation = Relation(relationId, mock[Node], mock[Node])
@@ -40,11 +24,11 @@ class RelationSpec extends Specification with Mockito {
       val ArC = Relation(5, A, C)
       val BrC = Relation(6, B, C)
 
-      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+      implicit val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
     }
 
     "delete itself from graph" in new ExampleGraph {
-      ArB.delete()
+      ArB.delete
 
       graph.nodes must contain(exactly(A,B,C))
       graph.relations must contain(exactly(ArC, BrC))

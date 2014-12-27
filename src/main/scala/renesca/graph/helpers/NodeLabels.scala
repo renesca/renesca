@@ -1,23 +1,22 @@
 package renesca.graph.helpers
 
-import renesca.graph.{Graph, Label, NodeRemoveLabel, NodeSetLabel}
+import renesca.graph._
 
 import scala.collection.mutable
 
 class NodeLabels(val id: Long, self: mutable.Set[Label] = mutable.HashSet.empty[Label])
   extends mutable.Set[Label] with mutable.SetLike[Label, NodeLabels] {
 
-  private[graph] var _graph: Graph = null
-  def graph = _graph
+  private[graph] var changes = new mutable.ArrayBuffer[GraphChange]
 
   override def +=(elem: Label) = {
-    graph.changes += NodeSetLabel(id, elem)
+    changes += NodeSetLabel(id, elem)
     self += elem
     this
   }
 
   override def -=(elem: Label) = {
-    graph.changes += NodeRemoveLabel(id, elem)
+    changes += NodeRemoveLabel(id, elem)
     self -= elem
     this
   }

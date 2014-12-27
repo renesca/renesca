@@ -16,14 +16,6 @@ class NodeSpec extends Specification with Mockito {
       A.properties must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
     }
 
-    "pass on graph reference to labels-Set and properties-Map" in {
-      val node = Node(1, Nil, Map.empty)
-      val graph = Graph(List(node), Nil)
-
-      node.labels.graph mustEqual graph
-      node.properties.graph mustEqual graph
-    }
-
     "pass on node id to labels-Set and properties-Map" in {
       val nodeId = 5
       val node = Node(nodeId)
@@ -42,7 +34,7 @@ class NodeSpec extends Specification with Mockito {
       val ArC = Relation(5, A, C)
       val BrC = Relation(6, B, C)
 
-      val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+      implicit val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
     }
 
     "provide access to relations" in new ExampleGraph {
@@ -88,13 +80,13 @@ class NodeSpec extends Specification with Mockito {
     }
 
     "delete itself from graph" in new ExampleGraph {
-      B.delete()
+      B.delete
 
       graph.nodes must contain(exactly(A,C))
     }
 
     "delete incident relations from graph" in new ExampleGraph {
-      B.delete()
+      B.delete
 
       graph.relations must contain(exactly(ArC))
     }

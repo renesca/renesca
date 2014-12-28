@@ -1,6 +1,6 @@
 package renesca.json.protocols
 
-import renesca.graph.{ArrayPropertyValue, BooleanPropertyValue, DoublePropertyValue, LongPropertyValue, PropertyValue, StringPropertyValue}
+import renesca.json._
 import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 object PropertyValueProtocol extends DefaultJsonProtocol {

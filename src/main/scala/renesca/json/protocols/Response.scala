@@ -5,10 +5,12 @@ import spray.json.DefaultJsonProtocol
 
 
 object RelationshipJsonProtocol extends DefaultJsonProtocol {
+  import renesca.json.protocols.PropertyValueProtocol._
   implicit val relationshipFormat = jsonFormat5(Relationship)
 }
 
 object NodeJsonProtocol extends DefaultJsonProtocol {
+  import renesca.json.protocols.PropertyValueProtocol._
   implicit val nodeFormat = jsonFormat3(Node)
 }
 
@@ -16,7 +18,7 @@ object GraphDataJsonProtocol extends DefaultJsonProtocol {
   import renesca.json.protocols.NodeJsonProtocol._
   import renesca.json.protocols.RelationshipJsonProtocol._
 
-  implicit val graphDataFormat = jsonFormat2(GraphData)
+  implicit val graphDataFormat = jsonFormat2(Graph)
 }
 
 object ErrorJsonProtocol extends DefaultJsonProtocol {

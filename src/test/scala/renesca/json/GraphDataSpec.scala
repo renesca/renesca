@@ -1,12 +1,12 @@
 package renesca.json
 
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.GraphDataJsonProtocol
+import renesca.json.protocols.GraphDataJsonProtocol._
 import spray.json._
-import GraphDataJsonProtocol._
 
 @RunWith(classOf[JUnitRunner])
 class GraphDataSpec extends Specification with Mockito {
@@ -18,8 +18,8 @@ class GraphDataSpec extends Specification with Mockito {
           "relationships" : []
         }
         """
-       val graphData = json.parseJson.convertTo[GraphData]
-       graphData mustEqual GraphData()
+       val graphData = json.parseJson.convertTo[Graph]
+       graphData mustEqual Graph()
      }
      
      "have nodes" in {
@@ -37,8 +37,8 @@ class GraphDataSpec extends Specification with Mockito {
     			 "relationships" : []
 			 }
 			 """
-			 val graphData = json.parseJson.convertTo[GraphData]
-			 graphData mustEqual GraphData(List(Node("1"), Node("2")))
+			 val graphData = json.parseJson.convertTo[Graph]
+			 graphData mustEqual Graph(List(Node("1"), Node("2")))
      }
      
      "have relationships" in {
@@ -62,8 +62,8 @@ class GraphDataSpec extends Specification with Mockito {
             }]
 			 }
 			 """
-    	 val graphData = json.parseJson.convertTo[GraphData]
-			 graphData mustEqual GraphData(List(Node("1"), Node("2")), List(Relationship("9","HAS","1","2")))
+    	 val graphData = json.parseJson.convertTo[Graph]
+			 graphData mustEqual Graph(List(Node("1"), Node("2")), List(Relationship("9","HAS","1","2")))
      }
      
      "nodes have properties" in {

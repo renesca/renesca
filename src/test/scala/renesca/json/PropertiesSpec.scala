@@ -1,18 +1,11 @@
 package renesca.json
 
 import org.junit.runner.RunWith
-import protocols.PropertyValueProtocol._
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.runner.JUnitRunner
+import renesca.json.protocols.PropertyValueProtocol._
 import spray.json._
-import renesca.graph.PropertyValue
-import renesca.graph.{ StringPropertyValue, BooleanPropertyValue }
-import spray.json.DefaultJsonProtocol._
-import renesca.graph.DoublePropertyValue
-import renesca.graph.LongPropertyValue
-import renesca.graph.ArrayPropertyValue
-import renesca.json.protocols.PropertyValueProtocol
 
 @RunWith(classOf[JUnitRunner])
 class PropertiesSpec extends Specification with Mockito {

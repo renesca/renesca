@@ -1,10 +1,10 @@
 package renesca.graph
 
+import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.specification.Scope
-import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
+import org.specs2.specification.Scope
 
 @RunWith(classOf[JUnitRunner])
 class GraphSpec extends Specification with Mockito {
@@ -26,11 +26,6 @@ class GraphSpec extends Specification with Mockito {
     }
   
   "Graph" should {
-    "create graphs with nodes and relations" in new ExampleGraph {
-    	import graph._
-      nodes must containTheSameElementsAs(nodesList)
-      relations must containTheSameElementsAs(relationsList)
-    }
 
     "provide access to relations" in new ExampleGraph {
       import graph._

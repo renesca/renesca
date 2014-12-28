@@ -1,8 +1,10 @@
 package renesca.graph
 
+import renesca.json.PropertyValue
+
 import scala.collection.mutable
 
-trait RelationType
+case class RelationType(name:String)
 
 object Relation {
   def apply(id:Long, start:Node, end:Node, relationType:RelationType = null, properties:Map[String,PropertyValue] = Map.empty) = {

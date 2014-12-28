@@ -1,14 +1,35 @@
 package renesca.graph
 
+import renesca.json
+
 import scala.collection.mutable
 
 object Graph {
-  def apply(nodes: Traversable[Node], relations: Traversable[Relation]) = {
+  def apply(nodes: Traversable[Node] = Nil, relations: Traversable[Relation] = Nil):Graph = {
     new Graph(
       mutable.HashSet.empty ++ nodes,
       mutable.HashSet.empty ++ relations)
   }
+
+  def apply(jsonGraph:json.Graph):Graph = {
+    val nodes = jsonGraph.nodes.map{ case json.Node(id,labels,properties) =>
+      Node(id.toLong, labels.map(Label), properties)
+    }
+    
+    val idToNode = nodes.map{case node => node.id.toString -> node}.toMap
+
+    val relations = jsonGraph.relationships.map{ case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
+      Relation(id.toLong,
+        idToNode(startNode),
+        idToNode(endNode),
+        RelationType(relationshipType),
+        properties)
+    }
+
+    Graph(nodes, relations)
+  }
 }
+
 
 class Graph private[graph] (val nodes: mutable.Set[Node], val relations: mutable.Set[Relation]) {
   // private constructor to force usage of Factory
@@ -42,6 +63,7 @@ class Graph private[graph] (val nodes: mutable.Set[Node], val relations: mutable
   def outDegree(node: Node) = outRelations(node).size
   def degree(node: Node) = inDegree(node) + outDegree(node)
 
+  def merge(that:Graph) = Graph(this.nodes ++ that.nodes, this.relations ++ that.relations)
 }
 
 

@@ -1,8 +1,10 @@
 package renesca.graph
 
+import renesca.json.PropertyValue
+
 import scala.collection.mutable
 
-trait Label
+case class Label(name:String)
 
 object Node {
   def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[String, PropertyValue] = Map.empty) = {

@@ -1,5 +1,7 @@
 package renesca.graph
 
+import renesca.json.PropertyValue
+
 sealed trait GraphChange
 case class NodeSetProperty(nodeId:Long, key:String, value:PropertyValue) extends GraphChange
 case class NodeRemoveProperty(nodeId:Long, key:String) extends GraphChange

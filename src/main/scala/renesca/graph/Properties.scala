@@ -1,5 +1,7 @@
 package renesca.graph
 
+import renesca.json.PropertyValue
+
 import scala.collection.mutable
 
 class Properties(val id: Long,

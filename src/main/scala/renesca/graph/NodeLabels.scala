@@ -1,6 +1,5 @@
 package renesca.graph
 
-import renesca.graph._
 import scala.collection.mutable
 
 class NodeLabels(

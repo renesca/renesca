@@ -94,12 +94,32 @@ class GraphSpec extends Specification with Mockito {
       val otherNodes = List(D, E, F)
       val otherRelations = List(DrE, DrF)
       val otherGraph = Graph(otherNodes, otherRelations)
-      val newGraph = graph.merge(otherGraph)
+      val newGraph = graph merge otherGraph
 
       newGraph.nodes must containAllOf(nodesList)
       newGraph.nodes must containAllOf(otherNodes)
       newGraph.relations must containAllOf(relationsList)
       newGraph.relations must containAllOf(otherRelations)
+    }
+
+    "merge graphs with shared nodes and relations" in new ExampleGraph {
+      // D == A
+      // E == B
+      // DrE == ArB
+
+      val D = Node(1)
+      val E = Node(2)
+      val F = Node(16)
+      val DrE = Relation(4, D, E)
+      val DrF = Relation(18, D, F)
+
+      val otherNodes = List(D, E, F)
+      val otherRelations = List(DrE, DrF)
+      val otherGraph = Graph(otherNodes, otherRelations)
+      val newGraph = graph merge otherGraph
+
+      newGraph.nodes must contain(exactly(A,B,C,F))
+      newGraph.relations must contain(exactly(ArB, ArC, BrC, DrF))
     }
   }
 }

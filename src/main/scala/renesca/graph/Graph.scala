@@ -70,7 +70,12 @@ class Graph private[graph] (val nodes: mutable.Set[Node], val relations: mutable
   def outDegree(node: Node) = outRelations(node).size
   def degree(node: Node) = inDegree(node) + outDegree(node)
 
-  def merge(that:Graph) = Graph(this.nodes ++ that.nodes, this.relations ++ that.relations)
+  def merge(that:Graph) = {
+    val graph = Graph(this.nodes ++ that.nodes, this.relations ++ that.relations)
+    graph.localChanges ++= this.changes
+    graph.localChanges ++= that.changes
+    graph
+  }
 }
 
 

@@ -123,7 +123,16 @@ class GraphSpec extends Specification with Mockito {
     }
 
     "merge graphs with changes" in {
-      todo
+      val graph1 = Graph()
+      val graph2 = Graph()
+
+      val change1 = mock[GraphChange]
+      val change2 = mock[GraphChange]
+
+      graph1.localChanges += change1
+      graph2.localChanges += change2
+
+      (graph1 merge graph2).changes must contain(exactly(change1, change2))
     }
   }
 }

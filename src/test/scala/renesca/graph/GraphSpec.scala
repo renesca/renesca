@@ -121,5 +121,9 @@ class GraphSpec extends Specification with Mockito {
       newGraph.nodes must contain(exactly(A,B,C,F))
       newGraph.relations must contain(exactly(ArB, ArC, BrC, DrF))
     }
+
+    "merge graphs with changes" in {
+      todo
+    }
   }
 }

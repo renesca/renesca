@@ -48,23 +48,60 @@ class GraphChangeSpec extends Specification with Mockito {
         relationPropertiesChange
       ))
     }
+
+    "emit change when deleting node" in {
+      val A = Node(1)
+      val graph = Graph(List(A), Nil)
+
+      graph.delete(A)
+
+      graph.localChanges must contain(exactly(
+        NodeDelete(A.id).asInstanceOf[GraphChange]
+      ))
+    }
+
+    "emit changes when deleting node with relations" in {
+      // emit NodeDelete and RelationDelete
+      // TODO: Important! when deleting a node via Cypher, relations have to be deleted, too
+      // else the transaction fails and will be rolled back
+      todo
+    }
+
+    "emit change when deleting relation" in {
+      val A = Node(1)
+      val B = Node(2)
+      val ArB = Relation(3, A, B)
+      val graph = Graph(List(A,B), List(ArB))
+
+      graph.delete(ArB)
+
+      graph.changes must contain(exactly(
+        RelationDelete(ArB.id).asInstanceOf[GraphChange]
+      ))
+    }
   }
 
   "Node" should {
-
-    trait NodeChangesMock extends Scope {
-      val A = new Node(1, mock[NodeLabels], mock[Properties])
-    }
-
     "emit change when setting property" in {
       val properties = new Properties(1, NodeSetProperty , NodeRemoveProperty)
+
       properties("key") = "value"
       properties += ("key" -> "value")
 
       properties.localChanges must contain(exactly(
-          NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange],
-          NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange]
-          ))
+        NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange],
+        NodeSetProperty(1, "key", "value").asInstanceOf[GraphChange]
+      ))
+    }
+
+    "emit change when removing property" in {
+      val properties = new Properties(1, NodeSetProperty , NodeRemoveProperty)
+
+      properties -= "key"
+
+      properties.localChanges must contain(exactly(
+          NodeRemoveProperty(1, "key").asInstanceOf[GraphChange]
+      ))
     }
 
     "emit change when setting label" in  {
@@ -73,7 +110,26 @@ class GraphChangeSpec extends Specification with Mockito {
 
       labels += label
 
-      labels.localChanges must contain(exactly(NodeSetLabel(1, label).asInstanceOf[GraphChange]))
+      labels.localChanges must contain(exactly(
+        NodeSetLabel(1, label).asInstanceOf[GraphChange]
+      ))
     }
+
+    "emit change when removing label" in  {
+      val labels = new NodeLabels(1)
+      val label = mock[Label]
+
+      labels -= label
+
+      labels.localChanges must contain(exactly(
+        NodeRemoveLabel(1, label).asInstanceOf[GraphChange]
+      ))
+    }
+  }
+
+  "Relation" should {
+    "emit change when removing property" in {todo}
+
+    "emit change when setting property" in {todo}
   }
 }

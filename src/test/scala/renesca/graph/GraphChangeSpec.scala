@@ -3,6 +3,7 @@ package renesca.graph
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.specification.Scope
+import renesca.json.StringPropertyValue
 import scala.collection.mutable
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -138,8 +139,25 @@ class GraphChangeSpec extends Specification with Mockito {
   }
 
   "Relation" should {
-    "emit change when removing property" in {todo}
+    "emit change when setting property" in {
+      val relation = Relation(1, Node(2), Node(3))
+      relation.properties += (("key", StringPropertyValue("value")))
+      relation.properties -= "key"
 
-    "emit change when setting property" in {todo}
+      relation.changes must contain(
+        RelationSetProperty(1, "key", StringPropertyValue("value"))
+      )
+    }
+
+    "emit change when removing property" in {
+      val relation = Relation(1, Node(2), Node(3))
+      relation.properties += (("key", StringPropertyValue("value")))
+      relation.properties -= "key"
+
+      relation.changes must contain(
+          RelationSetProperty(1, "key", StringPropertyValue("value")).asInstanceOf[GraphChange],
+          RelationRemoveProperty(1, "key").asInstanceOf[GraphChange]
+      ).inOrder
+    }
   }
 }

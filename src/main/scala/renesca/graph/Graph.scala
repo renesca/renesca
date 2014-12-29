@@ -49,9 +49,16 @@ class Graph private[graph] (val nodes: mutable.Set[Node], val relations: mutable
 
   def delete(node: Node) {
     nodes -= node
-    relations --= incidentRelations(node)
+    deleteRelations(node)
     localChanges += NodeDelete(node.id)
   }
+
+  def deleteRelations(node : Node) {
+    val nodeRelations = incidentRelations(node)
+    relations --= nodeRelations
+    localChanges ++= nodeRelations.map(relation => RelationDelete(relation.id))
+  }
+
 
   def outRelations(node: Node) = relations.filter(node == _.startNode).toSet
   def inRelations(node: Node) = relations.filter(node == _.endNode).toSet

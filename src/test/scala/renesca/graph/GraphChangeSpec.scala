@@ -61,10 +61,20 @@ class GraphChangeSpec extends Specification with Mockito {
     }
 
     "emit changes when deleting node with relations" in {
-      // emit NodeDelete and RelationDelete
-      // TODO: Important! when deleting a node via Cypher, relations have to be deleted, too
-      // else the transaction fails and will be rolled back
-      todo
+      val A = Node(1)
+      val B = Node(2)
+      val C = Node(4)
+      val ArB = Relation(3, A, B)
+      val BrC = Relation(5, B, C)
+      val graph = Graph(List(A, B, C), List(ArB, BrC))
+
+      graph.delete(A)
+
+      graph.nodes must not contain(A)
+      graph.relations must not contain(ArB)
+      graph.relations must contain(BrC)
+      graph.changes must contain(RelationDelete(3))
+      graph.changes must not contain(RelationDelete(5))
     }
 
     "emit change when deleting relation" in {

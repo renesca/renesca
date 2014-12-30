@@ -21,15 +21,13 @@ class DbService {
   def queryRequest(query:Query, queryRequestType:QueryRequestType):Request = {
     val jsonRequest = json.Request(List(json.Statement(query.statement, query.parameters, List(queryRequestType.toString))))
     // Request(POST, "/transaction/commit", Some(jsonRequest.toJson.compactPrint)
-    ???
+    Request(RequestType.POST, null, None)
   }
 
   def queryGraph(query:Query):Graph = {
     val request = queryRequest(query, QueryRequestType.graph)
     val jsonResponse = restService.submit(request).parseJson.convertTo[json.Response]
-    val jsonGraph = ???
-
-    Graph(jsonGraph)
+    Graph(jsonResponse.results.head.data.head.graph.get)
   }
 
   def queryRows(query:String, parameters:Map[String,Any]) = ???

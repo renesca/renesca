@@ -10,20 +10,20 @@ import spray.json._
 @RunWith(classOf[JUnitRunner])
 class ResponseSpec extends Specification with Mockito {
   "Response" can {
-     "be empty" in {
-       val json = """
+    "be empty" in {
+      val json = """
         {
           "results" : [ ],
           "errors" : [ ]
         }
-        """
-       val response = json.parseJson.convertTo[Response]
+                 """
+      val response = json.parseJson.convertTo[Response]
 
-       response mustEqual Response()
-     } 
+      response mustEqual Response()
+    }
 
-     "contain one result" in {
-       val json = """
+    "contain one result" in {
+      val json = """
         {
           "results" : [ { 
             "columns" : ["col1", "col2"], 
@@ -31,13 +31,13 @@ class ResponseSpec extends Specification with Mockito {
           } ],
           "errors" : [ ]
         }
-        """
-       val response = json.parseJson.convertTo[Response]
-       response mustEqual Response(List(Result(List("col1", "col2"), Nil)))
-     } 
+                 """
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(List(Result(List("col1", "col2"), Nil)))
+    }
 
-     "contain data" in {
-    	 val json = """
+    "contain data" in {
+      val json = """
     			 {
     			 "results" : [ { 
               "columns" : ["col1"],
@@ -45,9 +45,9 @@ class ResponseSpec extends Specification with Mockito {
             } ],
     			 "errors" : [ ]
     			 }
-    			 """
-    			 val response = json.parseJson.convertTo[Response]
-    			 response mustEqual Response(List(Result(List("col1"), List(Data()))))
-     } 
+                 			 """
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(List(Result(List("col1"), List(Data()))))
+    }
   }
 }

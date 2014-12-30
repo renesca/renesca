@@ -27,7 +27,15 @@ class DbService {
   def queryGraph(query:Query):Graph = {
     val request = queryRequest(query, QueryRequestType.graph)
     val jsonResponse = restService.submit(request).parseJson.convertTo[json.Response]
-    Graph(jsonResponse.results.head.data.head.graph.get)
+    var graph = Graph()
+    jsonResponse.results.foreach(result => {
+      result.data.foreach (data => {
+        data.graph.map(jsonGraph => {
+          graph = graph merge Graph(jsonGraph)
+        })
+      })
+    })
+    graph
   }
 
   def queryRows(query:String, parameters:Map[String,Any]) = ???

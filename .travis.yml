@@ -10,6 +10,7 @@ jdk:
 - openjdk7
 cache:
   directories:
+  - $HOME/.sbt/boot
   - $HOME/.ivy2
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test

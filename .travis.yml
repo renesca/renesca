@@ -1,3 +1,4 @@
+sudo: false
 language: scala
 scala:
 - 2.11.4
@@ -7,6 +8,9 @@ jdk:
 - oraclejdk8
 - openjdk6
 - openjdk7
+cache:
+  directories:
+  - $HOME/.ivy2
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 after_success:

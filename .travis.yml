@@ -10,12 +10,21 @@ jdk:
 - openjdk7
 cache:
   directories:
-  - $HOME/.sbt
-  - $HOME/.ivy2
+  - "$HOME/.sbt"
+  - "$HOME/.ivy2"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
-after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
+after_success:
+- |
+  test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt publishLocalSigned
 env:
   global:
-    secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=
+  - secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=
+before_install:
+- openssl aes-256-cbc -K $encrypted_4d569095c74d_key -iv $encrypted_4d569095c74d_iv
+  -in credentials.sbt.enc -out local.credentials.sbt -d
+- openssl aes-256-cbc -K $encrypted_4d569095c74d_key -iv $encrypted_4d569095c74d_iv
+  -in pubring.gpg.enc -out local.pubring.gpg -d
+- openssl aes-256-cbc -K $encrypted_4d569095c74d_key -iv $encrypted_4d569095c74d_iv
+  -in secring.gpg.enc -out local.secring.gpg -d

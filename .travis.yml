@@ -23,6 +23,6 @@ env:
   - secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=
   - secure: XRuvBLO9eRPHgu2HDXn0yEhBscngE11MUESSaMrpqxmMH3QmVE2xLfxB+9wJIIc7TRdbdI6d0MPtlRI+814ssaU0r4wUXefGUcNeRnmaVPQedldAH2mn/ohvFD2N5ZvqW8MnmGGfWVNSuEjuq+WZvs1mmm61QBa5CgkY2CPMLlQ=
 before_install:
-- openssl aes-256-cbc -k '$file_encryption_password' -in credentials.sbt.enc -out local.credentials.sbt -d
-- openssl aes-256-cbc -k '$file_encryption_password' -in secring.gpg.enc -out local.secring.gpg -d
-- openssl aes-256-cbc -k '$file_encryption_password' -in pubring.gpg.enc -out local.pubring.gpg -d
+- openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out local.credentials.sbt -d
+- openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg -d
+- openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg -d

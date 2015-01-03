@@ -28,10 +28,7 @@ pgpPublicRing := file("local.pubring.gpg")
 
 sonatypeSettings
 
-profileName := "com.github.renesca"
-
-organization := "com.github.renesca.renesca"
-
+organization := "com.github.renesca"
 
 pomExtra := {
   <url>https://github.com/renesca/renesca</url>

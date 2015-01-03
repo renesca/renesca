@@ -16,7 +16,7 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
 after_success:
-- test -z "${TRAVIS_TAG}" && test "${TRAVIS_BRANCH}" == 'master' && test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_BRANCH}" == 'master' && test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease
 env:
   global:
   - secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=

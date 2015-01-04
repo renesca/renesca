@@ -6,7 +6,7 @@ import spray.json._
 
 
 // TODO: type of parameters? PorpertyValues?
-case class Query(statement:String, parameters:Map[String,Any])
+case class Query(statement:String, parameters:Map[String,String])
 object QueryRequestType extends Enumeration {
   type QueryRequestType = Value
   val row, graph, rest = Value
@@ -19,7 +19,7 @@ class DbService {
   var restService:RestService = null
 
   def queryRequest(query:Query, queryRequestType:QueryRequestType):Request = {
-    val jsonRequest = json.Request(List(json.Statement(query.statement, query.parameters, List(queryRequestType.toString))))
+    val jsonRequest = json.Request(List(json.Statement(query.statement, Some(query.parameters), Some(List(queryRequestType.toString)))))
     // Request(POST, "/transaction/commit", Some(jsonRequest.toJson.compactPrint)
     Request(RequestType.POST, null, None)
   }

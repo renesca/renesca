@@ -26,13 +26,19 @@ object ValueProtocol extends DefaultJsonProtocol {
 
     override def write(p: Map[String, Value]) = {
       val jsonMap = p.foldLeft(Map[String, JsValue]()) { (jsonMap, keyValue)  =>
-        keyValue._2 match {
-          case StringValue(str) => jsonMap + ((keyValue._1, JsString(str)))
-          case other => serializationError(s"can not serialize value of type $other")
-        }
+        jsonMap + ((keyValue._1, toJsValue(keyValue._2)))
       }
       JsObject(jsonMap)
     }
+
+    def toJsValue(value : Value) : JsValue =  value match {
+      case StringValue(str) => JsString(str)
+      case DoubleValue(num) => JsNumber(num)
+      case LongValue(num) => JsNumber(num)
+      case ArrayValue(arr) => JsArray((arr map toJsValue).toVector)
+      case other => serializationError(s"can not serialize value of type $other")
+    }
+
 
     override def read(value: JsValue) = value match {
       case JsObject(fields) =>

@@ -27,8 +27,7 @@ class RequestSpec extends Specification with Mockito {
         "statements" : [ {
           "statement" : "CREATE (n) RETURN id(n)"
         } ]
-      }
-                    """.parseJson
+      }""".parseJson
 
       Request(List(Statement("CREATE (n) RETURN id(n)"))).toJson mustEqual jsonAst
     }
@@ -40,10 +39,12 @@ class RequestSpec extends Specification with Mockito {
           {"statement" : "CREATE (n) RETURN id(n)"},
           {"statement" : "CREATE (n) RETURN n"}
          ]
-      }
-                    """.parseJson
+      }""".parseJson
 
-      Request(List(Statement("CREATE (n) RETURN id(n)"), Statement("CREATE (n) RETURN n"))).toJson mustEqual jsonAst
+      Request(List(
+        Statement("CREATE (n) RETURN id(n)"),
+        Statement("CREATE (n) RETURN n"))
+      ).toJson mustEqual jsonAst
     }
 
     "contain statement with parameters (string literal)" in {
@@ -53,11 +54,57 @@ class RequestSpec extends Specification with Mockito {
           "statement" : "MATCH (n) WHERE n.name = { name } RETURN n",
           "parameters" : {"name" : "Glaab"}
         } ]
-      }
-                    """.parseJson
+      }""".parseJson
 
-      Request(List(Statement("MATCH (n) WHERE n.name = { name } RETURN n",
-        parameters = Some(Map("name" -> "Glaab"))))).toJson mustEqual jsonAst
+      Request(List(Statement(
+        statement = "MATCH (n) WHERE n.name = { name } RETURN n",
+        parameters = Some(Map("name" -> "Glaab")))
+      )).toJson mustEqual jsonAst
+    }
+
+    "contain statement with parameters (double literal)" in {
+      val jsonAst = """
+      {
+        "statements" : [ {
+          "statement" : "MATCH (n) WHERE n.date = { date } RETURN n",
+          "parameters" : {"date" : 17.44}
+        } ]
+      }""".parseJson
+
+      Request(List(Statement(
+        statement = "MATCH (n) WHERE n.date = { date } RETURN n",
+        parameters = Some(Map("date" -> 17.44)))
+      )).toJson mustEqual jsonAst
+    }
+
+    "contain statement with parameters (long literal)" in {
+      val jsonAst = """
+      {
+        "statements" : [ {
+          "statement" : "MATCH (n) WHERE n.year = { year } RETURN n",
+          "parameters" : {"year" : 1744}
+        } ]
+      }""".parseJson
+
+      Request(List(Statement(
+        statement = "MATCH (n) WHERE n.year = { year } RETURN n",
+        parameters = Some(Map("year" -> 1744L)))
+      )).toJson mustEqual jsonAst
+    }
+
+    "contain statement with parameters (array of strings)" in {
+      val jsonAst = """
+      {
+        "statements" : [ {
+          "statement" : "MATCH (n) WHERE n.param = { strings } RETURN n",
+          "parameters" : {"param" : ["1744", "1516"] }
+        } ]
+      }""".parseJson
+
+      Request(List(Statement(
+        statement = "MATCH (n) WHERE n.param = { strings } RETURN n",
+        parameters = Some(Map("param" -> ArrayValue(List(StringValue("1744"), StringValue("1516"))))))
+      )).toJson mustEqual jsonAst
     }
 
     "contain statement with result data contents" in {
@@ -67,7 +114,7 @@ class RequestSpec extends Specification with Mockito {
           "statement" : "CREATE (n) RETURN n",
           "resultDataContents" : [ "row", "graph" ]
         } ]
-      }                    """.parseJson
+      }""".parseJson
 
       Request(List(Statement("CREATE (n) RETURN n",
         resultDataContents = Some(List("row", "graph"))))).toJson mustEqual jsonAst

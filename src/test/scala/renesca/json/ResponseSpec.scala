@@ -1,9 +1,9 @@
 package renesca.json
 
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 
@@ -25,8 +25,8 @@ class ResponseSpec extends Specification with Mockito {
     "contain one result" in {
       val json = """
         {
-          "results" : [ { 
-            "columns" : ["col1", "col2"], 
+          "results" : [ {
+            "columns" : ["col1", "col2"],
             "data" : []
           } ],
           "errors" : [ ]
@@ -39,7 +39,7 @@ class ResponseSpec extends Specification with Mockito {
     "contain data" in {
       val json = """
     			 {
-    			 "results" : [ { 
+    			 "results" : [ {
               "columns" : ["col1"],
               "data" : [{}]
             } ],

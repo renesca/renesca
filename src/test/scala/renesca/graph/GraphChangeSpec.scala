@@ -1,12 +1,10 @@
 package renesca.graph
 
+import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import org.specs2.specification.Scope
-import renesca.json.StringPropertyValue
-import scala.collection.mutable
-import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
+import renesca.json.StringPropertyValue
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
@@ -14,7 +12,7 @@ class GraphChangeSpec extends Specification with Mockito {
   "Graph" should {
     "collect all changes in one collection" in {
       val graphChange = mock[GraphChange]
-      
+
       val nodeChange = mock[GraphChange]
       val nodeLabelChange = mock[GraphChange]
       val nodePropertiesChange = mock[GraphChange]
@@ -35,7 +33,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
       val graph = Graph(List(A,B), List(ArB))
       graph.localChanges += graphChange
-      
+
       A.changes must contain(exactly(nodeChange, nodeLabelChange, nodePropertiesChange))
       ArB.changes must contain(exactly(relationChange, relationPropertiesChange))
 
@@ -71,11 +69,11 @@ class GraphChangeSpec extends Specification with Mockito {
 
       graph.delete(A)
 
-      graph.nodes must not contain(A)
-      graph.relations must not contain(ArB)
-      graph.relations must contain(BrC)
+      graph.nodes must not contain A
+      graph.relations must not contain ArB
+      graph.relations must contain (BrC)
       graph.changes must contain(RelationDelete(3))
-      graph.changes must not contain(RelationDelete(5))
+      graph.changes must not contain RelationDelete(5)
     }
 
     "emit change when deleting relation" in {

@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.protocols.NodeJsonProtocol._
+import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])

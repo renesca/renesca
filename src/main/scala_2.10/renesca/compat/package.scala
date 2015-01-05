@@ -1,6 +1,6 @@
 package renesca
 
-import java.math.{ MathContext, BigDecimal => BigDec }
+import java.math.{BigDecimal => BigDec, MathContext}
 
 package object compat {
   final def bigDecimal_isDecimalDouble(x:BigDecimal) = {

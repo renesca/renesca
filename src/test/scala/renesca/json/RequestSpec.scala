@@ -1,15 +1,15 @@
 package renesca.json
 
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.runner.JUnitRunner
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class RequestSpec extends Specification with Mockito {
   "Request" can {
-    import protocols.RequestJsonProtocol._
+    import renesca.json.protocols.RequestJsonProtocol._
     "be empty" in {
       val jsonAst =
         """

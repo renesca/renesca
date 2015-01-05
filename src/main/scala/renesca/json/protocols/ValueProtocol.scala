@@ -24,10 +24,8 @@ object ValueProtocol extends DefaultJsonProtocol {
 
   implicit object PropertiesJsonValueFormat extends RootJsonFormat[Map[String, Value]] {
 
-    override def write(p: Map[String, Value]) = {
-      val jsonMap = p.foldLeft(Map[String, JsValue]()) { (jsonMap, keyValue)  =>
-        jsonMap + ((keyValue._1, toJsValue(keyValue._2)))
-      }
+    override def write(jsonValues: Map[String, Value]) = {
+      val jsonMap = jsonValues.map { case (k, v) => k -> toJsValue(v)}.toMap
       JsObject(jsonMap)
     }
 
@@ -38,7 +36,6 @@ object ValueProtocol extends DefaultJsonProtocol {
       case ArrayValue(arr) => JsArray((arr map toJsValue).toVector)
       case other => serializationError(s"can not serialize value of type $other")
     }
-
 
     override def read(value: JsValue) = value match {
       case JsObject(fields) =>

@@ -108,7 +108,7 @@ class DbServiceSpec extends Specification with Mockito {
                }]
             }
           }]
-        }, {
+         }, {
            "columns" : [],
            "data" : [{
              "graph" : {

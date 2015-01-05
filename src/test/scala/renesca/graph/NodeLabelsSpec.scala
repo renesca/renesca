@@ -51,7 +51,5 @@ class NodeLabelsSpec extends Specification with Mockito {
 
       A.labels.empty must beEmpty
     }
-
   }
-
 }

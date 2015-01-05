@@ -1,8 +1,9 @@
 package renesca
 
 import renesca.graph.Graph
+import renesca.json.Value
 
-case class Query(statement:String, parameters:Map[String,String] = Map.empty)
+case class Query(statement:String, parameters:Map[String,Value] = Map.empty)
 
 
 class DbService {
@@ -28,7 +29,7 @@ class DbService {
     mergedGraph
   }
 
-  def queryRows(query:String, parameters:Map[String,Any]) = ???
+  def queryRows(query:String, parameters:Map[String,Value]) = ???
 }
 
 

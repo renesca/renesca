@@ -16,7 +16,7 @@ class RequestSpec extends Specification with Mockito {
         {
           "statements" : []
         }
-      """.parseJson
+        """.parseJson
 
       Request().toJson mustEqual jsonAst
     }
@@ -75,15 +75,39 @@ class RequestSpec extends Specification with Mockito {
   }
 
   "Statement" can {
-    "contain parameters (long)" >> todo
-    "contain parameters (double)" >> todo
+    "contain parameters (long)" in {
+      val statement = Statement("statement", Some(Map("number" -> 3L)))
+      statement.parameters must not be None
+      statement.parameters.get must havePair("number", LongValue(3))
+    }
+
+    "contain parameters (double)" in {
+      val statement = Statement("statement", Some(Map("number" -> 3.5)))
+      statement.parameters must not be None
+      statement.parameters.get must havePair("number", DoubleValue(3.5))
+    }
+
     "contain parameters (regular expression)" >> todo
     "contain parameters (properties)" >> todo
     "contain parameters (properties for multiple nodes)" >> todo
-    "contain parameters (array of strings)" >> todo
-    "contain parameters (array of longs)" >> todo
-    "contain parameters (array of doubles)" >> todo
-  }
 
+    "contain parameters (array of strings)" in {
+      val statement = Statement("statement", Some(Map("strings" -> ArrayValue(List(StringValue("a"), StringValue("b"))))))
+      statement.parameters must not be None
+      statement.parameters.get must havePair("strings", ArrayValue(List(StringValue("a"), StringValue("b"))))
+    }
+
+    "contain parameters (array of longs)" in {
+      val statement = Statement("statement", Some(Map("longs" -> ArrayValue(List(LongValue(1), LongValue(2))))))
+      statement.parameters must not be None
+      statement.parameters.get must havePair("longs", ArrayValue(List(LongValue(1), LongValue(2))))
+    }
+
+    "contain parameters (array of doubles)" in {
+      val statement = Statement("statement", Some(Map("doubles" -> ArrayValue(List(DoubleValue(1.5), DoubleValue(2.5))))))
+      statement.parameters must not be None
+      statement.parameters.get must havePair("doubles", ArrayValue(List(DoubleValue(1.5), DoubleValue(2.5))))
+    }
+  }
 }
 

@@ -5,7 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.json.{PropertyValue, StringPropertyValue}
+import renesca.json.{Value, StringValue}
 
 @RunWith(classOf[JUnitRunner])
 class PropertiesSpec extends Specification with Mockito {
@@ -20,7 +20,7 @@ class PropertiesSpec extends Specification with Mockito {
     "store property" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties("key") mustEqual StringPropertyValue("value")
+      A.properties("key") mustEqual StringValue("value")
     }
 
     "remove property" in new MockNode {
@@ -38,13 +38,13 @@ class PropertiesSpec extends Specification with Mockito {
     "get existing element" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties.get("key") mustEqual Some(StringPropertyValue("value"))
+      A.properties.get("key") mustEqual Some(StringValue("value"))
     }
 
     "provide iterator" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties.iterator must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+      A.properties.iterator must contain(exactly("key" -> StringValue("value").asInstanceOf[Value]))
     }
 
     "provide empty"in new MockNode  {
@@ -52,7 +52,5 @@ class PropertiesSpec extends Specification with Mockito {
 
       A.properties.empty must beEmpty
     }
-
   }
-
 }

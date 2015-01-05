@@ -23,15 +23,9 @@ class DbService {
     val jsonRequest = buildJsonRequest(query, List("graph"))
     val jsonResponse = restService.awaitJsonResponse(jsonRequest)
 
-    var graph = Graph()
-    jsonResponse.results.foreach(result => {
-      result.data.foreach (data => {
-        data.graph.map(jsonGraph => {
-          graph = graph merge Graph(jsonGraph)
-        })
-      })
-    })
-    graph
+    val allJsonGraphs:Seq[json.Graph] = jsonResponse.results.flatMap{_.data.flatMap(_.graph)}
+    val mergedGraph = allJsonGraphs.map(Graph(_)).reduce(_ merge _)
+    mergedGraph
   }
 
   def queryRows(query:String, parameters:Map[String,Any]) = ???

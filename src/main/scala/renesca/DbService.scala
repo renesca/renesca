@@ -1,32 +1,28 @@
 package renesca
 
 import renesca.graph.Graph
-import renesca.json.protocols.ResponseJsonProtocol._
-import spray.json._
 
-
-// TODO: type of parameters? PorpertyValues?
-case class Query(statement:String, parameters:Map[String,String])
-object QueryRequestType extends Enumeration {
-  type QueryRequestType = Value
-  val row, graph, rest = Value
-}
-
-import renesca.QueryRequestType._
+case class Query(statement:String, parameters:Map[String,String] = Map.empty)
 
 
 class DbService {
   var restService:RestService = null
 
-  def queryRequest(query:Query, queryRequestType:QueryRequestType):Request = {
-    val jsonRequest = json.Request(List(json.Statement(query.statement, Some(query.parameters), Some(List(queryRequestType.toString)))))
-    // Request(POST, "/transaction/commit", Some(jsonRequest.toJson.compactPrint)
-    Request(RequestType.POST, null, None)
+  def buildJsonRequest(query:Query, queryRequestType:List[String]):json.Request = {
+    json.Request(List(
+      json.Statement(
+        query.statement,
+        if (query.parameters.nonEmpty) Some(query.parameters) else None,
+        Some(queryRequestType)
+      )
+    ))
   }
 
+
   def queryGraph(query:Query):Graph = {
-    val request = queryRequest(query, QueryRequestType.graph)
-    val jsonResponse = restService.submit(request).parseJson.convertTo[json.Response]
+    val jsonRequest = buildJsonRequest(query, List("graph"))
+    val jsonResponse = restService.awaitJsonResponse(jsonRequest)
+
     var graph = Graph()
     jsonResponse.results.foreach(result => {
       result.data.foreach (data => {

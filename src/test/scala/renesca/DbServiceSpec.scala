@@ -5,18 +5,30 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.graph.{Graph, Relation, Node}
-import renesca.json.{Relationship, PropertyValue, StringPropertyValue}
+import renesca.graph.{Graph, Node, Relation}
+import renesca.json.protocols.ResponseJsonProtocol._
+import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class DbServiceSpec extends Specification with Mockito {
 
-  "DbService" can {
-    "create an empty graph" in {
-      val dbService = new DbService
-      dbService.restService = mock[RestService]
+  trait GraphQuery extends Scope {
+    val dbService = new DbService
+    dbService.restService = mock[RestService]
 
-      val json = """
+    var graph:Graph = null
+
+    def respond(response:String): Unit = {
+      def jsonResponse = response.parseJson.convertTo[json.Response]
+      dbService.restService.awaitJsonResponse(any[json.Request]) returns jsonResponse
+      graph = dbService.queryGraph(Query(""))
+    }
+  }
+
+  "DbService" can {
+    "create an empty graph" in new GraphQuery {
+
+      respond("""
          {
          "results" : [ {
             "columns" : [],
@@ -28,21 +40,17 @@ class DbServiceSpec extends Specification with Mockito {
             }]
           } ],
          "errors" : [ ]
-         } """
-      dbService.restService.submit(any[Request]) returns json
+         } """)
 
-      val graph = dbService.queryGraph(mock[Query])
 
       graph.nodes must beEmpty
       graph.relations must beEmpty
     }
 
 
-    "create a graph" in {
-      val dbService = new DbService
-      dbService.restService = mock[RestService]
+    "create a graph" in new GraphQuery {
 
-      val json = """
+      respond("""
        {
        "results" : [ {
           "columns" : [],
@@ -68,20 +76,15 @@ class DbServiceSpec extends Specification with Mockito {
           }]
         } ],
        "errors" : [ ]
-       } """
-      dbService.restService.submit(any[Request]) returns json
-
-      val graph = dbService.queryGraph(mock[Query])
+       } """)
 
       graph.nodes must contain(exactly(Node(1), Node(2)))
       graph.relations must contain(exactly(Relation(9, Node(1), Node(2))))
     }
 
-    "create a graph from multiple results" in {
-      val dbService = new DbService
-      dbService.restService = mock[RestService]
+    "create a graph from multiple results" in new GraphQuery {
 
-      val json = """
+      respond("""
        {
        "results" : [ {
           "columns" : [],
@@ -139,10 +142,7 @@ class DbServiceSpec extends Specification with Mockito {
            }]
          } ],
        "errors" : [ ]
-       } """
-      dbService.restService.submit(any[Request]) returns json
-
-      val graph = dbService.queryGraph(mock[Query])
+       } """)
 
       graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
       graph.relations must contain(exactly(
@@ -152,11 +152,9 @@ class DbServiceSpec extends Specification with Mockito {
       ))
     }
 
-    "create a graph from multiple graph datas" in {
-      val dbService = new DbService
-      dbService.restService = mock[RestService]
+    "create a graph from multiple graph datas" in new GraphQuery {
 
-      val json = """
+      respond("""
        {
        "results" : [ {
           "columns" : [],
@@ -211,10 +209,7 @@ class DbServiceSpec extends Specification with Mockito {
           }]
         } ],
        "errors" : [ ]
-       } """
-      dbService.restService.submit(any[Request]) returns json
-
-      val graph = dbService.queryGraph(mock[Query])
+       } """)
 
       graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
       graph.relations must contain(exactly(
@@ -224,11 +219,9 @@ class DbServiceSpec extends Specification with Mockito {
       ))
     }
 
-    "create a graph from multiple datas - allow data without graph data" in {
-      val dbService = new DbService
-      dbService.restService = mock[RestService]
+    "create a graph from multiple datas - allow data without graph data" in new GraphQuery {
 
-      val json = """
+      respond("""
        {
        "results" : [ {
           "columns" : [],
@@ -256,10 +249,7 @@ class DbServiceSpec extends Specification with Mockito {
           }]
         } ],
        "errors" : [ ]
-       } """
-      dbService.restService.submit(any[Request]) returns json
-
-      val graph = dbService.queryGraph(mock[Query])
+       } """)
 
       graph.nodes must contain(exactly(Node(1), Node(2)))
       graph.relations must contain(exactly(

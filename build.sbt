@@ -9,9 +9,15 @@ scalaVersion := "2.11.4"
 
 crossScalaVersions := Seq("2.10.4", "2.11.4")
 
+resolvers ++= Seq(
+  "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases" // to fix specs2 dependency
+)
+
 libraryDependencies ++= Seq(
-  "io.spray" %% "spray-json" % "1.3.1",
-  "org.specs2" %% "specs2" % "2.4.2" % "test"
+  "io.spray"   %% "spray-client"     % "1.3.2",
+  "io.spray"   %% "spray-json"       % "1.3.1",
+  "com.typesafe.akka"   %%  "akka-actor" % "2.3.8",
+  "org.specs2" %% "specs2"           % "2.4.15" % "test"
 )
 
 

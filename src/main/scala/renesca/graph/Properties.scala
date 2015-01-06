@@ -1,6 +1,6 @@
 package renesca.graph
 
-import renesca.json.{PropertyValue, PropertyValue$}
+import renesca.json.PropertyValue
 
 import scala.collection.mutable
 

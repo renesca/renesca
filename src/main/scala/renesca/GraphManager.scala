@@ -16,7 +16,7 @@ object GraphManager {
 }
 
 class GraphManager {
-  import GraphManager._
+  import renesca.GraphManager._
 
   var dbService:DbService = null
 

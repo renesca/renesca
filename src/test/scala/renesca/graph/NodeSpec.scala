@@ -5,7 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.json.{PropertyValue, PropertyValue$, StringPropertyValue}
+import renesca.json.{PropertyValue, StringPropertyValue}
 
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {
@@ -58,7 +58,7 @@ class NodeSpec extends Specification with Mockito {
       node.outRelations(graph)
       there was one(graph).outRelations(node)
     }
-    
+
     "ask graph for relations" in new ForwardTest {
       node.relations(graph)
       there was one(graph).incidentRelations(node)
@@ -73,7 +73,7 @@ class NodeSpec extends Specification with Mockito {
     	node.predecessors(graph)
     	there was one(graph).predecessors(node)
     }
-    
+
     "ask graph for successors" in new ForwardTest {
     	node.successors(graph)
     	there was one(graph).successors(node)
@@ -83,7 +83,7 @@ class NodeSpec extends Specification with Mockito {
     	node.inDegree(graph)
     	there was one(graph).inDegree(node)
     }
-    
+
     "ask graph for outDegree" in new ForwardTest {
     	node.outDegree(graph)
       there was one(graph).outDegree(node)

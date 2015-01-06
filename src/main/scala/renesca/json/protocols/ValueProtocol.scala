@@ -1,10 +1,7 @@
 package renesca.json.protocols
 
-import renesca.compat
 import renesca.json._
 import spray.json._
-
-import scala.collection.mutable
 
 object ValueProtocol extends DefaultJsonProtocol {
 

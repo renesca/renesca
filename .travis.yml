@@ -14,8 +14,8 @@ cache:
   - "$HOME/.ivy2"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
-- sbt ++$TRAVIS_SCALA_VERSION coveralls
 after_success:
+- sbt ++$TRAVIS_SCALA_VERSION coveralls
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}" = "2.11.4" && sbt publishSigned sonatypeRelease
 env:
   global:

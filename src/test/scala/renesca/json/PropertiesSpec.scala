@@ -1,14 +1,13 @@
 package renesca.json
 
 import org.junit.runner.RunWith
-import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ValueProtocol._
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])
-class PropertiesSpec extends Specification with Mockito {
+class PropertiesSpec extends Specification {
   "Properties" can {
     "have a string value" in {
       val jsonAst = """{"key":"value"}""".parseJson

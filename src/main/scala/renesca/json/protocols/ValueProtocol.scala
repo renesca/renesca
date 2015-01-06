@@ -32,7 +32,7 @@ object ValueProtocol extends DefaultJsonProtocol {
 
   implicit object JsonParameterValueFormat extends RootJsonFormat[ParameterValue] {
     override def write(pv: ParameterValue) = pv match {
-      case pv:PropertyValue => JsonParameterValueFormat.write(pv)
+      case pv:PropertyValue => JsonPropertyValueFormat.write(pv)
       case ArrayParameterValue(seq) => JsArray((seq map write).toVector)
       case MapParameterValue(map) => JsObject(map mapValues write)
     }

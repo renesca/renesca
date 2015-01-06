@@ -2,7 +2,9 @@ package renesca.graph
 
 import renesca.json.Value
 
-sealed trait GraphChange
+sealed trait GraphChange {
+  val timestamp:Long = System.nanoTime
+}
 case class NodeSetProperty(nodeId:Long, key:String, value:Value) extends GraphChange
 case class NodeRemoveProperty(nodeId:Long, key:String) extends GraphChange
 case class NodeSetLabel(nodeId:Long, label:Label) extends GraphChange

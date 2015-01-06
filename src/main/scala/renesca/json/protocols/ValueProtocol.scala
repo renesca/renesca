@@ -9,7 +9,6 @@ import scala.collection.mutable
 object ValueProtocol extends DefaultJsonProtocol {
 
   implicit object JsonPropertyValueFormat extends RootJsonFormat[PropertyValue] {
-
     override def write(pv: PropertyValue) = pv match {
       case LongPropertyValue(value) => JsNumber(value)
       case DoublePropertyValue(value) => JsNumber(value)
@@ -22,10 +21,10 @@ object ValueProtocol extends DefaultJsonProtocol {
     override def read(value: JsValue) = value match {
       case JsString(str) => StringPropertyValue(str)
       case JsNumber(num) if num.isValidLong => LongPropertyValue(num.toLong)
-      case JsNumber(num) if compat.bigDecimal_isDecimalDouble(num) => DoublePropertyValue(num.toDouble) //TODO: !num.isValidLong ?
+      case JsNumber(num) if !num.isValidLong => DoublePropertyValue(num.toDouble)
       case JsBoolean(bool) => BooleanPropertyValue(bool)
       case JsNull => NullPropertyValue
-      case JsArray(arr) => ArrayPropertyValue(arr.map(read)) // TODO: check type of arr
+      case JsArray(arr) => ArrayPropertyValue(arr.map(read))
       case json => deserializationError(s"can not deserialize property value of type $json")
     }
   }

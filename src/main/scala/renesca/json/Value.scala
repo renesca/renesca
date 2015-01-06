@@ -9,6 +9,7 @@ case class ArrayValue(value:Seq[Value]) extends Value
 
 object Value {
   implicit def primitiveToValue(x:Long):Value = LongValue(x)
+  implicit def primitiveToValue(x:Int):Value = LongValue(x)
   implicit def primitiveToValue(x:Double):Value = DoubleValue(x)
   implicit def primitiveToValue(x:String):Value = StringValue(x)
   implicit def primitiveToValue(x:Boolean):Value = BooleanValue(x)
@@ -19,6 +20,7 @@ object Value {
   implicit def valueToPrimitive(x:BooleanValue):Boolean = x.value
 
   implicit def SeqLongToValue(x:Seq[Long]):Value = ArrayValue(x map LongValue)
+  implicit def SeqIntToValue(xs:Seq[Int]):Value = ArrayValue(xs.map(x => LongValue(x.toLong)))
   implicit def SeqDoubleToValue(x:Seq[Double]):Value = ArrayValue(x map DoubleValue)
   implicit def SeqStringToValue(x:Seq[String]):Value = ArrayValue(x map StringValue)
   implicit def SeqBooleanToValue(x:Seq[Boolean]):Value = ArrayValue(x map BooleanValue)

@@ -19,74 +19,83 @@ class PropertiesSpec extends Specification with Mockito {
     }
 
     "have a boolean value" in {
-      val json = """
-        {"key":true}
-        """
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":true}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> BooleanPropertyValue(true))
+      properties.toJson mustEqual jsonAst
     }
 
     "have a double value" in {
-      val json = """
-    			 {"key":17.44}
-    			 """
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":17.44}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> DoublePropertyValue(17.44))
+      properties.toJson mustEqual jsonAst
     }
 
     "have a long value" in {
-      val json = """
-    			 {"key":1744}
-    			 """
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":1744}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> LongPropertyValue(1744))
+      properties.toJson mustEqual jsonAst
+    }
+
+    "have a null value" in {
+      val jsonAst = """{"key":null}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
+      properties mustEqual Map("key" -> NullPropertyValue)
+      properties.toJson mustEqual jsonAst
     }
 
     "have a diffent value types" in {
-      val json = """
-    			{"key":1744, "key2" : "bier"}
-    			"""
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":1744, "key2" : "bier"}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> LongPropertyValue(1744), "key2" -> StringPropertyValue("bier"))
+      properties.toJson mustEqual jsonAst
     }
 
     "have arrays of longs" in {
-      val json = """
-    			{"key":[1744, 1516]}
-    			"""
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":[1744, 1516]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> ArrayPropertyValue(List(LongPropertyValue(1744), LongPropertyValue(1516))))
+      properties.toJson mustEqual jsonAst
     }
 
     "have arrays of doubles" in {
-      val json = """
-    			{"key":[17.44, 15.16]}
-    			"""
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":[17.44, 15.16]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> ArrayPropertyValue(List(DoublePropertyValue(17.44), DoublePropertyValue(15.16))))
+      properties.toJson mustEqual jsonAst
     }
 
     "have arrays of strings" in {
-      val json = """
-    			{"key":["17.44", "15.16"]}
-    			"""
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":["17.44", "15.16"]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> ArrayPropertyValue(List(StringPropertyValue("17.44"), StringPropertyValue("15.16"))))
+      properties.toJson mustEqual jsonAst
     }
 
     "have arrays of booleans" in {
-      val json = """
-    			{"key":[true, false, true]}
-    			"""
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":[true, false, true]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> ArrayPropertyValue(List(BooleanPropertyValue(true), BooleanPropertyValue(false), BooleanPropertyValue(true))))
+      properties.toJson mustEqual jsonAst
     }
 
-    "not have arrays of different types" in {
-      val json = """
-    			{"key":[true, "bier", true]}
-    			"""
-      json.parseJson.convertTo[Map[String, PropertyValue]] must throwA[IllegalArgumentException]
-    }.pendingUntilFixed
+    "have arrays of null" in {
+      val jsonAst = """{"key":[null, null]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
+      properties mustEqual Map("key" -> ArrayPropertyValue(List(NullPropertyValue, NullPropertyValue)))
+      properties.toJson mustEqual jsonAst
+    }
   }
 }

@@ -49,7 +49,7 @@ class PropertiesSpec extends Specification {
       properties.toJson mustEqual jsonAst
     }
 
-    "have a diffent value types" in {
+    "have different value types" in {
       val jsonAst = """{"key":1744, "key2" : "bier"}""".parseJson
       val properties = jsonAst.convertTo[Map[String, PropertyValue]]
 
@@ -94,6 +94,16 @@ class PropertiesSpec extends Specification {
       val properties = jsonAst.convertTo[Map[String, PropertyValue]]
 
       properties mustEqual Map("key" -> ArrayPropertyValue(List(NullPropertyValue, NullPropertyValue)))
+      properties.toJson mustEqual jsonAst
+    }
+
+    "have different arrays" in {
+      val jsonAst = """{"key":[null, null], "key2":[1,-2]}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
+      properties mustEqual Map(
+        "key" -> ArrayPropertyValue(List(NullPropertyValue, NullPropertyValue)),
+        "key2" -> ArrayPropertyValue(List(LongPropertyValue(1), LongPropertyValue(-2))))
       properties.toJson mustEqual jsonAst
     }
   }

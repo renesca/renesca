@@ -11,11 +11,11 @@ import spray.json._
 class PropertiesSpec extends Specification with Mockito {
   "Properties" can {
     "have a string value" in {
-      val json = """
-        {"key":"value"}
-        """
-      val properties = json.parseJson.convertTo[Map[String, PropertyValue]]
+      val jsonAst = """{"key":"value"}""".parseJson
+      val properties = jsonAst.convertTo[Map[String, PropertyValue]]
+
       properties mustEqual Map("key" -> StringPropertyValue("value"))
+      properties.toJson mustEqual jsonAst
     }
 
     "have a boolean value" in {

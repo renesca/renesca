@@ -8,32 +8,32 @@ import scala.collection.mutable
 
 object ValueProtocol extends DefaultJsonProtocol {
 
-  implicit object JsonValueFormat extends RootJsonFormat[Value] {
+  implicit object JsonValueFormat extends RootJsonFormat[PropertyValue] {
 
-    override def write(p: Value) = ???
+    override def write(p: PropertyValue) = ???
 
     override def read(value: JsValue) = value match {
-      case JsString(str) => StringValue(str)
-      case JsNumber(num) if num.isValidLong => LongValue(num.toLong)
-      case JsNumber(num) if compat.bigDecimal_isDecimalDouble(num) => DoubleValue(num.toDouble) //TODO: !num.isValidLong ?
-      case JsBoolean(bool) => BooleanValue(bool)
-      case JsArray(arr) => ArrayValue(arr.map(read)) // TODO: check type of arr
+      case JsString(str) => StringPropertyValue(str)
+      case JsNumber(num) if num.isValidLong => LongPropertyValue(num.toLong)
+      case JsNumber(num) if compat.bigDecimal_isDecimalDouble(num) => DoublePropertyValue(num.toDouble) //TODO: !num.isValidLong ?
+      case JsBoolean(bool) => BooleanPropertyValue(bool)
+      case JsArray(arr) => ArrayPropertyValue(arr.map(read)) // TODO: check type of arr
       case json => deserializationError(s"can not deserialize property value of type $json")
     }
   }
 
-  implicit object PropertiesJsonValueFormat extends RootJsonFormat[Map[String, Value]] {
+  implicit object PropertiesJsonValueFormat extends RootJsonFormat[Map[String, PropertyValue]] {
 
-    override def write(jsonValues: Map[String, Value]) = {
+    override def write(jsonValues: Map[String, PropertyValue]) = {
       val jsonMap = jsonValues.map { case (k, v) => k -> toJsValue(v)}.toMap
       JsObject(jsonMap)
     }
 
-    def toJsValue(value : Value) : JsValue =  value match {
-      case StringValue(str) => JsString(str)
-      case DoubleValue(num) => JsNumber(num)
-      case LongValue(num) => JsNumber(num)
-      case ArrayValue(arr) => JsArray((arr map toJsValue).toVector)
+    def toJsValue(value : PropertyValue) : JsValue =  value match {
+      case StringPropertyValue(str) => JsString(str)
+      case DoublePropertyValue(num) => JsNumber(num)
+      case LongPropertyValue(num) => JsNumber(num)
+      case ArrayPropertyValue(arr) => JsArray((arr map toJsValue).toVector)
       case other => serializationError(s"can not serialize value of type $other")
     }
 

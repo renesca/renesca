@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import renesca.json.StringValue
+import renesca.json.StringPropertyValue
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
@@ -139,21 +139,21 @@ class GraphChangeSpec extends Specification with Mockito {
   "Relation" should {
     "emit change when setting property" in {
       val relation = Relation(1, Node(2), Node(3))
-      relation.properties += (("key", StringValue("value")))
+      relation.properties += (("key", StringPropertyValue("value")))
       relation.properties -= "key"
 
       relation.changes must contain(
-        RelationSetProperty(1, "key", StringValue("value"))
+        RelationSetProperty(1, "key", StringPropertyValue("value"))
       )
     }
 
     "emit change when removing property" in {
       val relation = Relation(1, Node(2), Node(3))
-      relation.properties += (("key", StringValue("value")))
+      relation.properties += (("key", StringPropertyValue("value")))
       relation.properties -= "key"
 
       relation.changes must contain(
-          RelationSetProperty(1, "key", StringValue("value")).asInstanceOf[GraphChange],
+          RelationSetProperty(1, "key", StringPropertyValue("value")).asInstanceOf[GraphChange],
           RelationRemoveProperty(1, "key").asInstanceOf[GraphChange]
       ).inOrder
     }

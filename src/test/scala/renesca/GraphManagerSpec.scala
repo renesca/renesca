@@ -2,7 +2,7 @@ package renesca
 
 import org.specs2.mutable.Specification
 import renesca.graph.NodeSetProperty
-import renesca.json.Value._
+import renesca.json.PropertyValue._
 
 class GraphManagerSpec extends Specification {
   "GraphManager" should {

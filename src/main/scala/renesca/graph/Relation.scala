@@ -1,15 +1,15 @@
 package renesca.graph
 
-import renesca.json.Value
+import renesca.json.PropertyValue
 
 import scala.collection.mutable
 
 case class RelationType(name:String)
 
 object Relation {
-  def apply(id:Long, start:Node, end:Node, relationType:RelationType = null, properties:Map[String,Value] = Map.empty) = {
+  def apply(id:Long, start:Node, end:Node, relationType:RelationType = null, properties:Map[String,PropertyValue] = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty,
-        mutable.HashMap.empty[String, Value] ++ properties)
+        mutable.HashMap.empty[String, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
 }

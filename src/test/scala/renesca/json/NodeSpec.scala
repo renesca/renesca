@@ -33,8 +33,8 @@ class NodeSpec extends Specification with Mockito {
        } """
     val node = json.parseJson.convertTo[Node]
     node mustEqual Node("1", Nil, Map(
-      "key" -> StringValue("value"),
-      "key2" -> StringValue("value2"))
+      "key" -> StringPropertyValue("value"),
+      "key2" -> StringPropertyValue("value2"))
     )
   }
 
@@ -50,8 +50,8 @@ class NodeSpec extends Specification with Mockito {
        } """
     val node = json.parseJson.convertTo[Node]
     node mustEqual Node("1", Nil, Map(
-      "key" -> StringValue("value"),
-      "key2" -> LongValue(1))
+      "key" -> StringPropertyValue("value"),
+      "key2" -> LongPropertyValue(1))
     )
   }
 

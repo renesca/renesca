@@ -3,3 +3,6 @@ target/
 
 # local stuff
 local.*
+
+# idea config
+/.idea/

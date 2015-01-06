@@ -5,6 +5,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import spray.json._
+import Value._
 
 @RunWith(classOf[JUnitRunner])
 class RequestSpec extends Specification with Mockito {
@@ -123,13 +124,13 @@ class RequestSpec extends Specification with Mockito {
 
   "Statement" can {
     "contain parameters (long)" in {
-      val statement = Statement("statement", Some(Map("number" -> 3L)))
+      val statement = Statement("statement", Some(Map("number" -> LongValue(3L))))
       statement.parameters must not be None
       statement.parameters.get must havePair("number", LongValue(3))
     }
 
     "contain parameters (double)" in {
-      val statement = Statement("statement", Some(Map("number" -> 3.5)))
+      val statement = Statement("statement", Some(Map("number" -> DoubleValue(3.5))))
       statement.parameters must not be None
       statement.parameters.get must havePair("number", DoubleValue(3.5))
     }

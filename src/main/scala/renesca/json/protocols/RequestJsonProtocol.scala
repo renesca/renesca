@@ -6,7 +6,7 @@ import spray.json._
 import ValueProtocol._
 
 object RequestJsonProtocol extends DefaultJsonProtocol {
-  implicit val statementFormat = jsonFormat3(Statement)
+  implicit val statementFormat = jsonFormat3(Statement.apply)
   implicit val requestFormat = jsonFormat1(Request)
 }
 

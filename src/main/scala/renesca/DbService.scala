@@ -1,9 +1,9 @@
 package renesca
 
 import renesca.graph.Graph
-import renesca.json.PropertyValue
+import renesca.json.{ParameterValue, PropertyValue}
 
-case class Query(statement:String, parameters:Map[String,PropertyValue] = Map.empty)
+case class Query(statement:String, parameters:Map[String, ParameterValue] = Map.empty)
 
 class DbService {
   var restService:RestService = null

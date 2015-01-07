@@ -1,10 +1,12 @@
 package renesca
 
 import renesca.graph._
+import renesca.json.PropertyValue._
+import renesca.json.ParameterValue._
 
 object GraphManager {
   val graphChangeToQuery:GraphChange => Query = {
-    case NodeSetProperty(nodeId, key, value) => Query(s"match (n) where id(n) = {id} set n.$key = {value}", Map("id" -> nodeId, "value" -> value))
+    case NodeSetProperty(nodeId, key, value) => Query(s"match (n) where id(n) = {id} set {keyvalue}", Map("id" -> nodeId, "keyvalue" -> Map(key -> value)))
     case NodeRemoveProperty(nodeId, key) => ???
     case NodeSetLabel(nodeId, label) => ???
     case NodeRemoveLabel(nodeId, label) => ???

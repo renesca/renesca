@@ -13,6 +13,7 @@ case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue
 case class ArrayParameterValue(value:Seq[ParameterValue]) extends ParameterValue
 case class MapParameterValue(value:Map[String,ParameterValue]) extends ParameterValue
 
+
 object PropertyValue {
   implicit def primitiveToPropertyValue(x: Long): PropertyValue = LongPropertyValue(x)
   implicit def primitiveToPropertyValue(x: Int): PropertyValue = LongPropertyValue(x)
@@ -36,8 +37,11 @@ object PropertyValue {
 }
 
 object ParameterValue {
-  implicit def MapLongToParameterValue(map:Map[String, ParameterValue]):ParameterValue = MapParameterValue(map)
-  def Map(kvs:(String,ParameterValue)*):Map[String,ParameterValue] = scala.collection.immutable.Map(kvs:_*)
+  implicit def MapToParameterValue(map:Map[String, ParameterValue]):ParameterValue = MapParameterValue(map)
+  def Map(kvs:(String,ParameterValue)*):Map[String, ParameterValue] = scala.collection.immutable.Map(kvs:_*)
+
+
+  implicit def MapParameterValueToMap(map:MapParameterValue):Map[String,ParameterValue] = map.value
 }
 
 

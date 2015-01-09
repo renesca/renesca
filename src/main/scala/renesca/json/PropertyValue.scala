@@ -1,5 +1,7 @@
 package renesca.json
 
+import scala.collection.immutable
+
 sealed trait ParameterValue
 sealed trait PropertyValue extends ParameterValue
 
@@ -38,7 +40,7 @@ object PropertyValue {
 
 object ParameterValue {
   implicit def MapToParameterValue(map:Map[String, ParameterValue]):ParameterValue = MapParameterValue(map)
-  def Map(kvs:(String,ParameterValue)*):Map[String, ParameterValue] = scala.collection.immutable.Map(kvs:_*)
+  def Map(kvs:(String,ParameterValue)*):Map[String, ParameterValue] = immutable.Map(kvs:_*)
 
 
   implicit def MapParameterValueToMap(map:MapParameterValue):Map[String,ParameterValue] = map.value

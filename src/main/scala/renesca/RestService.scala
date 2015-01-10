@@ -2,7 +2,6 @@ package renesca
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import renesca.json.Response
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
@@ -31,7 +30,7 @@ class RestService {
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {
     val httpRequest = buildHttpRequest(jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
-    val Right(jsonResponse) = httpResponse.entity.as[Response]
+    val Right(jsonResponse) = httpResponse.entity.as[json.Response]
     //TODO: error handling
     jsonResponse
   }

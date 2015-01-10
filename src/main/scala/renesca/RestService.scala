@@ -23,8 +23,9 @@ class RestService {
   def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
   def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {
-
-    Post("http://localhost:7474/db", jsonRequest)
+    //TODO: Accept: application/json; charset=UTF-8
+    //TODO: don't hard-code URI
+    Post("http://localhost:7474/db/data/transaction/commit", jsonRequest)
   }
 
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {

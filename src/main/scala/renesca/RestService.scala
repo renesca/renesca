@@ -2,9 +2,13 @@ package renesca
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
+import renesca.json.Response
+import renesca.json.protocols.RequestJsonProtocol._
+import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.unmarshalling._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -19,8 +23,7 @@ class RestService {
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
   def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
-  def buildHttpRequest(jsonRequest:json.Request) = {
-    import renesca.json.protocols.RequestJsonProtocol._
+  def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {
 
     Post("http://localhost:7474/db", jsonRequest)
   }
@@ -28,7 +31,9 @@ class RestService {
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {
     val httpRequest = buildHttpRequest(jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
-    json.Response()
+    val Right(jsonResponse) = httpResponse.entity.as[Response]
+    //TODO: error handling
+    jsonResponse
   }
 }
 

@@ -22,6 +22,8 @@ class DbService {
     val jsonResponse = restService.awaitJsonResponse(jsonRequest)
   }
 
+  def queryGraph(statement:String):Graph = queryGraph(Query(statement))
+
   def queryGraph(query:Query):Graph = {
     val jsonRequest = buildJsonRequest(query, List("graph"))
     val jsonResponse = restService.awaitJsonResponse(jsonRequest)

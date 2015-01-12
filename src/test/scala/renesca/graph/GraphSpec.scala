@@ -141,5 +141,50 @@ class GraphSpec extends Specification with Mockito {
       val graph = Graph(nodes, relations)
       graph.toString mustEqual "Graph(nodes:(1, 2, 3), relations:(11:1->2, 12:2->3))"
     }
+
+    "be equal to another empty graph" in {
+      Graph() mustEqual Graph()
+    }
+    
+    "be equal to identical graph" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(7),Node(2),Node(4)),List( Relation(7,Node(2),Node(7)), Relation(1,Node(4),Node(2))))
+      graph1 mustEqual graph2
+    }
+
+    "not be equal to isomorphic graph with different nodes" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(8),Node(2),Node(4)),List( Relation(7,Node(2),Node(8)), Relation(1,Node(4),Node(2))))
+      graph1 mustNotEqual graph2
+    }
+
+    "not be equal to different graph with different relations" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(7),Node(2),Node(4)),List( Relation(7,Node(2),Node(7)), Relation(2,Node(4),Node(7))))
+      graph1 mustNotEqual graph2
+    }
+
+    "have the same hashcode as another empty graph" in {
+      Graph().hashCode mustEqual Graph().hashCode
+    }
+
+    "have the same hashcode as identical graph" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(7),Node(2),Node(4)),List( Relation(7,Node(2),Node(7)), Relation(1,Node(4),Node(2))))
+      graph1.hashCode mustEqual graph2.hashCode
+    }
+
+    "not have the same hashcode as isomorphic graph with different nodes" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(8),Node(2),Node(4)),List( Relation(7,Node(2),Node(8)), Relation(1,Node(4),Node(2))))
+      graph1.hashCode mustNotEqual graph2.hashCode
+    }
+
+    "not have the same hashcode as different graph with different relations" in {
+      val graph1 = Graph(List(Node(4),Node(7),Node(2)),List( Relation(1,Node(4),Node(2)), Relation(7,Node(2),Node(7))))
+      val graph2 = Graph(List(Node(7),Node(2),Node(4)),List( Relation(7,Node(2),Node(7)), Relation(2,Node(4),Node(7))))
+      graph1.hashCode mustNotEqual graph2.hashCode
+    }
+
   }
 }

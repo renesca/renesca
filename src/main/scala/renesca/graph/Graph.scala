@@ -78,7 +78,23 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     graph
   }
 
+
   override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Graph =>
+      (that canEqual this) &&
+        this.nodes == that.nodes &&
+        this.relations == that.relations
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(nodes, relations)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
 
 

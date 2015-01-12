@@ -7,18 +7,19 @@ import scala.collection.mutable
 object Graph {
   def apply(nodes: Traversable[Node] = Nil, relations: Traversable[Relation] = Nil):Graph = {
     new Graph(
-      mutable.HashSet.empty ++ nodes,
-      mutable.HashSet.empty ++ relations)
+      mutable.LinkedHashSet.empty ++ nodes,
+      mutable.LinkedHashSet.empty ++ relations)
   }
 
   def apply(jsonGraph:json.Graph):Graph = {
-    val nodes = jsonGraph.nodes.map{ case json.Node(id,labels,properties) =>
+    val nodes:List[Node] = jsonGraph.nodes.map{ case json.Node(id,labels,properties) =>
       Node(id.toLong, labels.map(Label), properties)
     }
-    
-    val idToNode = nodes.map{case node => node.id.toString -> node}.toMap
 
-    val relations = jsonGraph.relationships.map{ case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
+    val idToNode:Map[String,Node] = nodes.map{case node => node.id.toString -> node}.toMap
+
+    val relations:List[Relation] = jsonGraph.relationships.map {
+      case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
       Relation(id.toLong,
         idToNode(startNode),
         idToNode(endNode),
@@ -31,9 +32,9 @@ object Graph {
 }
 
 
-class Graph private[graph] (val nodes: mutable.Set[Node], val relations: mutable.Set[Relation]) {
+class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
   // private constructor to force usage of Factory
-  
+
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   def changes: Seq[GraphChange] = {

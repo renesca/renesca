@@ -68,6 +68,11 @@ class RelationSpec extends Specification with Mockito {
       Relation(1, A, B).hashCode mustNotEqual Relation(2, B, A).hashCode
       Relation(1, A, B).hashCode mustNotEqual Relation(2, A, B).hashCode
     }
+
+    "produce string representation" in {
+      val relation = Relation(10, Node(5), Node(7))
+      relation.toString mustEqual "Relation(10: 5 -> 7)"
+    }
   }
 }
 

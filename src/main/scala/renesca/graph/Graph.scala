@@ -77,6 +77,8 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     graph.localChanges ++= that.changes
     graph
   }
+
+  override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"
 }
 
 

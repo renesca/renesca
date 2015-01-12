@@ -93,6 +93,11 @@ class NodeSpec extends Specification with Mockito {
     	node.degree(graph)
     	there was one(graph).degree(node)
     }
+
+    "produce a string representation" in {
+      val node = Node(15)
+      node.toString mustEqual "Node(15)"
+    }
   }
 }
 

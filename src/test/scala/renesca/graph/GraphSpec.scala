@@ -18,13 +18,13 @@ class GraphSpec extends Specification with Mockito {
       val ArB = Relation(4, A, B)
       val ArC = Relation(5, A, C)
       val BrC = Relation(6, B, C)
-      
+
       val nodesList = List(A,B,C)
       val relationsList = List(ArB, ArC, BrC)
 
       implicit val graph = Graph(nodesList, relationsList)
     }
-  
+
   "Graph" should {
 
     "provide access to relations" in new ExampleGraph {
@@ -45,7 +45,7 @@ class GraphSpec extends Specification with Mockito {
 
     "provide access to neighbours" in new ExampleGraph {
       import graph._
-      
+
       predecessors(A) must beEmpty
       predecessors(B) must contain(exactly(A))
       predecessors(C) must contain(exactly(A,B))
@@ -61,7 +61,7 @@ class GraphSpec extends Specification with Mockito {
 
     "provide access to degrees" in new ExampleGraph {
       import graph._
-      
+
       inDegree(A) mustEqual 0
       inDegree(B) mustEqual 1
       inDegree(C) mustEqual 2
@@ -77,7 +77,7 @@ class GraphSpec extends Specification with Mockito {
 
     "delete itself from graph" in new ExampleGraph {
       import graph._
-      
+
       delete(B)
 
       nodes must contain(exactly(A,C))
@@ -133,6 +133,13 @@ class GraphSpec extends Specification with Mockito {
       graph2.localChanges += change2
 
       (graph1 merge graph2).changes must contain(exactly(change1, change2))
+    }
+
+    "produce a String representation" in {
+      val nodes = List(Node(1), Node(2), Node(3))
+      val relations = List(Relation(11,Node(1),Node(2)), Relation(12,Node(2),Node(3)))
+      val graph = Graph(nodes, relations)
+      graph.toString mustEqual "Graph(nodes:(1, 2, 3), relations:(11:1->2, 12:2->3))"
     }
   }
 }

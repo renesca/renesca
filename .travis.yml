@@ -16,11 +16,12 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}" = "2.11.4" && sbt publishSigned sonatypeRelease
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"
+  = "2.11.4" && sbt publishSigned sonatypeRelease
 env:
   global:
-  - secure: HvsNr1JOG8un5ehN9Clw6YEb4SRjHb5xLwx9+TZ2K3DyOmalRpyIXXYre16t1t4X3m2fuP2EdiYIGsFOv3oY8L0NnnIUw0OMs4uO1vYUPB9NQ8Ohd5KCs3R+OFa30xNSBds6Oqk0DQ6Jr1J86PZINbkKaFcKTjuQuWhfUqxKf7c=
   - secure: NoM0IHXcd8yXIGKeQmHFe902ATGKhIRDW5Uln0CB3SjXjygg7t9ysXlL0rz14oXpxVE0jhPrdIlnbtvuVEoupbermx2zQIdweh/om09pqH1xv33tVawPreExIOJ02SZkZ7sos+W5Q1gFsE3HvSdrZuoR3f2nXWV9Z0kQHmuNdIc=
+  - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=
 before_install:
 - openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
   local.credentials.sbt -d

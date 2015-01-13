@@ -27,5 +27,4 @@ class GraphManagerSpec extends Specification with Mockito {
 
   def requestUrl = mockService.getRequestUrl
 
-  def withMock(value: Nothing) = ???
 }

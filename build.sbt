@@ -20,8 +20,8 @@ libraryDependencies ++= Seq(
   "io.spray"   %% "spray-json"       % "1.3.1",
   "com.typesafe.akka"   %%  "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2"           % "2.4.15" % "test",
-  "com.github.httpmock" %  "mock-http-server-junit" % "1.1.4-SNAPSHOT" % "test",
-  "com.github.httpmock" %  "mock-http-server-standalone" % "1.1.4-SNAPSHOT" % "test"
+  "com.github.httpmock" %  "mock-http-server-junit" % "1.1.4" % "test",
+  "com.github.httpmock" %  "mock-http-server-standalone" % "1.1.4" % "test"
 )
 
 

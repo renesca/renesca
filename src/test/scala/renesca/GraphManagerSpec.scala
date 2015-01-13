@@ -13,6 +13,7 @@ class GraphManagerSpec extends Specification with Mockito {
       val graphManager = new GraphManager
       graphManager.dbService = mock[DbService]
 
+
       val graph = mock[Graph]
       graph.changes returns Nil
 

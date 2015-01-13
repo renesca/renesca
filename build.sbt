@@ -10,6 +10,7 @@ scalaVersion := "2.11.5"
 crossScalaVersions := Seq("2.10.4", "2.11.5")
 
 resolvers ++= Seq(
+  "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
   "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases", // to fix specs2 dependency
   "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
 )
@@ -19,7 +20,8 @@ libraryDependencies ++= Seq(
   "io.spray"   %% "spray-json"       % "1.3.1",
   "com.typesafe.akka"   %%  "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2"           % "2.4.15" % "test",
-  "com.github.httpmock" %  "mock-http-server-junit" % "1.1.3" % "test"
+  "com.github.httpmock" %  "mock-http-server-junit" % "1.1.4-SNAPSHOT" % "test",
+  "com.github.httpmock" %  "mock-http-server-standalone" % "1.1.4-SNAPSHOT" % "test"
 )
 
 

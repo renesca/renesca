@@ -17,14 +17,15 @@ class GraphManagerSpec extends Specification with Mockito {
       graph.changes returns Nil
 
       graphManager.persistChanges(graph)
-
       there was one(graph).clearChanges()
     }
   }
 
   private def getNumberOfCalls(request: RequestDto) = verifyResponse(request).getTimes
+
   private def verifyResponse(request: RequestDto) = mockService.verify(request)
-  private def baseUri: String = s"http://localhost:$port"
-  def port = mockServer.getHttpPort
+
   def requestUrl = mockService.getRequestUrl
+
+  def withMock(value: Nothing) = ???
 }

@@ -1,6 +1,10 @@
 package renesca.json
 
+import renesca.NonBacktickName
+
 import scala.collection.immutable
+
+case class PropertyKey(name:String) extends NonBacktickName
 
 sealed trait ParameterValue
 sealed trait PropertyValue extends ParameterValue
@@ -15,7 +19,6 @@ case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue
 case class ArrayParameterValue(value:Seq[ParameterValue]) extends ParameterValue
 case class MapParameterValue(value:Map[String,ParameterValue]) extends ParameterValue
 
-
 object PropertyValue {
   implicit def primitiveToPropertyValue(x: Long): PropertyValue = LongPropertyValue(x)
   implicit def primitiveToPropertyValue(x: Int): PropertyValue = LongPropertyValue(x)
@@ -29,11 +32,12 @@ object PropertyValue {
   implicit def SeqStringToPropertyValue(xs: Seq[String]): PropertyValue = ArrayPropertyValue(xs map StringPropertyValue)
   implicit def SeqBooleanToPropertyValue(xs: Seq[Boolean]): PropertyValue = ArrayPropertyValue(xs map BooleanPropertyValue)
 
-
   implicit def propertyValueToPrimitive(x:LongPropertyValue):Long = x.value
   implicit def propertyValueToPrimitive(x:DoublePropertyValue):Double = x.value
   implicit def propertyValueToPrimitive(x:StringPropertyValue):String = x.value
   implicit def propertyValueToPrimitive(x:BooleanPropertyValue):Boolean = x.value
+
+  implicit def propertyKeyToPrimitive(x:PropertyKey):String = x.name
 
   //TODO: ArrayPropertyValue to Array
 }

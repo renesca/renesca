@@ -72,7 +72,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.nodes must not contain A
       graph.relations must not contain ArB
       graph.relations must contain (BrC)
-      graph.changes must contain(RelationDelete(3))
+      graph.changes must not contain(RelationDelete(3))
       graph.changes must not contain RelationDelete(5)
     }
 

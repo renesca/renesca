@@ -50,16 +50,9 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
 
   def delete(node: Node) {
     nodes -= node
-    deleteRelations(node)
+    relations --= incidentRelations(node)
     localChanges += NodeDelete(node.id)
   }
-
-  def deleteRelations(node : Node) {
-    val nodeRelations = incidentRelations(node)
-    relations --= nodeRelations
-    localChanges ++= nodeRelations.map(relation => RelationDelete(relation.id))
-  }
-
 
   def outRelations(node: Node) = relations.filter(node == _.startNode).toSet
   def inRelations(node: Node) = relations.filter(node == _.endNode).toSet

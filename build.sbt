@@ -25,7 +25,10 @@ libraryDependencies ++= Seq(
 // Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")
 
+// Integration tests
+unmanagedSourceDirectories in DbTest <<= (baseDirectory in DbTest)(base =>  Seq(base / "src/test-integration"))
 
+parallelExecution in IntegrationTest := false
 
 // publishing
 pgpSecretRing := file("local.secring.gpg")

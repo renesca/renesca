@@ -15,9 +15,4 @@ object ApplicationBuild extends Build {
     // See http://www.scala-sbt.org/release/docs/Detailed-Topics/Testing#additional-test-configurations-with-shared-sources
     .configs(DbTest)
     .settings(inConfig(DbTest)(Defaults.testSettings) : _*)
-    .settings(
-      testOptions in DbTest := Seq(
-        Tests.Setup(IntegrationTestHelper.setupIntegrationTest _),
-        Tests.Cleanup(IntegrationTestHelper.cleanupIntegrationTest _))
-    )
 }

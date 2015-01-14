@@ -35,6 +35,8 @@ object Graph {
 class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
   // private constructor to force usage of Factory
 
+  require(relations.map(_.startNode).forall(nodes contains) && relations.map(_.endNode).forall(nodes contains)) //TODO: test
+
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   def changes: Seq[GraphChange] = {
@@ -70,6 +72,9 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     graph.localChanges ++= that.changes
     graph
   }
+
+  def isEmpty = nodes.isEmpty //TODO: test
+  def nonEmpty = nodes.nonEmpty
 
 
   override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"

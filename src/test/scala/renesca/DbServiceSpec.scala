@@ -26,6 +26,31 @@ class DbServiceSpec extends Specification with Mockito {
   }
 
   "DbService" can {
+    "create no graph as an empty graph" in new GraphQuery {
+
+      respond("""
+         {
+          "results": [
+            {
+              "columns": [
+                "n"
+              ],
+              "data": [
+
+              ]
+            }
+          ],
+          "errors": [
+
+          ]
+        }
+                       """)
+
+
+      graph.nodes must beEmpty
+      graph.relations must beEmpty
+    }
+
     "create an empty graph" in new GraphQuery {
 
       respond("""

@@ -57,7 +57,8 @@ pomExtra := {
   </developers>
 }
 
-
+// enable incremental compilation improvements
+incOptions := incOptions.value.withNameHashing(true)
 
 scalacOptions ++= Seq(
 "-encoding", "UTF-8",

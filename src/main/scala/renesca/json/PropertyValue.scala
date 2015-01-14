@@ -37,6 +37,7 @@ object PropertyValue {
   implicit def propertyValueToPrimitive(x:StringPropertyValue):String = x.value
   implicit def propertyValueToPrimitive(x:BooleanPropertyValue):Boolean = x.value
 
+  implicit def primitiveToPropertyKey(x:String):PropertyKey = PropertyKey(x)
   implicit def propertyKeyToPrimitive(x:PropertyKey):String = x.name
 
   //TODO: ArrayPropertyValue to Array
@@ -45,7 +46,6 @@ object PropertyValue {
 object ParameterValue {
   implicit def MapToParameterValue(map:Map[String, ParameterValue]):ParameterValue = MapParameterValue(map)
   def Map(kvs:(String,ParameterValue)*):Map[String, ParameterValue] = immutable.Map(kvs:_*)
-
 
   implicit def MapParameterValueToMap(map:MapParameterValue):Map[String,ParameterValue] = map.value
 }

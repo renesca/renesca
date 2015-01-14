@@ -4,7 +4,9 @@ import renesca.json.PropertyValue
 
 import scala.collection.mutable
 
-case class Label(name:String)
+case class Label(name:String) {
+  require(name.matches("^[^`]*$"), "Backticks are not allowed in label names")
+}
 
 object Node {
   def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[String, PropertyValue] = Map.empty) = {

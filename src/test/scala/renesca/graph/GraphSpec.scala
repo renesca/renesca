@@ -25,6 +25,15 @@ class GraphSpec extends Specification with Mockito {
       implicit val graph = Graph(nodesList, relationsList)
     }
 
+  "Label" should {
+    "disallow backticks in label names" in {
+      Label("foo`bar") must throwA[IllegalArgumentException]
+    }
+    "allow label names without backticks" in {
+      Label("foobar") must not(throwA[IllegalArgumentException])
+    }
+  }
+
   "Graph" should {
 
     "provide access to relations" in new ExampleGraph {

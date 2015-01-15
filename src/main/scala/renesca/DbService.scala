@@ -2,7 +2,9 @@ package renesca
 
 import renesca.graph.Graph
 import renesca.json.{ParameterValue, PropertyValue}
-
+object Query {
+  implicit def StringToQuery(statement:String):Query = Query(statement)
+}
 case class Query(statement:String, parameters:Map[String, ParameterValue] = Map.empty)
 
 class DbService {
@@ -17,12 +19,11 @@ class DbService {
   }
 
   //TODO: error handling
+  def batchQuery(query:Query) { batchQuery(List(query)) }
   def batchQuery(queries:Seq[Query]) {
     val jsonRequest = buildJsonRequest(queries)
     val jsonResponse = restService.awaitJsonResponse(jsonRequest)
   }
-
-  def queryGraph(statement:String):Graph = queryGraph(Query(statement))
 
   def queryGraph(query:Query):Graph = {
     val jsonRequest = buildJsonRequest(query, List("graph"))

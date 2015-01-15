@@ -1,6 +1,7 @@
 package renesca
 
 import org.specs2.mutable.Specification
+import org.specs2.specification.{AfterExample, Step, Fragments}
 import spray.can.Http.ConnectionAttemptFailedException
 
 object IntegrationTestSetup  {
@@ -37,18 +38,29 @@ object IntegrationTestSetup  {
 
     ready
   }
-}
 
-
-trait IntegrationSpecification extends Specification {
-  sequential // Specs are also executed sequentially (build.sbt)
-  if(!IntegrationTestSetup.testDbReady) skipAll
-
-  //TODO: clear database when done
+  def cleanupDb() {
+    db.batchQuery("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
+  }
 }
 
 class IntegrationTestSetupSpec extends Specification {
+  // Fails the whole run if testing db is not set up
   "Database should be available and empty" in {
     IntegrationTestSetup.testDbReady mustEqual true
   }
 }
+
+trait IntegrationSpecification extends Specification with AfterExample {
+  sequential // Specs are also executed sequentially (build.sbt)
+  if(!IntegrationTestSetup.testDbReady) skipAll
+
+  // clean database after every Spec
+  // override def map(fs: =>Fragments) = fs ^ Step(IntegrationTestSetup.cleanUpDb())
+
+  // clean database after every example
+  override protected def after = IntegrationTestSetup.cleanupDb()
+
+  val db = IntegrationTestSetup.db
+}
+

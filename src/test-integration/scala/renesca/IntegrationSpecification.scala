@@ -21,18 +21,17 @@ object IntegrationTestSetup  {
 
     val ready = dbServerIsAvailable && dbIsEmpty
 
-    if(!ready) println("")
-    if(!dbServerIsAvailable) {
-      // TODO: log error
-      println("Cannot connect to Database Server.")
-      println("Skipping all integration tests.")
-
-    } else if(!dbIsEmpty) {
-      println("Testing database is not empty.")
-      println("Skipping all integration tests.")
-    }
     if(!ready) {
+      println("")
+      if(!dbServerIsAvailable) {
+        // TODO: log error
+        println("Cannot connect to Database Server.")
+
+      } else if(!dbIsEmpty) {
+        println("Test database is not empty.")
+      }
       for(errorMessage <- error) println("Exception: " + errorMessage)
+      println("Skipping all integration tests.")
       println("")
     }
 
@@ -42,7 +41,14 @@ object IntegrationTestSetup  {
 
 
 trait IntegrationSpecification extends Specification {
+  sequential // Specs are also executed sequentially (build.sbt)
   if(!IntegrationTestSetup.testDbReady) skipAll
-  //TODO: fail when all tests are skipped
+
   //TODO: clear database when done
+}
+
+class IntegrationTestSetupSpec extends Specification {
+  "Database should be available and empty" in {
+    IntegrationTestSetup.testDbReady mustEqual true
+  }
 }

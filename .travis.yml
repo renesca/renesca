@@ -1,5 +1,9 @@
-# sudo: false
+sudo: false
 language: scala
+cache:
+  directories:
+  - "$HOME/.sbt"
+#   - "$HOME/.ivy2"
 scala:
 - 2.11.4
 - 2.10.4
@@ -8,10 +12,6 @@ jdk:
 - oraclejdk8
 - openjdk6
 - openjdk7
-# cache:
-#   directories:
-#   - "$HOME/.sbt"
-#   - "$HOME/.ivy2"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 - sbt ++$TRAVIS_SCALA_VERSION db:test # integration tests need a running neo4j instance

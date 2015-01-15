@@ -29,7 +29,7 @@ class DbService {
     val jsonResponse = restService.awaitJsonResponse(jsonRequest)
 
     val allJsonGraphs:Seq[json.Graph] = jsonResponse.results.flatMap{_.data.flatMap(_.graph)}
-    val mergedGraph = if(allJsonGraphs.nonEmpty) allJsonGraphs.map(Graph(_)).reduce(_ merge _) else Graph()
+    val mergedGraph = allJsonGraphs.map(Graph(_)).fold(Graph())(_ merge _) //TODO: use Graph.empty
     mergedGraph
   }
 

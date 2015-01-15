@@ -5,9 +5,12 @@ import akka.util.Timeout
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
+import spray.http.HttpHeaders.Accept
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import MediaTypes._
+import HttpCharsets._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -25,7 +28,10 @@ class RestService {
   def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {
     //TODO: Accept: application/json; charset=UTF-8
     //TODO: don't hard-code URI
-    Post("http://localhost:7474/db/data/transaction/commit", jsonRequest)
+    val uri = Uri("http://localhost:7474/db/data/transaction/commit")
+    val content = jsonRequest
+    val accept:MediaRange = `application/json`// withCharset `UTF-8`
+    Post(uri, content).withHeaders(Accept(accept))
   }
 
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {

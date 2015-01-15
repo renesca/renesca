@@ -31,7 +31,12 @@ before_install:
 # install Neo4j locally:
 - wget dist.neo4j.org/neo4j-community-$NEO4J_VERSION-unix.tar.gz
 - tar -xzf neo4j-community-$NEO4J_VERSION-unix.tar.gz
-- neo4j-community-$NEO4J_VERSION/bin/neo4j start
+- jdk_switcher home oraclejdk7
+- java -version
+- JAVA_HOME=$(jdk_switcher oraclejdk7) java -version
+- JAVA_HOME=$(jdk_switcher oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
+- jdk_switcher home oraclejdk7
+- java -version
 # decrypt secrets
 - openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
   local.credentials.sbt -d

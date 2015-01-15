@@ -12,8 +12,11 @@ jdk:
 #   directories:
 #   - "$HOME/.sbt"
 #   - "$HOME/.ivy2"
-services:
-- neo4j
+env:
+# test across multiple versions of Neo4j:
+- NEO4J_VERSION="2.1.6"
+- NEO4J_VERSION="2.0.4"
+- NEO4J_VERSION="1.9.9"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 - sbt ++$TRAVIS_SCALA_VERSION db:test
@@ -32,3 +35,7 @@ before_install:
   -d
 - openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg
   -d
+# install Neo4j locally:
+- wget dist.neo4j.org/neo4j-community-$NEO4J_VERSION-unix.tar.gz
+- tar -xzf neo4j-community-$NEO4J_VERSION-unix.tar.gz
+- neo4j-community-$NEO4J_VERSION/bin/neo4j start

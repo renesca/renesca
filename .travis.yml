@@ -1,4 +1,4 @@
-sudo: false
+# sudo: false
 language: scala
 scala:
 - 2.11.4
@@ -8,10 +8,10 @@ jdk:
 - oraclejdk8
 - openjdk6
 - openjdk7
-cache:
-  directories:
-  - "$HOME/.sbt"
-  - "$HOME/.ivy2"
+# cache:
+#   directories:
+#   - "$HOME/.sbt"
+#   - "$HOME/.ivy2"
 services:
 - neo4j
 script:

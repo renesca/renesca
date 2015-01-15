@@ -33,8 +33,9 @@ before_install:
 - tar -xzf neo4j-community-$NEO4J_VERSION-unix.tar.gz
 - jdk_switcher home oraclejdk7
 - java -version
-- JAVA_HOME=$(jdk_switcher oraclejdk7) java -version
-- JAVA_HOME=$(jdk_switcher oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
+- jdk_switcher home oraclejdk7
+- JAVA_HOME=$(jdk_switcher home oraclejdk7) java -version
+- JAVA_HOME=$(jdk_switcher home oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
 - jdk_switcher home oraclejdk7
 - java -version
 # decrypt secrets

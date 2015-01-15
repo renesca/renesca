@@ -15,6 +15,7 @@ jdk:
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 - sbt ++$TRAVIS_SCALA_VERSION db:test # integration tests need a running neo4j instance
+- sleep 3
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"
@@ -28,16 +29,10 @@ env:
     - secure: NoM0IHXcd8yXIGKeQmHFe902ATGKhIRDW5Uln0CB3SjXjygg7t9ysXlL0rz14oXpxVE0jhPrdIlnbtvuVEoupbermx2zQIdweh/om09pqH1xv33tVawPreExIOJ02SZkZ7sos+W5Q1gFsE3HvSdrZuoR3f2nXWV9Z0kQHmuNdIc=
     - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=
 before_install:
-# install Neo4j locally:
+# install Neo4j locally and run with specific jvm:
 - wget dist.neo4j.org/neo4j-community-$NEO4J_VERSION-unix.tar.gz
 - tar -xzf neo4j-community-$NEO4J_VERSION-unix.tar.gz
-- jdk_switcher home oraclejdk7
-- java -version
-- jdk_switcher home oraclejdk7
-- JAVA_HOME=$(jdk_switcher home oraclejdk7) java -version
 - JAVA_HOME=$(jdk_switcher home oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
-- jdk_switcher home oraclejdk7
-- java -version
 # decrypt secrets
 - openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
   local.credentials.sbt -d

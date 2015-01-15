@@ -12,8 +12,10 @@ cache:
   directories:
   - "$HOME/.sbt"
   - "$HOME/.ivy2"
+services:
+- neo4j
 script:
-- sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage test db:test
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"

@@ -7,7 +7,7 @@ import org.specs2.runner.JUnitRunner
 import renesca.graph.Graph
 
 @RunWith(classOf[JUnitRunner])
-class GraphManagerSpec extends Specification with Mockito {
+class GraphManagerSpec extends Specification with Mockito  with HttpMockServer {
   "GraphManager" should {
     "clear changes after persisting" in {
       val graphManager = new GraphManager
@@ -21,11 +21,4 @@ class GraphManagerSpec extends Specification with Mockito {
       there was one(graph).clearChanges()
     }
   }
-
-  private def getNumberOfCalls(request: RequestDto) = verifyResponse(request).getTimes
-
-  private def verifyResponse(request: RequestDto) = mockService.verify(request)
-
-  def requestUrl = mockService.getRequestUrl
-
 }

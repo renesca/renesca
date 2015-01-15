@@ -21,12 +21,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.15" % "test",
   "com.jayway.awaitility" % "awaitility-scala" % "1.6.3" % "test",
-  "com.github.httpmock" % "mock-http-server-junit" % "1.1.5" % "test",
-  "com.github.httpmock" % "mock-http-server-exec" % "1.1.5" % "test",
-  "com.github.httpmock" % "mock-http-server-webapp" % "1.1.5" % "test" artifacts (Artifact("mock-http-server-webapp", "standalone"))
-)
-
-
+  "com.github.httpmock" %% "httpmock-specs" % "0.1" % "test")
 
 // Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")

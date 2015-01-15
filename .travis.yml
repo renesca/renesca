@@ -12,11 +12,6 @@ jdk:
 #   directories:
 #   - "$HOME/.sbt"
 #   - "$HOME/.ivy2"
-env:
-# test across multiple versions of Neo4j:
-- NEO4J_VERSION="2.1.6"
-- NEO4J_VERSION="2.0.4"
-- NEO4J_VERSION="1.9.9"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 - sbt ++$TRAVIS_SCALA_VERSION db:test
@@ -25,6 +20,10 @@ after_success:
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"
   = "2.11.4" && sbt publishSigned sonatypeRelease
 env:
+# test across multiple versions of Neo4j:
+- NEO4J_VERSION="2.1.6"
+- NEO4J_VERSION="2.0.4"
+- NEO4J_VERSION="1.9.9"
   global:
   - secure: NoM0IHXcd8yXIGKeQmHFe902ATGKhIRDW5Uln0CB3SjXjygg7t9ysXlL0rz14oXpxVE0jhPrdIlnbtvuVEoupbermx2zQIdweh/om09pqH1xv33tVawPreExIOJ02SZkZ7sos+W5Q1gFsE3HvSdrZuoR3f2nXWV9Z0kQHmuNdIc=
   - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=

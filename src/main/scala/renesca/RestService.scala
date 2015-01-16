@@ -23,7 +23,6 @@ class RestService(server:String) {
   import system.dispatcher // provides execution context
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
-  //TODO: https support (neo4j does not seem to support pipelining in https)
   def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
   def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {

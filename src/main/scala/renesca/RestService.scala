@@ -15,7 +15,7 @@ import HttpCharsets._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class RestService {
+class RestService(server:String) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
   implicit val system: ActorSystem = ActorSystem()
@@ -23,15 +23,16 @@ class RestService {
   import system.dispatcher // provides execution context
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
+  //TODO: https support (neo4j does not seem to support pipelining in https)
   def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
   def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {
-    //TODO: Accept: application/json; charset=UTF-8
-    //TODO: don't hard-code URI
-    val uri = Uri("http://localhost:7474/db/data/transaction/commit")
+    //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
+    val path = "/db/data/transaction/commit"
+    val uri = Uri(s"$server$path")
     val content = jsonRequest
     val accept:MediaRange = `application/json`// withCharset `UTF-8`
-    Post(uri, content).withHeaders(Accept(accept))
+    Post(uri, content)//.withHeaders(Accept(accept))
   }
 
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {

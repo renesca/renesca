@@ -6,7 +6,7 @@ import spray.can.Http.ConnectionAttemptFailedException
 
 object IntegrationTestSetup  {
   val db = new DbService
-  db.restService = new RestService
+  db.restService = new RestService("http://localhost:7474") // TODO: don't hardcode, configure in environment
 
   lazy val testDbReady = {
     lazy val (dbServerIsAvailable, dbIsEmpty, error) = {

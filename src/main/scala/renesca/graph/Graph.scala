@@ -35,7 +35,10 @@ object Graph {
 class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
   // private constructor to force usage of Factory
 
-  require(relations.map(_.startNode).forall(nodes contains) && relations.map(_.endNode).forall(nodes contains)) //TODO: test
+  require(relations.forall{ relation =>
+    (nodes contains relation.startNode) &&
+    (nodes contains relation.endNode)
+  }) // TODO: test
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 

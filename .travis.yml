@@ -5,7 +5,7 @@ cache:
   - "$HOME/.sbt"
   - "$HOME/.ivy2"
 scala:
-- 2.11.4
+- 2.11.5
 - 2.10.4
 jdk:
 - oraclejdk7

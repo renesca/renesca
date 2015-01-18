@@ -13,7 +13,9 @@ case class LongPropertyValue(value:Long) extends PropertyValue
 case class DoublePropertyValue(value:Double) extends PropertyValue
 case class StringPropertyValue(value:String) extends PropertyValue
 case class BooleanPropertyValue(value:Boolean) extends PropertyValue
-case object NullPropertyValue extends PropertyValue
+case object NullPropertyValue extends PropertyValue {
+  override def equals(obj: Any): Boolean = obj == null || super.equals(obj)
+}
 case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue
 
 case class ArrayParameterValue(value:Seq[ParameterValue]) extends ParameterValue

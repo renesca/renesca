@@ -41,14 +41,6 @@ class ParametersSpec extends Specification {
       properties.toJson mustEqual jsonAst
     }
 
-    "have arrays of nulls" in {
-      val jsonAst = """{"key":[null, null]}""".parseJson
-      val properties = jsonAst.convertTo[Map[String, ParameterValue]]
-
-      properties mustEqual Map("key" -> ArrayParameterValue(List(NullPropertyValue, NullPropertyValue)))
-      properties.toJson mustEqual jsonAst
-    }
-
     "have nested objects" in {
       val jsonAst = """{"key":{"foo":1,"bar":{"id":2}}}""".parseJson
       val properties = jsonAst.convertTo[Map[String, ParameterValue]]
@@ -62,11 +54,11 @@ class ParametersSpec extends Specification {
     }
 
     "have objects and literals in array in objects" in {
-      val jsonAst = """{"a":false, "key":[{"x":null},{"y":{"frei":"bier"}},{"brei": 3.14141414}, 7]}""".parseJson
+      val jsonAst = """{"a":false, "key":[{"x":9999999999999},{"y":{"frei":"bier"}},{"brei": 3.14141414}, 7]}""".parseJson
       val properties = jsonAst.convertTo[Map[String, ParameterValue]]
 
       properties mustEqual Map("a" -> BooleanPropertyValue(false), "key" -> ArrayParameterValue(List(
-        MapParameterValue(Map("x" -> NullPropertyValue)),
+        MapParameterValue(Map("x" -> LongPropertyValue(9999999999999L))),
         MapParameterValue(Map("y" -> MapParameterValue(Map("frei" -> StringPropertyValue("bier"))))),
         MapParameterValue(Map("brei" -> DoublePropertyValue(3.14141414))),
         LongPropertyValue(7)

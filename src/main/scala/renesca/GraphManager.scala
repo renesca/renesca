@@ -24,5 +24,6 @@ class GraphManager {
 
   def persistChanges(graph:Graph) {
     val queries:Seq[Query] = graph.changes.map(graphChangeToQuery)
+    dbService.batchQuery(queries)
   }
 }

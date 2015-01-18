@@ -11,7 +11,6 @@ object ValueProtocol extends DefaultJsonProtocol {
       case DoublePropertyValue(value) => JsNumber(value)
       case StringPropertyValue(value) => JsString(value)
       case BooleanPropertyValue(value) => JsBoolean(value)
-      case NullPropertyValue => JsNull
       case ArrayPropertyValue(value) => JsArray((value map write).toVector)
     }
 
@@ -20,7 +19,6 @@ object ValueProtocol extends DefaultJsonProtocol {
       case JsNumber(num) if num.isValidLong => LongPropertyValue(num.toLong)
       case JsNumber(num) if !num.isValidLong => DoublePropertyValue(num.toDouble)
       case JsBoolean(bool) => BooleanPropertyValue(bool)
-      case JsNull => NullPropertyValue
       case JsArray(arr) => ArrayPropertyValue(arr.map(read))
       case json => deserializationError(s"can not deserialize property value of type $json")
     }

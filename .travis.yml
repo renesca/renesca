@@ -24,7 +24,7 @@ env:
   matrix:
     # test across multiple versions of Neo4j:
     - NEO4J_VERSION="2.1.6"
-    - NEO4J_VERSION="2.0.4"
+    # - NEO4J_VERSION="2.0.4" # does not support property += {...}
   global:
     - secure: NoM0IHXcd8yXIGKeQmHFe902ATGKhIRDW5Uln0CB3SjXjygg7t9ysXlL0rz14oXpxVE0jhPrdIlnbtvuVEoupbermx2zQIdweh/om09pqH1xv33tVawPreExIOJ02SZkZ7sos+W5Q1gFsE3HvSdrZuoR3f2nXWV9Z0kQHmuNdIc=
     - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=

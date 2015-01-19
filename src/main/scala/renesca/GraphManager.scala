@@ -1,6 +1,7 @@
 package renesca
 
 import renesca.graph._
+import renesca.json.PropertyKey._
 import renesca.json.PropertyValue._
 import renesca.json.ParameterValue._
 

@@ -21,6 +21,13 @@ case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
 case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue
 case class MapParameterValue(value:Map[PropertyKey,ParameterValue]) extends SoleParameterValue
 
+object PropertyKey {
+  implicit def StringMapToPropertyKeyMap(key: String)= new AnyRef {
+    def ->(x: PropertyValue) = (PropertyKey(key),x)
+    def ->(x: SoleParameterValue) = (PropertyKey(key),x)
+  }
+}
+
 object PropertyValue {
   implicit def primitiveToPropertyValue(x: Long): PropertyValue = LongPropertyValue(x)
   implicit def primitiveToPropertyValue(x: Int): PropertyValue = LongPropertyValue(x)
@@ -49,11 +56,6 @@ object ParameterValue {
   implicit def PropertyKeyMapToMapParameterValue(map:Map[PropertyKey, ParameterValue]):MapParameterValue = MapParameterValue(map)
 
   implicit def MapParameterValueToPropertyKeyMap(map:MapParameterValue):Map[PropertyKey,ParameterValue] = map.value
-
-  implicit def StringMapToPropertyKeyMap(key: String)= new AnyRef {
-    def ->(x: PropertyValue) = (PropertyKey(key),x)
-    def ->(x: SoleParameterValue) = (PropertyKey(key),x)
-  }
 }
 
 

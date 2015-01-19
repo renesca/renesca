@@ -5,8 +5,8 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import renesca.json.StringPropertyValue
+import renesca.json.PropertyKey._
 import renesca.json.PropertyValue._
-import renesca.json.ParameterValue._
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {

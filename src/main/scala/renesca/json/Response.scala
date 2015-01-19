@@ -10,7 +10,7 @@ case class Relationship(
                          )
 case class Node(id : String, labels : List[String] = Nil, properties : Map[String, PropertyValue] = Map.empty)
 case class Graph(nodes : List[Node] = Nil, relationships : List[Relationship] = Nil)
-case class Error(code : String, messages : String)
+case class Error(code : String, message : String)
 case class Data(row : Option[RowData] = None, graph : Option[Graph] = None)
 case class RowData()
 case class Result(columns : List[String], data : List[Data])

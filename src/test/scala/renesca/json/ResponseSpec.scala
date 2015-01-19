@@ -49,5 +49,22 @@ class ResponseSpec extends Specification with Mockito {
       val response = json.parseJson.convertTo[Response]
       response mustEqual Response(List(Result(List("col1"), List(Data()))))
     }
+
+    "contain error" in {
+      val json = """
+          {
+            "results" : [ ],
+            "errors" : [ {
+              "code" : "Neo.ClientError.Statement.InvalidSyntax",
+              "message" : "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"
+            } ]
+          }                 			 """
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(errors=List(
+        Error(
+          code = "Neo.ClientError.Statement.InvalidSyntax",
+          message = "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"
+      )))
+    }
   }
 }

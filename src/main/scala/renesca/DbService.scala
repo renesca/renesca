@@ -8,7 +8,7 @@ object Query {
 case class Query(statement:String, parameters:Map[String, ParameterValue] = Map.empty)
 
 class DbService {
-  var restService:RestService = null
+  var restService:RestService = null //TODO: inject
 
   def queryGraph(query:Query):Graph = {
     val results = executeQueries(List(query), List("graph"))
@@ -37,11 +37,11 @@ class DbService {
   }
 
   private def handleError(jsonResponse:json.Response):List[json.Result] = {
-    //TODO: can there be more than one error?
-    // right now this only throws the first error.
     jsonResponse match {
       case json.Response(results, Nil) => results
-      case json.Response(Nil, json.Error(code, message) :: _) => throw new RuntimeException(s"$code\n$message")
+      case json.Response(Nil, errors) =>
+        val message = errors.map{ case json.Error(code, msg) => s"$code\n$msg"}.mkString("\n","\n\n","\n")
+        throw new RuntimeException(message)
     }
   }
 

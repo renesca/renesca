@@ -10,7 +10,7 @@ import renesca.json.StringPropertyValue
 class GraphChangeSpec extends Specification with Mockito {
 
   "Graph" should {
-    "collect all changes in one collection" in {
+    "collect all changes in one collection and clear it" in {
       val graphChange = mock[GraphChange]
 
       val nodeLabelChange = mock[GraphChange]
@@ -40,6 +40,10 @@ class GraphChangeSpec extends Specification with Mockito {
         nodePropertiesChange,
         relationPropertiesChange
       ))
+
+      graph.clearChanges()
+
+      graph.changes must beEmpty
     }
 
     "emit change when deleting node" in {

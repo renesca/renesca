@@ -26,9 +26,19 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
     node.properties("key") = data
     graphManager.persistChanges(graph)
-    graph.changes must beEmpty
 
     resultNode.properties("key") mustEqual data
+  }
+
+  def testRelationSetProperty(data:PropertyValue) = {
+    val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
+    val relation = graph.relations.head
+
+    relation.properties("key") = data
+    graphManager.persistChanges(graph)
+
+    val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
+    resultRelation.properties("key") mustEqual data
   }
 
   "GraphManager.persist" should {
@@ -48,7 +58,6 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
       node.properties -= "yes"
       graphManager.persistChanges(graph)
-      graph.changes must beEmpty
 
       resultNode.properties must beEmpty
     }
@@ -58,7 +67,6 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
       node.labels += Label("BEER")
       graphManager.persistChanges(graph)
-      graph.changes must beEmpty
 
       resultNode.labels must contain(exactly(Label("BEER")))
     }
@@ -68,7 +76,6 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
       node.labels -= Label("WINE")
       graphManager.persistChanges(graph)
-      graph.changes must beEmpty
 
       resultNode.labels must beEmpty
     }
@@ -78,7 +85,6 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
       graph.delete(node)
       graphManager.persistChanges(graph)
-      graph.changes must beEmpty
 
       val resultGraph = db.queryGraph("match n return n")
       resultGraph.nodes must beEmpty
@@ -99,11 +105,43 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val n = graph.nodes.find(_.id == nid).get
       graph.delete(n) // deletes node n and relations l,r
       graphManager.persistChanges(graph)
-      graph.changes must beEmpty
 
       val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
       resultGraph.nodes must haveSize(2)
       resultGraph.nodes must not contain n
+      resultGraph.relations must beEmpty
+    }
+
+    "set long property on relation" in { testRelationSetProperty(123) }
+    "set double property on relation" in { testRelationSetProperty(1.337) }
+    "set string property on relation" in { testRelationSetProperty("schnipp") }
+    "set boolean property on relation" in { testRelationSetProperty(true) }
+
+    "set long array property on relation" in { testRelationSetProperty(List(1, 3)) }
+    "set double array property on relation" in { testRelationSetProperty(List(1.7, 2.555555)) }
+    "set string array property on relation" in { testRelationSetProperty(List("schnipp","schnapp")) }
+    "set boolean array property on relation" in { testRelationSetProperty(List(true, false)) }
+
+    "remove property from relation" in {
+      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
+      val relation = graph.relations.head
+
+      relation.properties -= "yes"
+      graphManager.persistChanges(graph)
+
+      val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
+      resultRelation.properties must beEmpty
+    }
+
+    "delete relation" in {
+      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
+      val relation = graph.relations.head
+
+      graph.delete(relation)
+      graphManager.persistChanges(graph)
+
+      val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
+      resultGraph.nodes must haveSize(2)
       resultGraph.relations must beEmpty
     }
   }

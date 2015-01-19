@@ -56,7 +56,7 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
       node.labels.localChanges.clear()
     }
     relations.foreach{relation =>
-      relation.properties.clear()
+      relation.properties.localChanges.clear()
     }
   }
 

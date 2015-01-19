@@ -12,7 +12,7 @@ object GraphManager {
     case NodeRemoveLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} remove n:`${label.name}`", Map("id" -> nodeId))
     case NodeDelete(nodeId) => Query("match (n) where id(n) = {id} optional match (n)-[r]-() delete r,n", Map("id" -> nodeId))
     case RelationSetProperty(relationId, key, value) => Query("match ()-[r]->() where id(r) = {id} set r += {keyValue}", Map("id" -> relationId, "keyValue" -> Map((key, value))))
-    case RelationRemoveProperty(relationId, key) => Query(s"match ()-[r]->() where id(r) = {id} remove n.`$key`", Map("id" -> relationId))
+    case RelationRemoveProperty(relationId, key) => Query(s"match ()-[r]->() where id(r) = {id} remove r.`$key`", Map("id" -> relationId))
     case RelationDelete(relationId) => Query("match ()-[r]->() where id(r) = {id} delete r", Map("id" -> relationId))
   }
 }

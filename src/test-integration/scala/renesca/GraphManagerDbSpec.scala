@@ -3,7 +3,7 @@ package renesca
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.graph.{Graph, Label, Node}
-import renesca.json.ParameterValue._
+import renesca.json.PropertyKey._
 import renesca.json.PropertyValue
 import renesca.json.PropertyValue._
 

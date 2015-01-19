@@ -23,8 +23,7 @@ class Relation private[Relation] (
     ) {
   // private constructor to force usage of factory
 
-  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
-  def changes:Seq[GraphChange] = localChanges ++ properties.localChanges
+  def changes:Seq[GraphChange] = properties.localChanges
 
   def other(node:Node) = if(startNode == node) endNode else startNode
 

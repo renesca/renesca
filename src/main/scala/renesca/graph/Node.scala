@@ -20,8 +20,7 @@ class Node private[graph] (
     val properties: Properties
     ) {
 
-  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
-  def changes:Seq[GraphChange] = localChanges ++ labels.localChanges ++ properties.localChanges
+  def changes:Seq[GraphChange] = labels.localChanges ++ properties.localChanges
 
   def outRelations(implicit graph: Graph) = graph.outRelations(this)
   def inRelations(implicit graph: Graph) = graph.inRelations(this)

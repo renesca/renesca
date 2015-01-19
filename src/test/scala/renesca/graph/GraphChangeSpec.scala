@@ -13,37 +13,31 @@ class GraphChangeSpec extends Specification with Mockito {
     "collect all changes in one collection" in {
       val graphChange = mock[GraphChange]
 
-      val nodeChange = mock[GraphChange]
       val nodeLabelChange = mock[GraphChange]
       val nodePropertiesChange = mock[GraphChange]
 
-      val relationChange = mock[GraphChange]
       val relationPropertiesChange = mock[GraphChange]
 
       val A = Node(1)
-      A.localChanges += nodeChange
       A.labels.localChanges += nodeLabelChange
       A.properties.localChanges += nodePropertiesChange
 
       val B = Node(2)
 
       val ArB = Relation(3, A, B)
-      ArB.localChanges += relationChange
       ArB.properties.localChanges += relationPropertiesChange
 
       val graph = Graph(List(A,B), List(ArB))
       graph.localChanges += graphChange
 
-      A.changes must contain(exactly(nodeChange, nodeLabelChange, nodePropertiesChange))
-      ArB.changes must contain(exactly(relationChange, relationPropertiesChange))
+      A.changes must contain(exactly(nodeLabelChange, nodePropertiesChange))
+      ArB.changes must contain(exactly(relationPropertiesChange))
 
-      graph.changes.size mustEqual 6
+      graph.changes.size mustEqual 4
       graph.changes must contain(exactly(
         graphChange,
-        nodeChange,
         nodeLabelChange,
         nodePropertiesChange,
-        relationChange,
         relationPropertiesChange
       ))
     }

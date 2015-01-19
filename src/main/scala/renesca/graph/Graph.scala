@@ -33,6 +33,7 @@ object Graph {
 
 
 class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
+
   // private constructor to force usage of Factory
 
   require(relations.forall{ relation =>
@@ -46,6 +47,17 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     localChanges ++
     (nodes.flatMap(node => node.changes) ++
       relations.flatMap(relation => relation.changes)).toSeq
+  }
+
+  def clearChanges() {
+    localChanges.clear()
+    nodes.foreach{node =>
+      node.properties.localChanges.clear()
+      node.labels.localChanges.clear()
+    }
+    relations.foreach{relation =>
+      relation.properties.clear()
+    }
   }
 
   def delete(relation: Relation) {

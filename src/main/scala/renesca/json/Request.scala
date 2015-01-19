@@ -10,7 +10,7 @@ object Statement {
     new Statement(
       query.statement,
       if (query.parameters.nonEmpty) Some(query.parameters) else None,
-      Some(resultDataContents)
+      if (resultDataContents.nonEmpty) Some(resultDataContents) else None
     )
   }
 }

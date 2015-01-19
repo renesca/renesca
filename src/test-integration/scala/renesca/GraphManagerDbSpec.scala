@@ -2,21 +2,32 @@ package renesca
 
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import org.specs2.specification.Scope
-import renesca.json._
+import renesca.graph.{Graph, Label, Node}
+import renesca.json.ParameterValue._
+import renesca.json.PropertyValue
+import renesca.json.PropertyValue._
 
 @RunWith(classOf[JUnitRunner])
 class GraphManagerDbSpec extends IntegrationSpecification {
 
-  def testNodeSetProperty(data:PropertyValue) = {
-    val graph = db.queryGraph("create n return n")
+  def createNode(query:String):(Graph,Node) = {
+    val graph = db.queryGraph(query)
     val node = graph.nodes.head
+    (graph, node)
+  }
+  
+  def resultNode:Node = {
+    val resultGraph = db.queryGraph("match n return n")
+    resultGraph.nodes.head
+  }
+
+  def testNodeSetProperty(data:PropertyValue) = {
+    val (graph,node) = createNode("create n return n")
 
     node.properties("key") = data
     graphManager.persistChanges(graph)
+    graph.changes must beEmpty
 
-    val resultGraph = db.queryGraph("match n return n")
-    val resultNode = resultGraph.nodes.head
     resultNode.properties("key") mustEqual data
   }
 
@@ -31,6 +42,70 @@ class GraphManagerDbSpec extends IntegrationSpecification {
     "set double array property on node" in { testNodeSetProperty(List(1.7, 2.555555)) }
     "set string array property on node" in { testNodeSetProperty(List("schnipp","schnapp")) }
     "set boolean array property on node" in { testNodeSetProperty(List(true, false)) }
+
+    "remove property from node" in {
+      val (graph,node) = createNode("create n return n")
+
+      node.properties -= "yes"
+      graphManager.persistChanges(graph)
+      graph.changes must beEmpty
+
+      resultNode.properties must beEmpty
+    }
+
+    "set label on node" in {
+      val (graph,node) = createNode("create n return n")
+
+      node.labels += Label("BEER")
+      graphManager.persistChanges(graph)
+      graph.changes must beEmpty
+
+      resultNode.labels must contain(exactly(Label("BEER")))
+    }
+
+    "remove label from node" in {
+      val (graph,node) = createNode("create (n:WINE) return n")
+
+      node.labels -= Label("WINE")
+      graphManager.persistChanges(graph)
+      graph.changes must beEmpty
+
+      resultNode.labels must beEmpty
+    }
+
+    "delete node" in {
+      val (graph,node) = createNode("create n return n")
+
+      graph.delete(node)
+      graphManager.persistChanges(graph)
+      graph.changes must beEmpty
+
+      val resultGraph = db.queryGraph("match n return n")
+      resultGraph.nodes must beEmpty
+    }
+
+    "delete node with relations" in {
+      // 1. create (m)-r->(n)<-l-(q)
+      // 2. query (m)-r->(n)
+      // 3. delete n (implicitly deletes relation r from graph and relation l which is only in the database)
+      // 4. whole graph should be (m) and (q)
+
+      val nid = db.queryGraph("create n return n").nodes.head.id
+      val graph = db.queryGraph("match n where id(n) = {id} create (m)-[r:INTERNAL]->(n)<-[l:EXTERNAL]-(q) return n,r,m", Map("id" -> nid))
+
+      graph.nodes must haveSize(2) // m, n
+      graph.relations must haveSize(1) // r
+
+      val n = graph.nodes.find(_.id == nid).get
+      graph.delete(n) // deletes node n and relations l,r
+      graphManager.persistChanges(graph)
+      graph.changes must beEmpty
+
+      val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
+      resultGraph.nodes must haveSize(2)
+      resultGraph.nodes must not contain n
+      resultGraph.relations must beEmpty
+    }
   }
 
 }

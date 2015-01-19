@@ -5,7 +5,8 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.json.{PropertyValue, StringPropertyValue}
+import renesca.json.{PropertyKey, PropertyValue, StringPropertyValue}
+import renesca.json.PropertyValue._
 
 @RunWith(classOf[JUnitRunner])
 class PropertiesSpec extends Specification with Mockito {
@@ -44,7 +45,7 @@ class PropertiesSpec extends Specification with Mockito {
     "provide iterator" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties.iterator must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+      A.properties.iterator must contain(exactly(PropertyKey("key") -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
     }
 
     "provide empty"in new MockNode  {

@@ -7,6 +7,7 @@ import scala.collection.immutable
 case class PropertyKey(name:String) extends NonBacktickName
 
 sealed trait ParameterValue
+sealed trait SoleParameterValue extends ParameterValue
 sealed trait PropertyValue extends ParameterValue
 
 case class LongPropertyValue(value:Long) extends PropertyValue
@@ -17,8 +18,8 @@ case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
   //TODO: forbid nesting of propertyvalues
 }
 
-case class ArrayParameterValue(value:Seq[ParameterValue]) extends ParameterValue
-case class MapParameterValue(value:Map[String,ParameterValue]) extends ParameterValue
+case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue
+case class MapParameterValue(value:Map[PropertyKey,ParameterValue]) extends SoleParameterValue
 
 object PropertyValue {
   implicit def primitiveToPropertyValue(x: Long): PropertyValue = LongPropertyValue(x)
@@ -45,10 +46,14 @@ object PropertyValue {
 }
 
 object ParameterValue {
-  implicit def MapToParameterValue(map:Map[String, ParameterValue]):ParameterValue = MapParameterValue(map)
-  def Map(kvs:(String,ParameterValue)*):Map[String, ParameterValue] = immutable.Map(kvs:_*)
+  implicit def PropertyKeyMapToMapParameterValue(map:Map[PropertyKey, ParameterValue]):MapParameterValue = MapParameterValue(map)
 
-  implicit def MapParameterValueToMap(map:MapParameterValue):Map[String,ParameterValue] = map.value
+  implicit def MapParameterValueToPropertyKeyMap(map:MapParameterValue):Map[PropertyKey,ParameterValue] = map.value
+
+  implicit def StringMapToPropertyKeyMap(key: String)= new AnyRef {
+    def ->(x: PropertyValue) = (PropertyKey(key),x)
+    def ->(x: SoleParameterValue) = (PropertyKey(key),x)
+  }
 }
 
 

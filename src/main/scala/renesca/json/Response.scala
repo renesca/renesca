@@ -6,9 +6,9 @@ case class Relationship(
                          `type` : String,
                          startNode:String,
                          endNode:String,
-                         properties : Map[String, PropertyValue] = Map.empty
+                         properties : Map[PropertyKey, PropertyValue] = Map.empty
                          )
-case class Node(id : String, labels : List[String] = Nil, properties : Map[String, PropertyValue] = Map.empty)
+case class Node(id : String, labels : List[String] = Nil, properties : Map[PropertyKey, PropertyValue] = Map.empty)
 case class Graph(nodes : List[Node] = Nil, relationships : List[Relationship] = Nil)
 case class Error(code : String, message : String)
 case class Data(row : Option[RowData] = None, graph : Option[Graph] = None)

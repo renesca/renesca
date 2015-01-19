@@ -7,6 +7,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.json
 import renesca.json.{LongPropertyValue, Relationship, StringPropertyValue}
+import renesca.json.ParameterValue._
 
 import scala.collection.mutable
 

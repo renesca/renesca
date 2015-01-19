@@ -1,17 +1,17 @@
 package renesca
 
 import renesca.graph.Graph
-import renesca.json.{ParameterValue, PropertyValue}
+import renesca.json.{PropertyKey, ParameterValue, PropertyValue}
 
 object Query {
   implicit def StringToQuery(statement:String):Query = Query(statement)
 }
-case class Query(statement:String, parameters:Map[String, ParameterValue] = Map.empty)
+case class Query(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty)
 
 class DbService {
   var restService:RestService = null //TODO: inject
 
-  def queryGraph(statement:String, parameters:Map[String, ParameterValue]):Graph = queryGraph(Query(statement, parameters))
+  def queryGraph(statement:String, parameters:Map[PropertyKey, ParameterValue]):Graph = queryGraph(Query(statement, parameters))
   def queryGraph(query:Query):Graph = {
     val results = executeQueries(List(query), List("graph"))
 
@@ -20,7 +20,7 @@ class DbService {
     mergedGraph
   }
 
-  def queryRows(query:String, parameters:Map[String,PropertyValue]) = ???
+  def queryRows(query:String, parameters:Map[PropertyKey,PropertyValue]) = ???
 
   def batchQuery(query:Query) { executeQueries(List(query), Nil) }
   def batchQuery(queries:Seq[Query]) { executeQueries(queries, Nil) }

@@ -1,15 +1,15 @@
 package renesca.graph
 
 import renesca.NonBacktickName
-import renesca.json.PropertyValue
+import renesca.json.{PropertyKey, PropertyValue}
 import scala.collection.mutable
 
 case class Label(name:String) extends NonBacktickName
 
 object Node {
-  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[String, PropertyValue] = Map.empty) = {
+  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) = {
     val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
-    val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[String, PropertyValue] ++ properties)
+    val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)
   }
 }

@@ -15,4 +15,4 @@ object Statement {
   }
 }
 
-case class Statement(statement:String, parameters:Option[Map[String,ParameterValue]] = None, resultDataContents:Option[List[String]] = None)
+case class Statement(statement:String, parameters:Option[Map[PropertyKey,ParameterValue]] = None, resultDataContents:Option[List[String]] = None)

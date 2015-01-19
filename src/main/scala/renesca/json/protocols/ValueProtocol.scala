@@ -4,6 +4,14 @@ import renesca.json._
 import spray.json._
 
 object ValueProtocol extends DefaultJsonProtocol {
+  implicit object JsonPropertyKeyFormat extends RootJsonFormat[PropertyKey] {
+    override def write(pv: PropertyKey) = JsString(pv.name)
+
+    override def read(value: JsValue): PropertyKey = value match {
+      case JsString(str) => PropertyKey(str)
+      case json => deserializationError(s"can not deserialize property key of type $json")
+    }
+  }
 
   implicit object JsonPropertyValueFormat extends RootJsonFormat[PropertyValue] {
     override def write(pv: PropertyValue) = pv match {
@@ -28,13 +36,13 @@ object ValueProtocol extends DefaultJsonProtocol {
     override def write(pv: ParameterValue) = pv match {
       case pv:PropertyValue => JsonPropertyValueFormat.write(pv)
       case ArrayParameterValue(seq) => JsArray((seq map write).toVector)
-      case MapParameterValue(map) => JsObject(map mapValues write)
+      case MapParameterValue(map) => JsObject(map.map { case (key, value) => (key.name, write(value))})
     }
 
     override def read(value: JsValue) = value match {
       case x@(_:JsString | _:JsNumber | _:JsBoolean | JsNull) => JsonPropertyValueFormat.read(x)
       case JsArray(array) => ArrayParameterValue(array map read)
-      case JsObject(map) => MapParameterValue(map mapValues read)
+      case JsObject(map) => MapParameterValue(map.map { case (key, value) => (PropertyKey(key), read(value))})
     }
   }
 }

@@ -6,6 +6,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.json.{PropertyValue, StringPropertyValue}
+import renesca.json.ParameterValue._
 
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {

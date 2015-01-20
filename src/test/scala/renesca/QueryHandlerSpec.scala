@@ -10,7 +10,7 @@ import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])
-class DbServiceSpec extends Specification with Mockito {
+class QueryHandlerSpec extends Specification with Mockito {
 
   trait GraphQuery extends Scope {
     val dbService = new DbService
@@ -25,7 +25,20 @@ class DbServiceSpec extends Specification with Mockito {
     }
   }
 
-  "DbService" can {
+  "QueryHandler" should {
+    "clear changes after persisting" in {
+      val queryHandler = new QueryHandler() {
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+      }
+
+      val graph = mock[Graph]
+      graph.changes returns Nil
+
+      queryHandler.persistChanges(graph)
+
+      there was one(graph).clearChanges()
+    }
+
     "create no graph as an empty graph" in new GraphQuery {
 
       respond("""

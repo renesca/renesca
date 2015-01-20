@@ -13,18 +13,6 @@ import spray.json._
 
 
 @RunWith(classOf[JUnitRunner])
-class DbServiceDbSpec extends IntegrationSpecification {
-
-  "DbService" should {
-
-    "throw exception on Neo4j Error" in {
-      db.batchQuery("this is invalid cypher syntax") must throwA[RuntimeException]
-    }
-  }
-
-}
-
-@RunWith(classOf[JUnitRunner])
 class DbServiceWithMockDbSpec extends HttpMockSpecification {
   "DbService" should {
     "execute graph query" in new DbMock(this) {

@@ -1,7 +1,8 @@
 package renesca
 
-import renesca.graph.Graph
-import renesca.json.{Result, PropertyKey, ParameterValue, PropertyValue}
+import renesca.graph._
+import renesca.json.{ParameterValue, PropertyKey, PropertyValue}
+import renesca.json.PropertyKey._
 
 case class Query(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty)
 
@@ -18,6 +19,12 @@ trait QueryHandler {
 
   def queryRows(query:String, parameters:Map[PropertyKey,PropertyValue]) = ???
 
+  def persistChanges(graph:Graph) {
+    val queries:Seq[Query] = graph.changes.map(graphChangeToQuery)
+    batchQuery(queries)
+    graph.clearChanges()
+  }
+
   protected def executeQueries(queries:Seq[Query], resultDataContents:List[String]):List[json.Result] = {
     val jsonRequest = buildJsonRequest(queries, resultDataContents)
     val jsonResponse = queryService(jsonRequest)
@@ -29,6 +36,17 @@ trait QueryHandler {
     val allJsonGraphs:Seq[json.Graph] = results.flatMap{_.data.flatMap(_.graph)}
     val mergedGraph = allJsonGraphs.map(Graph(_)).fold(Graph())(_ merge _) //TODO: use Graph.empty
     mergedGraph
+  }
+
+  private val graphChangeToQuery:GraphChange => Query = {
+    case NodeSetProperty(nodeId, key, value) => Query("match (n) where id(n) = {id} set n += {keyValue}", Map("id" -> nodeId, "keyValue" -> Map(key -> value)))
+    case NodeRemoveProperty(nodeId, key) => Query(s"match (n) where id(n) = {id} remove n.`$key`", Map("id" -> nodeId))
+    case NodeSetLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} set n:`${label.name}`", Map("id" -> nodeId))
+    case NodeRemoveLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} remove n:`${label.name}`", Map("id" -> nodeId))
+    case NodeDelete(nodeId) => Query("match (n) where id(n) = {id} optional match (n)-[r]-() delete r,n", Map("id" -> nodeId))
+    case RelationSetProperty(relationId, key, value) => Query("match ()-[r]->() where id(r) = {id} set r += {keyValue}", Map("id" -> relationId, "keyValue" -> Map(key -> value)))
+    case RelationRemoveProperty(relationId, key) => Query(s"match ()-[r]->() where id(r) = {id} remove r.`$key`", Map("id" -> relationId))
+    case RelationDelete(relationId) => Query("match ()-[r]->() where id(r) = {id} delete r", Map("id" -> relationId))
   }
 
   private def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {

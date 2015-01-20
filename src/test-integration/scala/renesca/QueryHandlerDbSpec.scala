@@ -8,7 +8,7 @@ import renesca.json.PropertyValue
 import renesca.json.PropertyValue._
 
 @RunWith(classOf[JUnitRunner])
-class GraphManagerDbSpec extends IntegrationSpecification {
+class QueryHandlerDbSpec extends IntegrationSpecification {
 
   def createNode(query:String):(Graph,Node) = {
     val graph = db.queryGraph(query)
@@ -25,7 +25,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
     val (graph,node) = createNode("create n return n")
 
     node.properties("key") = data
-    graphManager.persistChanges(graph)
+    db.persistChanges(graph)
 
     resultNode.properties("key") mustEqual data
   }
@@ -35,13 +35,19 @@ class GraphManagerDbSpec extends IntegrationSpecification {
     val relation = graph.relations.head
 
     relation.properties("key") = data
-    graphManager.persistChanges(graph)
+    db.persistChanges(graph)
 
     val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
     resultRelation.properties("key") mustEqual data
   }
 
-  "GraphManager.persist" should {
+  "QueryHandler" should {
+    "throw exception on Neo4j Error" in {
+      db.batchQuery("this is invalid cypher syntax") must throwA[RuntimeException]
+    }
+  }
+
+  "QueryHandler.persist" should {
 
     "set long property on node" in { testNodeSetProperty(123) }
     "set double property on node" in { testNodeSetProperty(1.337) }
@@ -57,7 +63,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val (graph,node) = createNode("create n return n")
 
       node.properties -= "yes"
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       resultNode.properties must beEmpty
     }
@@ -66,7 +72,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val (graph,node) = createNode("create n return n")
 
       node.labels += Label("BEER")
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       resultNode.labels must contain(exactly(Label("BEER")))
     }
@@ -75,7 +81,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val (graph,node) = createNode("create (n:WINE) return n")
 
       node.labels -= Label("WINE")
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       resultNode.labels must beEmpty
     }
@@ -84,7 +90,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val (graph,node) = createNode("create n return n")
 
       graph.delete(node)
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       val resultGraph = db.queryGraph("match n return n")
       resultGraph.nodes must beEmpty
@@ -104,7 +110,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
 
       val n = graph.nodes.find(_.id == nid).get
       graph.delete(n) // deletes node n and relations l,r
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
       resultGraph.nodes must haveSize(2)
@@ -127,7 +133,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val relation = graph.relations.head
 
       relation.properties -= "yes"
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
       resultRelation.properties must beEmpty
@@ -138,7 +144,7 @@ class GraphManagerDbSpec extends IntegrationSpecification {
       val relation = graph.relations.head
 
       graph.delete(relation)
-      graphManager.persistChanges(graph)
+      db.persistChanges(graph)
 
       val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
       resultGraph.nodes must haveSize(2)

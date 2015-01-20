@@ -62,7 +62,5 @@ trait IntegrationSpecification extends Specification with AfterExample {
   override protected def after = IntegrationTestSetup.cleanupDb()
 
   implicit val db = IntegrationTestSetup.db
-  val graphManager = new GraphManager
-  graphManager.dbService = db
 }
 

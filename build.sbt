@@ -20,15 +20,15 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.15" % "test",
-  "com.github.httpmock" %% "httpmock-specs" % "0.2" % "test")
+  "com.github.httpmock" %% "httpmock-specs" % "0.2" % "integration-test")
 
 // Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")
 
 // Integration tests
-unmanagedSourceDirectories in DbTest <<= (baseDirectory in DbTest)(base =>  Seq(base / "src/test-integration"))
+unmanagedSourceDirectories in RenescaIntegrationTest <<= (baseDirectory in RenescaIntegrationTest)(base =>  Seq(base / "src" / "integration-test" / "scala"))
 
-parallelExecution in IntegrationTest := false
+parallelExecution in RenescaIntegrationTest := false
 
 // publishing
 pgpSecretRing := file("local.secring.gpg")

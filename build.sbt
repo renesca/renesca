@@ -20,8 +20,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.15" % "test",
-  "com.jayway.awaitility" % "awaitility-scala" % "1.6.3" % "test",
-  "com.github.httpmock" %% "httpmock-specs" % "0.1" % "test")
+  "com.github.httpmock" %% "httpmock-specs" % "0.2" % "test")
 
 // Scoverage
 scalacOptions in Test ++= Seq("-Yrangepos")

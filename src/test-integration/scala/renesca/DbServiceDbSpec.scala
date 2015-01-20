@@ -8,10 +8,7 @@ import com.github.httpmock.specs.{HttpMock, HttpMockServer}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import org.specs2.specification.Scope
 import renesca.graph.Graph
-import renesca.json._
-import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 
 
@@ -27,21 +24,23 @@ class DbServiceDbSpec extends IntegrationSpecification {
 
 }
 
-class DbServiceWithMockDbSepc extends HttpMockSpecification {
-  // TODO: do everything in integration test instead.
-  "exeecute graph query" in new DbMock(this) {
-    val A = json.Node("1")
-    val B = json.Node("2")
-    val ArB = json.Relationship("3", "hopfen", A.id, B.id)
-    val jsonGraph: json.Graph = json.Graph(List(A, B), List(ArB))
-    when(Query("some statement")).thenRespond(jsonGraph)
+@RunWith(classOf[JUnitRunner])
+class DbServiceWithMockDbSpec extends HttpMockSpecification {
+  "DbService" should {
+    "execute graph query" in new DbMock(this) {
+      val A = json.Node("1")
+      val B = json.Node("2")
+      val ArB = json.Relationship("3", "hopfen", A.id, B.id)
+      val jsonGraph: json.Graph = json.Graph(List(A, B), List(ArB))
+      when(Query("some statement")).thenRespond(jsonGraph)
 
-    val resultGraph = graphManager.dbService.queryGraph(Query("some statement"))
-    resultGraph must equalTo(Graph(jsonGraph))
+      val resultGraph = graphManager.dbService.queryGraph(Query("some statement"))
+      resultGraph must equalTo(Graph(jsonGraph))
+    }
   }
 }
 
-class HttpMockSpecification extends Specification with HttpMockServer
+abstract class HttpMockSpecification extends Specification with HttpMockServer
 
 class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   val graphManager = new GraphManager
@@ -63,6 +62,7 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   }
 
   implicit def jsonResponseToHttpResponse(jsonResponse: json.Response): ResponseDto = {
+    import renesca.json.protocols.ResponseJsonProtocol._
     response().payload(jsonResponse.toJson.prettyPrint).build()
   }
 

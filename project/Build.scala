@@ -2,9 +2,14 @@ import sbt.Keys._
 import sbt._
 
 object ApplicationBuild extends Build {
+
   lazy val RenescaIntegrationTest = config("integration-test") extend (Test)
+  lazy val integrationTestSettings : Seq[Setting[_]] = inConfig(RenescaIntegrationTest)(Defaults.testSettings) ++ Seq(
+    scalaSource in RenescaIntegrationTest := baseDirectory.value / "src/integration-test/scala",
+    parallelExecution in RenescaIntegrationTest := false,
+    fork in RenescaIntegrationTest := false
+  )
   lazy val project = Project("renesca", file("."))
-    // See http://www.scala-sbt.org/release/docs/Detailed-Topics/Testing#additional-test-configurations-with-shared-sources
     .configs(RenescaIntegrationTest)
-    .settings(inConfig(RenescaIntegrationTest)(Defaults.testSettings): _*)
+    .settings(inConfig(RenescaIntegrationTest)(integrationTestSettings): _*)
 }

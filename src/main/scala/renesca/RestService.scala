@@ -5,7 +5,7 @@ import akka.util.Timeout
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
-import spray.http.HttpHeaders.Accept
+import spray.http.HttpHeaders.{Location, Accept}
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -15,7 +15,9 @@ import HttpCharsets._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-case class TransactionId(id:String)
+case class TransactionId(id:String) {
+  override def toString = id
+}
 
 class RestService(server:String) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
@@ -50,10 +52,18 @@ class RestService(server:String) {
     jsonResponse
   }
 
-  def openTransaction(jsonRequest:json.Request):(TransactionId, json.Response) = {
+  def openTransaction(jsonRequest:json.Request = json.Request()):(TransactionId, json.Response) = {
     val path = "/db/data/transaction"
     val (headers, jsonResponse) = awaitResponse(path, jsonRequest)
-    (TransactionId("0"), jsonResponse)
+    val uris = headers.collectFirst({ case Location(uri) => uri })
+    val optionId = for (uri <- uris) yield {
+      uri.path.reverse.head.toString
+    }
+
+    optionId match {
+      case Some(id) => (TransactionId(id), jsonResponse)
+      case None => throw new RuntimeException("Cannot get transaction id")
+    }
   }
 
   def resumeTransaction(id:TransactionId, jsonRequest:json.Request):json.Response = {
@@ -62,7 +72,7 @@ class RestService(server:String) {
     jsonResponse
   }
 
-  def commitTransaction(id:TransactionId, jsonRequest:json.Request):json.Response = {
+  def commitTransaction(id:TransactionId, jsonRequest:json.Request = json.Request()):json.Response = {
     val path = s"/db/data/transaction/$id/commit"
     val (_,jsonResponse) = awaitResponse(path, jsonRequest)
     jsonResponse

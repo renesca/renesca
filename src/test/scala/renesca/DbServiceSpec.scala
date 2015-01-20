@@ -20,7 +20,7 @@ class DbServiceSpec extends Specification with Mockito {
 
     def respond(response:String): Unit = {
       def jsonResponse = response.parseJson.convertTo[json.Response]
-      dbService.restService.awaitJsonResponse(any[json.Request]) returns jsonResponse
+      dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
       graph = dbService.queryGraph(Query(""))
     }
   }

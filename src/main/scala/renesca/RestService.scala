@@ -15,6 +15,8 @@ import HttpCharsets._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
+case class TransactionId(id:String)
+
 class RestService(server:String) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
@@ -23,29 +25,47 @@ class RestService(server:String) {
   import system.dispatcher // provides execution context
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
-  def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
-  def buildHttpRequest(jsonRequest:json.Request):HttpRequest = {
+  private def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
+
+  private def buildHttpRequest(path:String, jsonRequest:json.Request):HttpRequest = {
     //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
-    val path = "/db/data/transaction/commit"
     val uri = Uri(s"$server$path")
     val content = jsonRequest
     val accept:MediaRange = `application/json`// withCharset `UTF-8`
     Post(uri, content)//.withHeaders(Accept(accept))
   }
 
-  def awaitJsonResponse(jsonRequest:json.Request):json.Response = {
-    val httpRequest = buildHttpRequest(jsonRequest)
+  private def awaitResponse(path:String, jsonRequest:json.Request):(List[HttpHeader], json.Response) = {
+    val httpRequest = buildHttpRequest(path, jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
-    httpResponse.entity.as[json.Response] match {
-      case Right(jsonResponse) =>
-        jsonResponse
-      case Left(error) =>
-        println(httpResponse.status)
-        println(httpResponse.entity.asString)
-        println(error)
-        null
-    }
+    val Right(jsonResponse) = httpResponse.entity.as[json.Response]
+    //TODO: error handling
+    (httpResponse.headers, jsonResponse)
+  }
+
+  def singleRequest(jsonRequest:json.Request):json.Response = {
+    val path = "/db/data/transaction/commit"
+    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    jsonResponse
+  }
+
+  def openTransaction(jsonRequest:json.Request):(TransactionId, json.Response) = {
+    val path = "/db/data/transaction"
+    val (headers, jsonResponse) = awaitResponse(path, jsonRequest)
+    (TransactionId("0"), jsonResponse)
+  }
+
+  def resumeTransaction(id:TransactionId, jsonRequest:json.Request):json.Response = {
+    val path = s"/db/data/transaction/$id"
+    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    jsonResponse
+  }
+
+  def commitTransaction(id:TransactionId, jsonRequest:json.Request):json.Response = {
+    val path = s"/db/data/transaction/$id/commit"
+    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    jsonResponse
   }
 }
 

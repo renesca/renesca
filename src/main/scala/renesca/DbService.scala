@@ -1,7 +1,7 @@
 package renesca
 
 import renesca.graph.Graph
-import renesca.json.{PropertyKey, ParameterValue, PropertyValue}
+import renesca.json.{Result, PropertyKey, ParameterValue, PropertyValue}
 
 case class Query(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty)
 
@@ -20,6 +20,12 @@ trait QueryHandler {
   protected def buildResults(results:Seq[json.Result]):Graph
 }
 
+class Transaction extends QueryHandler {
+  override protected def executeQueries(queries: Seq[Query], resultDataContents: List[String]): List[Result] = ???
+
+  override protected def buildResults(results: Seq[Result]): Graph = ???
+}
+
 class DbService extends QueryHandler {
   var restService:RestService = null //TODO: inject
 
@@ -31,7 +37,7 @@ class DbService extends QueryHandler {
 
   protected def executeQueries(queries:Seq[Query], resultDataContents:List[String]):List[json.Result] = {
     val jsonRequest = buildJsonRequest(queries, resultDataContents)
-    val jsonResponse = restService.awaitJsonResponse(jsonRequest)
+    val jsonResponse = restService.singleRequest(jsonRequest)
     val results = handleError(jsonResponse)
     results
   }

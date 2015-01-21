@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.15" % "test,integration-test",
   "com.github.httpmock" % "mock-http-server-webapp" % "1.1.8" artifacts(Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
-  "com.github.httpmock" %% "httpmock-specs" % "0.4" % "test,integration-test")
+  "com.github.httpmock" %% "httpmock-specs" % "0.5" % "test,integration-test")
 
 
 // Scoverage

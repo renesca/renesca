@@ -7,7 +7,7 @@ import renesca.json.PropertyKey._
 case class Query(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty)
 
 object QueryHandler {
-  private val graphChangeToQuery:GraphChange => Query = {
+  private val graphContentChangeToQuery:GraphContentChange => Query = {
     case NodeSetProperty(nodeId, key, value) => Query("match (n) where id(n) = {id} set n += {keyValue}", Map("id" -> nodeId, "keyValue" -> Map(key -> value)))
     case NodeRemoveProperty(nodeId, key) => Query(s"match (n) where id(n) = {id} remove n.`$key`", Map("id" -> nodeId))
     case NodeSetLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} set n:`${label.name}`", Map("id" -> nodeId))
@@ -16,6 +16,15 @@ object QueryHandler {
     case RelationSetProperty(relationId, key, value) => Query("match ()-[r]->() where id(r) = {id} set r += {keyValue}", Map("id" -> relationId, "keyValue" -> Map(key -> value)))
     case RelationRemoveProperty(relationId, key) => Query(s"match ()-[r]->() where id(r) = {id} remove r.`$key`", Map("id" -> relationId))
     case RelationDelete(relationId) => Query("match ()-[r]->() where id(r) = {id} delete r", Map("id" -> relationId))
+  }
+
+  private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
+    case AddNode(localNodeId) => db => graph =>
+      val dbNode = db.queryGraph("create (n) return n").nodes.head
+      val localNode = graph.nodes.find(_.id == localNodeId).get
+      // TODO: only replace node.id?
+      graph.nodes -= localNode
+      graph.nodes += dbNode
   }
 }
 
@@ -35,8 +44,27 @@ trait QueryHandler {
   def queryRows(query:String, parameters:Map[PropertyKey,PropertyValue]) = ???
 
   def persistChanges(graph:Graph) {
-    val queries:Seq[Query] = graph.changes.map(graphChangeToQuery)
-    batchQuery(queries)
+    //TODO: optimizations
+    // - successive writes on property/label keep only the most recent one
+
+    // produce changesets which end with a structural change
+    val changeSets:List[List[GraphChange]] = graph.changes.foldRight(List(List.empty[GraphChange])) {
+      case (x:GraphStructureChange,xs:List[List[GraphChange]]) => List(x) :: xs
+      case (x:GraphChange,          xs:List[List[GraphChange]]) => (x :: xs.head) :: xs.tail
+    }
+
+    for( changeSet <- changeSets ) {
+      val contentChanges = changeSet collect {case c:GraphContentChange => c }
+      val structuralChanges = changeSet collect {case c:GraphStructureChange => c }
+
+      val contentChangeQueries:Seq[Query] = contentChanges.map(graphContentChangeToQuery)
+      batchQuery(contentChangeQueries)
+
+      for(structuralChange <- structuralChanges) {
+        graphStructureChangeToEffect(structuralChange)(this)(graph)
+      }
+    }
+
     graph.clearChanges()
   }
 

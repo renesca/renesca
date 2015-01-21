@@ -15,7 +15,7 @@ object Node {
 }
 
 class Node private[graph] (
-    val id: Long,
+    val id: Long, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
     val labels: NodeLabels,
     val properties: Properties
     ) {

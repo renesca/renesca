@@ -19,7 +19,7 @@ script:
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"
-  = "2.11.4" && sbt publishSigned sonatypeRelease
+  = "2.11.5" && sbt publishSigned sonatypeRelease
 env:
   matrix:
     # test across multiple versions of Neo4j:

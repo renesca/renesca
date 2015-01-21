@@ -33,9 +33,9 @@ object Graph {
 
 
 class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
-
   // private constructor to force usage of Factory
 
+  // graph must be consistent
   require(relations.forall{ relation =>
     (nodes contains relation.startNode) &&
     (nodes contains relation.endNode)
@@ -44,9 +44,10 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   def changes: Seq[GraphChange] = {
-    localChanges ++
+    val unsortedChanges = localChanges ++
     (nodes.flatMap(node => node.changes) ++
-      relations.flatMap(relation => relation.changes)).toSeq
+      relations.flatMap(relation => relation.changes))
+    unsortedChanges.sortBy(_.timestamp)
   }
 
   def clearChanges() {

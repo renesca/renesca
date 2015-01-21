@@ -71,6 +71,8 @@ trait QueryHandler {
 
 class Transaction extends QueryHandler {
   var restService:RestService = null //TODO: inject
+
+  //TODO: submit first query with openTransaction
   lazy val (id,_) = restService.openTransaction()
 
   override protected def queryService(jsonRequest:json.Request):json.Response = {

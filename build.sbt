@@ -20,8 +20,8 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.15" % "test,integration-test",
-  "com.github.httpmock" % "mock-http-server-webapp" % "1.1.7" artifacts(Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
-  "com.github.httpmock" %% "httpmock-specs" % "0.3" % "test,integration-test")
+  "com.github.httpmock" % "mock-http-server-webapp" % "1.1.8" artifacts(Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
+  "com.github.httpmock" %% "httpmock-specs" % "0.4" % "test,integration-test")
 
 
 // Scoverage

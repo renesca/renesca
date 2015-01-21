@@ -50,9 +50,8 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   override def requestUrl = s"${mockServer.baseUri}${super.requestUrl}"
 
   def when(query: Query): Stubbing = {
-    val url = s"$requestUrl/db/data/transaction/commit"
-    println(s"db url: $url")
-    when(post(url).contentType("application/json").build())
+    val url = "/db/data/transaction/commit"
+    when(post(url).build())
   }
 
   def post(url: String) = request().post(url)
@@ -63,7 +62,7 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
 
   implicit def jsonResponseToHttpResponse(jsonResponse: json.Response): ResponseDto = {
     import renesca.json.protocols.ResponseJsonProtocol._
-    response().payload(jsonResponse.toJson.prettyPrint).build()
+    response().contentType("application/json").payload(jsonResponse.toJson.prettyPrint).build()
   }
 
 }

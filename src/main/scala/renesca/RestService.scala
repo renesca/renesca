@@ -37,9 +37,15 @@ class RestService(server:String) {
   def awaitJsonResponse(jsonRequest:json.Request):json.Response = {
     val httpRequest = buildHttpRequest(jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
-    val Right(jsonResponse) = httpResponse.entity.as[json.Response]
-    //TODO: error handling
-    jsonResponse
+    httpResponse.entity.as[json.Response] match {
+      case Right(jsonResponse) =>
+        jsonResponse
+      case Left(error) =>
+        println(httpResponse.status)
+        println(httpResponse.entity.asString)
+        println(error)
+        null
+    }
   }
 }
 

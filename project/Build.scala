@@ -3,9 +3,9 @@ import sbt._
 
 object ApplicationBuild extends Build {
 
-  lazy val RenescaIntegrationTest = config("integration-test") extend (Test)
+  lazy val RenescaIntegrationTest = config("test-integration") extend (Test)
   lazy val integrationTestSettings : Seq[Setting[_]] = inConfig(RenescaIntegrationTest)(Defaults.testSettings) ++ Seq(
-    scalaSource in RenescaIntegrationTest := baseDirectory.value / "src/integration-test/scala",
+    scalaSource in RenescaIntegrationTest := baseDirectory.value / "src/test-integration/scala",
     parallelExecution in RenescaIntegrationTest := false,
     fork in RenescaIntegrationTest := false
   )

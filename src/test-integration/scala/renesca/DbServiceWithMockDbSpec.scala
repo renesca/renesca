@@ -22,7 +22,7 @@ class DbServiceWithMockDbSpec extends HttpMockSpecification {
       val jsonGraph: json.Graph = json.Graph(List(A, B), List(ArB))
       when(Query("some statement")).thenRespond(jsonGraph)
 
-      val resultGraph = graphManager.dbService.queryGraph(Query("some statement"))
+      val resultGraph = dbService.queryGraph(Query("some statement"))
       resultGraph must equalTo(Graph(jsonGraph))
     }
   }
@@ -31,9 +31,8 @@ class DbServiceWithMockDbSpec extends HttpMockSpecification {
 abstract class HttpMockSpecification extends Specification with HttpMockServer
 
 class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
-  val graphManager = new GraphManager
-  graphManager.dbService = new DbService
-  graphManager.dbService.restService = new RestService(requestUrl)
+  val dbService = new DbService
+  dbService.restService = new RestService(requestUrl)
 
   override def requestUrl = s"${mockServer.baseUri}${super.requestUrl}"
 

@@ -52,6 +52,6 @@ class Node private[graph] (
 
   override def hashCode: Int = id.hashCode
 
-  override def toString = s"Node(${id.value})"
+  override def toString = s"Node($id)"
 }
 

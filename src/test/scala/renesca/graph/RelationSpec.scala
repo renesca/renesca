@@ -5,6 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
+import renesca.graph.Id._
 
 @RunWith(classOf[JUnitRunner])
 class RelationSpec extends Specification with Mockito {
@@ -14,7 +15,7 @@ class RelationSpec extends Specification with Mockito {
       val relationId = 5
       val relation = Relation(relationId, mock[Node], mock[Node])
 
-      relation.properties.id mustEqual relationId
+      relation.properties.id mustEqual Id(relationId)
     }
 
     trait ExampleGraph extends Scope {

@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.graph.{Graph, Label, Node}
 import renesca.json.PropertyKey._
-import renesca.json.PropertyValue
+import renesca.json.{LongPropertyValue, PropertyKey, PropertyValue}
 import renesca.json.PropertyValue._
 
 @RunWith(classOf[JUnitRunner])
@@ -150,6 +150,42 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.nodes must haveSize(2)
       resultGraph.relations must beEmpty
     }
+
+    "add node" in {
+      val graph = Graph()
+      graph.addNode()
+      val node = graph.nodes.head
+      node.id.value must beLessThan(0L)
+      db.persistChanges(graph)
+      node.id.value must beGreaterThan(0L)
+
+      val result = db.queryGraph("match (n) return n")
+      result.nodes must haveSize(1)
+    }
+
+    "add content changes after NodeAdd" in {
+      val graph = Graph()
+      graph.addNode()
+      val node = graph.nodes.head
+      node.properties += ("test" -> 5)
+      db.persistChanges(graph)
+
+      val result = db.queryGraph("match (n) return n")
+      result.nodes must haveSize(1)
+      val resultNode = result.nodes.head
+      resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
+    }.pendingUntilFixed
+
+    "add content changes in NodeAdd" in {
+      val graph = Graph()
+      graph.addNode(properties = Map("test" -> 5))
+      db.persistChanges(graph)
+
+      val result = db.queryGraph("match (n) return n")
+      result.nodes must haveSize(1)
+      val resultNode = result.nodes.head
+      resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
+    }.pendingUntilFixed
   }
 
 }

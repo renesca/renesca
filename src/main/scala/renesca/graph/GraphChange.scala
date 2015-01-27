@@ -7,16 +7,18 @@ sealed trait GraphChange {
 }
 
 trait GraphContentChange extends GraphChange
-case class NodeSetProperty(nodeId:Long, key:PropertyKey, value:PropertyValue) extends GraphContentChange
-case class NodeRemoveProperty(nodeId:Long, key:PropertyKey) extends GraphContentChange
-case class NodeSetLabel(nodeId:Long, label:Label) extends GraphContentChange
-case class NodeRemoveLabel(nodeId:Long, label:Label) extends GraphContentChange
-case class NodeDelete(nodeId:Long) extends GraphContentChange
-case class RelationSetProperty(relationId:Long, key:PropertyKey, value:PropertyValue) extends GraphContentChange
-case class RelationRemoveProperty(relationId:Long, key:PropertyKey) extends GraphContentChange
-case class RelationDelete(relationId:Long) extends GraphContentChange
+case class NodeSetProperty(nodeId:Id, key:PropertyKey, value:PropertyValue) extends GraphContentChange
+case class NodeRemoveProperty(nodeId:Id, key:PropertyKey) extends GraphContentChange
+case class NodeSetLabel(nodeId:Id, label:Label) extends GraphContentChange
+case class NodeRemoveLabel(nodeId:Id, label:Label) extends GraphContentChange
+case class NodeDelete(nodeId:Id) extends GraphContentChange
+case class RelationSetProperty(relationId:Id, key:PropertyKey, value:PropertyValue) extends GraphContentChange
+case class RelationRemoveProperty(relationId:Id, key:PropertyKey) extends GraphContentChange
+case class RelationDelete(relationId:Id) extends GraphContentChange
 
 trait GraphStructureChange extends GraphChange
-case class AddNode(localNodeId:Long) extends GraphStructureChange
+case class NodeAdd(localNodeId:Id, labels:Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange {
+  def this(node: Node) = this(node.id, node.labels, node.properties.toMap)
+}
 
 

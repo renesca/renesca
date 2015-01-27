@@ -4,9 +4,9 @@ import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
 
-class Properties(val id: Long,
-  setPropertyChange: (Long, PropertyKey, PropertyValue) => GraphChange,
-  removePropertyChange: (Long, PropertyKey) => GraphChange,
+class Properties(val id: Id,
+  setPropertyChange: (Id, PropertyKey, PropertyValue) => GraphChange,
+  removePropertyChange: (Id, PropertyKey) => GraphChange,
   self: mutable.Map[PropertyKey, PropertyValue] = mutable.HashMap.empty[PropertyKey, PropertyValue])
 
   extends mutable.Map[PropertyKey, PropertyValue] with mutable.MapLike[PropertyKey, PropertyValue, Properties] {

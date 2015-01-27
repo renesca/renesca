@@ -1,8 +1,23 @@
 package renesca.graph
 
 import renesca.json
+import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
+
+object Id {
+  implicit def IdToPropertyValue(id: Id):PropertyValue = id.value
+  implicit def IdToLong(id: Id):Long = id.value
+  implicit def LongToId(id: Long):Id = Id(id)
+  implicit def LongToId(id: Int):Id = Id(id)
+}
+
+case class Id(var _id: Long) {
+  def value = _id
+  def value_=(id: Long) {
+    _id = id
+  }
+}
 
 object Graph {
   def apply(nodes: Traversable[Node] = Nil, relations: Traversable[Relation] = Nil):Graph = {
@@ -16,7 +31,7 @@ object Graph {
       Node(id.toLong, labels.map(Label), properties)
     }
 
-    val idToNode:Map[String,Node] = nodes.map{case node => node.id.toString -> node}.toMap
+    val idToNode:Map[String,Node] = nodes.map{case node => node.id.value.toString -> node}.toMap
 
     val relations:List[Relation] = jsonGraph.relationships.map {
       case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
@@ -61,6 +76,13 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     }
   }
 
+  def addNode(labels: Seq[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) {
+    val node = Node.local(labels, properties)
+    nodes += node
+    // TODO: factory for NodeAdd
+    localChanges += new NodeAdd(node)
+  }
+
   def delete(relation: Relation) {
     relations -= relation
     localChanges += RelationDelete(relation.id)
@@ -93,7 +115,7 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
   def nonEmpty = nodes.nonEmpty
 
 
-  override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"
+  override def toString = s"Graph(nodes:(${nodes.map(_.id.value).mkString(", ")}), relations:(${relations.map( r => s"${r.id.value}:${r.startNode.id.value}->${r.endNode.id.value}").mkString(", ")}))"
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
 

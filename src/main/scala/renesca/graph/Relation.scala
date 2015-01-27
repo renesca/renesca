@@ -7,14 +7,14 @@ import scala.collection.mutable
 case class RelationType(name:String)
 
 object Relation {
-  def apply(id:Long, start:Node, end:Node, relationType:RelationType = null, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {
+  def apply(id:Id, start:Node, end:Node, relationType:RelationType = null, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
 }
 
 class Relation private[Relation] (
-    val id:Long,
+    val id:Id,
     val startNode:Node,
     val endNode:Node,
     val relationType:RelationType,
@@ -37,7 +37,7 @@ class Relation private[Relation] (
 
   override def hashCode = id.hashCode
 
-  override def toString = s"Relation($id: ${startNode.id} -> ${endNode.id})"
+  override def toString = s"Relation(${id.value}: ${startNode.id.value} -> ${endNode.id.value})"
 }
 
 

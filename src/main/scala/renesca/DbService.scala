@@ -19,12 +19,10 @@ object QueryHandler {
   }
 
   private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
-    case AddNode(localNodeId) => db => graph =>
+    case NodeAdd(localNodeId, _, _) => db => graph =>
       val dbNode = db.queryGraph("create (n) return n").nodes.head
       val localNode = graph.nodes.find(_.id == localNodeId).get
-      // TODO: only replace node.id?
-      graph.nodes -= localNode
-      graph.nodes += dbNode
+      localNode.id.value = dbNode.id.value
   }
 }
 

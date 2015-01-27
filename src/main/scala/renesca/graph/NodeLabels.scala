@@ -3,7 +3,7 @@ package renesca.graph
 import scala.collection.mutable
 
 class NodeLabels(
-    val id: Long,
+    val id: Id,
     self: mutable.Set[Label] = mutable.HashSet.empty[Label]
     )
   extends mutable.Set[Label] with mutable.SetLike[Label, NodeLabels] {

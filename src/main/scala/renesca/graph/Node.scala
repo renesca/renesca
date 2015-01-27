@@ -7,15 +7,24 @@ import scala.collection.mutable
 case class Label(name:String) extends NonBacktickName
 
 object Node {
-  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) = {
+  private var currentLocalId:Long = -1
+  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
     val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
     val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)
   }
+  def local(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
+    apply(nextId(), labels, properties)
+  }
+  private def nextId() = {
+    val newId = currentLocalId
+    currentLocalId -= 1
+    newId
+  }
 }
 
 class Node private[graph] (
-    val id: Long, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
+    val id: Id, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
     val labels: NodeLabels,
     val properties: Properties
     ) {
@@ -43,6 +52,6 @@ class Node private[graph] (
 
   override def hashCode: Int = id.hashCode
 
-  override def toString = s"Node($id)"
+  override def toString = s"Node(${id.value})"
 }
 

@@ -33,7 +33,7 @@ class ResponseSpec extends Specification with Mockito {
         }
                  """
       val response = json.parseJson.convertTo[Response]
-      response mustEqual Response(List(Result(List("col1", "col2"), Nil)))
+      response mustEqual Response(results=List(Result(List("col1", "col2"), Nil)))
     }
 
     "contain data" in {
@@ -47,7 +47,7 @@ class ResponseSpec extends Specification with Mockito {
     			 }
                  			 """
       val response = json.parseJson.convertTo[Response]
-      response mustEqual Response(List(Result(List("col1"), List(Data()))))
+      response mustEqual Response(results=List(Result(List("col1"), List(Data()))))
     }
 
     "contain error" in {
@@ -66,5 +66,93 @@ class ResponseSpec extends Specification with Mockito {
           message = "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"
       )))
     }
+
+    "contain transaction information" in {
+      val json = """
+          {
+            "commit": "http:\/\/localhost:7474\/db\/data\/transaction\/29\/commit",
+            "results" : [ ],
+            "transaction": {
+              "expires": "Tue, 27 Jan 2015 17:37:30 +0000"
+            },
+            "errors": [
+
+            ]
+          }                 			 """
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(
+        commit = Some("http://localhost:7474/db/data/transaction/29/commit"),
+        transaction = Some(Transaction("Tue, 27 Jan 2015 17:37:30 +0000"))
+      )
+    }
+
+    "parse complicated result" in {
+      val json = """
+          {
+            "results" : [ {
+              "columns" : [ "bike", "p1", "p2" ],
+              "data" : [ {
+                "row" : [ {
+                  "weight" : 10
+                }, [ {
+                  "weight" : 10
+                }, {
+                  "position" : 1
+                }, {
+                  "spokes" : 3
+                } ], [ {
+                  "weight" : 10
+                }, {
+                  "position" : 2
+                }, {
+                  "spokes" : 32
+                } ] ],
+                "graph" : {
+                  "nodes" : [ {
+                    "id" : "4",
+                    "labels" : [ "Bike" ],
+                    "properties" : {
+                      "weight" : 10
+                    }
+                  }, {
+                    "id" : "5",
+                    "labels" : [ "Wheel" ],
+                    "properties" : {
+                      "spokes" : 3
+                    }
+                  }, {
+                    "id" : "6",
+                    "labels" : [ "Wheel" ],
+                    "properties" : {
+                      "spokes" : 32
+                    }
+                  } ],
+                  "relationships" : [ {
+                    "id" : "0",
+                    "type" : "HAS",
+                    "startNode" : "4",
+                    "endNode" : "5",
+                    "properties" : {
+                      "position" : 1
+                    }
+                  }, {
+                    "id" : "1",
+                    "type" : "HAS",
+                    "startNode" : "4",
+                    "endNode" : "6",
+                    "properties" : {
+                      "position" : 2
+                    }
+                  } ]
+                }
+              } ]
+            } ],
+            "errors" : [ ]
+          }          	 """
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(
+      )
+    }.pendingUntilFixed
+
   }
 }

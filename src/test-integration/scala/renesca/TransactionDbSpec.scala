@@ -5,7 +5,7 @@ import org.specs2.runner.JUnitRunner
 import renesca.json.PropertyKey._
 
 @RunWith(classOf[JUnitRunner])
-class TransactionSpec extends IntegrationSpecification {
+class TransactionDbSpec extends IntegrationSpecification {
   "Transactions" should {
     "BatchQuery rollback on errors" in {
       try {
@@ -17,6 +17,7 @@ class TransactionSpec extends IntegrationSpecification {
       val graph = db.queryGraph(Query("match n return n"))
       graph.isEmpty mustEqual true
     }
+
     "Manual transaction rollback on errors" in {
       val transaction = new Transaction
       transaction.restService = db.restService // TODO injection
@@ -30,6 +31,7 @@ class TransactionSpec extends IntegrationSpecification {
       val graph = db.queryGraph(Query("match n return n"))
       graph.isEmpty mustEqual true
     }
+
     "Manual transaction success" in {
       val transaction = new Transaction
       transaction.restService = db.restService // TODO injection
@@ -44,6 +46,7 @@ class TransactionSpec extends IntegrationSpecification {
       result.nodes must not contain (first)
       result.nodes must contain (second)
     }
+
     "Persist graph changes in transaction" in {
       val transaction = new Transaction
       transaction.restService = db.restService // TODO injection
@@ -59,5 +62,29 @@ class TransactionSpec extends IntegrationSpecification {
       result.nodes must not contain (first)
       result.nodes must contain (second)
     }
+
+    "Submit last query on commit" in {
+      val transaction = new Transaction
+      transaction.restService = db.restService // TODO injection
+
+      println("##### batchQuery...")
+
+//      transaction.batchQuery("create (n) return n")
+//      println("##### commit...")
+//      transaction.commit("create (y) return y")
+
+      val result = db.queryGraph(Query("match n return n"))
+      result.nodes must haveSize(2)
+    }.pendingUntilFixed("receiving json that cannot be parsed yet. -> ResponseSpec")
+
+    "only commit with a query" in {
+      val transaction = new Transaction
+      transaction.restService = db.restService // TODO injection
+
+//      transaction.commit("create n return n")
+
+      val result = db.queryGraph(Query("match n return n"))
+      result.nodes must haveSize(1)
+    }.pendingUntilFixed("receiving json that cannot be parsed yet. -> ResponseSpec")
   }
 }

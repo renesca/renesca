@@ -79,14 +79,14 @@ trait QueryHandler {
     mergedGraph
   }
 
-  private def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {
+  protected def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {
     json.Request(queries.map(query => json.Statement(query, resultDataContents)).toList)
   }
 
-  private def handleError(jsonResponse:json.Response):List[json.Result] = {
+  protected def handleError(jsonResponse:json.Response):List[json.Result] = {
     jsonResponse match {
-      case json.Response(results, Nil) => results
-      case json.Response(Nil, errors) =>
+      case json.Response(_, results, _, Nil) => results
+      case json.Response(_, Nil    , _, errors) =>
         val message = errors.map{ case json.Error(code, msg) => s"$code\n$msg"}.mkString("\n","\n\n","\n")
         throw new RuntimeException(message)
     }
@@ -98,15 +98,34 @@ trait QueryHandler {
 class Transaction extends QueryHandler {
   var restService:RestService = null //TODO: inject
 
-  //TODO: submit first query with openTransaction
-  lazy val (id,_) = restService.openTransaction()
+  var id:Option[TransactionId] = None
 
   override protected def queryService(jsonRequest:json.Request):json.Response = {
-    restService.resumeTransaction(id, jsonRequest)
+    id match {
+      case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
+      case None =>
+        val (transactionId, jsonResponse) = restService.openTransaction(jsonRequest)
+        id = Some(transactionId)
+        jsonResponse
+    }
   }
 
   def commit() {
-    restService.commitTransaction(id)
+    for( transactionId <- id)
+      restService.commitTransaction(transactionId)
+  }
+
+  def commit(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty):Graph = {
+    commit(Query(statement, parameters))
+  }
+
+  def commit(query:Query):Graph = {
+    val jsonRequest = buildJsonRequest(List(query), List("graph"))
+    val jsonResponse = id match {
+      case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
+      case None =>                restService.singleRequest(jsonRequest)
+    }
+    buildResults(handleError(jsonResponse))
   }
 }
 

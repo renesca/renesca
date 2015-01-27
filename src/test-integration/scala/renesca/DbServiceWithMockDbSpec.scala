@@ -44,7 +44,7 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   def post(url: String) = request().post(url)
 
   implicit def graphToJsonResponse(jsonGraph: json.Graph): ResponseDto = {
-    json.Response(List(json.Result(Nil, List(json.Data(None, Some(jsonGraph))))))
+    json.Response(results=List(json.Result(Nil, List(json.Data(None, Some(jsonGraph))))))
   }
 
   implicit def jsonResponseToHttpResponse(jsonResponse: json.Response): ResponseDto = {

@@ -78,10 +78,11 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     }
   }
 
-  def addNode(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) {
+  def addNode(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty):Node = {
     val node = Node.local(labels, properties)
     nodes += node
-    localChanges += NodeAdd(node)
+    localChanges += NodeAdd(node.id, labels, properties)
+    node
   }
 
   def delete(relation: Relation) {

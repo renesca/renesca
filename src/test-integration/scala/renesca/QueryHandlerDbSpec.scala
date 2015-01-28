@@ -165,8 +165,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add properties and labels after NodeAdd" in {
       val graph = Graph()
-      graph.addNode()
-      val node = graph.nodes.head
+      val node = graph.addNode()
       node.properties += ("test" -> 5)
       node.labels ++= Set("foo", "bar")
       db.persistChanges(graph)
@@ -188,7 +187,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val resultNode = result.nodes.head
       resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
-    }.pendingUntilFixed
+    }
   }
 
 }

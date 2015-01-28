@@ -19,10 +19,10 @@ object QueryHandler {
   }
 
   private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
-    case NodeAdd(localNodeId, _, _) => db => graph =>
-      val dbNode = db.queryGraph("create (n) return n").nodes.head
-      val localNode = graph.nodes.find(_.id == localNodeId).get
-      localNode.id.value = dbNode.id.value
+    case NodeAdd(localNodeId, labels, properties) => db => graph =>
+      val labelDef = labels.map(l => s":`${l.name}`").mkString
+      val dbNode = db.queryGraph(s"create (n $labelDef) set n += {keyValue} return n", Map("keyValue" -> properties)).nodes.head
+      localNodeId.value = dbNode.id.value
   }
 }
 

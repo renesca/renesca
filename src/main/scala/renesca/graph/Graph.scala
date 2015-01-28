@@ -30,7 +30,7 @@ object Graph {
 
   def apply(jsonGraph:json.Graph):Graph = {
     val nodes:List[Node] = jsonGraph.nodes.map{ case json.Node(id,labels,properties) =>
-      Node(id.toLong, labels.map(Label), properties)
+      Node(id.toLong, labels.map(Label.apply), properties)
     }
 
     val idToNode:Map[String,Node] = nodes.map{case node => node.id.toString -> node}.toMap
@@ -78,7 +78,7 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     }
   }
 
-  def addNode(labels: Seq[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) {
+  def addNode(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) {
     val node = Node.local(labels, properties)
     nodes += node
     localChanges += NodeAdd(node)

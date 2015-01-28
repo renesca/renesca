@@ -163,28 +163,31 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       result.nodes must haveSize(1)
     }
 
-    "add content changes after NodeAdd" in {
+    "add properties and labels after NodeAdd" in {
       val graph = Graph()
       graph.addNode()
       val node = graph.nodes.head
       node.properties += ("test" -> 5)
+      node.labels ++= Set("foo", "bar")
       db.persistChanges(graph)
 
       val result = db.queryGraph("match (n) return n")
       result.nodes must haveSize(1)
       val resultNode = result.nodes.head
       resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
-    }.pendingUntilFixed
+      resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
+    }
 
-    "add content changes in NodeAdd" in {
+    "set properties and labels in NodeAdd" in {
       val graph = Graph()
-      graph.addNode(properties = Map("test" -> 5))
+      graph.addNode(Set("foo", "bar"), Map("test" -> 5))
       db.persistChanges(graph)
 
       val result = db.queryGraph("match (n) return n")
       result.nodes must haveSize(1)
       val resultNode = result.nodes.head
       resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
+      resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }.pendingUntilFixed
   }
 

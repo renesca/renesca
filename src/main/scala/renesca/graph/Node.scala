@@ -4,11 +4,15 @@ import renesca.NonBacktickName
 import renesca.json.{PropertyKey, PropertyValue}
 import scala.collection.mutable
 
+object Label {
+  implicit def StringToLabel(name: String):Label = Label(name)
+}
+
 case class Label(name:String) extends NonBacktickName
 
 object Node {
   private var currentLocalId:Long = -1
-  def apply(id: Long, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
+  def apply(id: Id, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
     val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
     val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)
@@ -19,7 +23,7 @@ object Node {
   private def nextId() = {
     val newId = currentLocalId
     currentLocalId -= 1
-    newId
+    Id(newId)
   }
 }
 

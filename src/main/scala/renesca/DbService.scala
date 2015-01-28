@@ -10,8 +10,8 @@ object QueryHandler {
   private val graphContentChangeToQuery:GraphContentChange => Query = {
     case NodeSetProperty(nodeId, key, value) => Query("match (n) where id(n) = {id} set n += {keyValue}", Map("id" -> nodeId, "keyValue" -> Map(key -> value)))
     case NodeRemoveProperty(nodeId, key) => Query(s"match (n) where id(n) = {id} remove n.`$key`", Map("id" -> nodeId))
-    case NodeSetLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} set n:`${label.name}`", Map("id" -> nodeId))
-    case NodeRemoveLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} remove n:`${label.name}`", Map("id" -> nodeId))
+    case NodeSetLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} set n:`$label`", Map("id" -> nodeId))
+    case NodeRemoveLabel(nodeId, label) => Query(s"match (n) where id(n) = {id} remove n:`$label`", Map("id" -> nodeId))
     case NodeDelete(nodeId) => Query("match (n) where id(n) = {id} optional match (n)-[r]-() delete r,n", Map("id" -> nodeId))
     case RelationSetProperty(relationId, key, value) => Query("match ()-[r]->() where id(r) = {id} set r += {keyValue}", Map("id" -> relationId, "keyValue" -> Map(key -> value)))
     case RelationRemoveProperty(relationId, key) => Query(s"match ()-[r]->() where id(r) = {id} remove r.`$key`", Map("id" -> relationId))
@@ -20,7 +20,7 @@ object QueryHandler {
 
   private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
     case NodeAdd(localNodeId, labels, properties) => db => graph =>
-      val labelDef = labels.map(l => s":`${l.name}`").mkString
+      val labelDef = labels.map(l => s":`$l`").mkString
       val dbNode = db.queryGraph(s"create (n $labelDef) set n += {keyValue} return n", Map("keyValue" -> properties)).nodes.head
       localNodeId.value = dbNode.id.value
   }

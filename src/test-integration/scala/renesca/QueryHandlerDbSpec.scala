@@ -60,7 +60,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "set boolean array property on node" in { testNodeSetProperty(List(true, false)) }
 
     "remove property from node" in {
-      val (graph,node) = createNode("create n return n")
+      val (graph,node) = createNode("create n set n.yes = 0 return n")
 
       node.properties -= "yes"
       db.persistChanges(graph)
@@ -129,7 +129,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "set boolean array property on relation" in { testRelationSetProperty(List(true, false)) }
 
     "remove property from relation" in {
-      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
+      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) set r.yes = 100 return chicken, r, horse")
       val relation = graph.relations.head
 
       relation.properties -= "yes"

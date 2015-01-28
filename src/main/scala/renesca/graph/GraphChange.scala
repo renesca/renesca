@@ -17,6 +17,9 @@ case class RelationRemoveProperty(relationId:Id, key:PropertyKey) extends GraphC
 case class RelationDelete(relationId:Id) extends GraphContentChange
 
 trait GraphStructureChange extends GraphChange
+object NodeAdd {
+  def apply(node: Node) = new NodeAdd(node)
+}
 case class NodeAdd(localNodeId:Id, labels:Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange {
   def this(node: Node) = this(node.id, node.labels, node.properties.toMap)
 }

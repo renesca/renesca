@@ -12,11 +12,19 @@ object Id {
   implicit def IntToId(id: Int):Id = Id(id)
 }
 
-case class Id(var _id: Long) {
+case class Id(private var _id: Long) {
   def value = _id
   def value_=(id: Long) {
     _id = id
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Id => _id == that._id
+    case that: Long => _id == that
+    case that: Int => _id == that
+    case _ => false
+  }
+  override def hashCode = _id.hashCode
 
   override def toString = _id.toString
 }

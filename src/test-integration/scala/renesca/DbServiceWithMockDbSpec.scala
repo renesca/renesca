@@ -25,6 +25,10 @@ class DbServiceWithMockDbSpec extends HttpMockSpecification {
       val resultGraph = dbService.queryGraph(Query("some statement"))
       resultGraph must equalTo(Graph(jsonGraph))
     }
+
+    "for list of queries in graphQuery return list of graphs" in todo
+
+    "for list of queries in batchQuery return no data" in todo
   }
 }
 

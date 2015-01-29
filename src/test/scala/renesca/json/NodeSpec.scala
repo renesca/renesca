@@ -6,6 +6,7 @@ import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
+import ParameterValue._
 
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {

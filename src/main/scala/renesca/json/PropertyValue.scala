@@ -10,16 +10,66 @@ sealed trait ParameterValue
 sealed trait SoleParameterValue extends ParameterValue
 sealed trait PropertyValue extends ParameterValue
 
-case class LongPropertyValue(value:Long) extends PropertyValue
-case class DoublePropertyValue(value:Double) extends PropertyValue
-case class StringPropertyValue(value:String) extends PropertyValue
-case class BooleanPropertyValue(value:Boolean) extends PropertyValue
-case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
-  //TODO: forbid nesting of propertyvalues
+final case class LongPropertyValue(value:Long) extends PropertyValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: LongPropertyValue => value == that.value
+    case that: Int => value == that
+    case that: Long => value == that
+    case _ => false
+  }
+  override def hashCode = value.hashCode
 }
 
-case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue
-case class MapParameterValue(value:Map[PropertyKey,ParameterValue]) extends SoleParameterValue
+final case class DoublePropertyValue(value:Double) extends PropertyValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: DoublePropertyValue => value == that.value
+    case that: Double => value == that
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
+case class StringPropertyValue(value:String) extends PropertyValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: StringPropertyValue => value == that.value
+    case that: String => value == that
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
+case class BooleanPropertyValue(value:Boolean) extends PropertyValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: BooleanPropertyValue => value == that.value
+    case that: Boolean => value == that
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
+case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
+  //TODO: forbid nesting of propertyvalues
+  override def equals(other: Any): Boolean = other match {
+    case that: ArrayPropertyValue => value == that.value
+    case that: Seq[_] => value.sameElements(that)
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
+
+case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: ArrayParameterValue => value == that.value
+    case that: Seq[_] => value.sameElements(that)
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
+case class MapParameterValue(value:Map[PropertyKey,ParameterValue]) extends SoleParameterValue {
+  override def equals(other: Any): Boolean = other match {
+    case that: MapParameterValue => value == that.value
+    case that: Map[_,_] => value.sameElements(that)
+    case _ => false
+  }
+  override def hashCode = value.hashCode
+}
 
 object PropertyKey {
   implicit def StringMapToPropertyKeyMap(key: String)= new AnyRef {

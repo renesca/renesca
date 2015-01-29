@@ -53,7 +53,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = Graph(jsonGraph)
       val node = graph.nodes.head
 
-      node.id mustEqual Id(1744)
+      node.id mustEqual 1744
       node.labels mustEqual Nil
       node.properties mustEqual Map.empty
     }
@@ -74,7 +74,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = Graph(jsonGraph)
       val node = graph.nodes.head
 
-      node.properties mustEqual mutable.Map("biene" -> StringPropertyValue("honig"), "bier" -> LongPropertyValue(1516))
+      node.properties mustEqual mutable.Map("biene" -> "honig", "bier" -> 1516)
     }
 
     "create graph with relations containing nodes" in {
@@ -89,10 +89,10 @@ class GraphFactorySpec extends Specification with Mockito {
       graph.relations must have size 1
 
       val relation = graph.relations.head
-      relation.id mustEqual Id(42)
+      relation.id mustEqual 42
       relation.relationType mustEqual RelationType("wurst") // !!!
-      relation.startNode mustEqual graph.nodes.find(_.id.value == 1744).get
-      relation.endNode mustEqual graph.nodes.find(_.id.value == 1516).get
+      relation.startNode mustEqual graph.nodes.find(_.id == 1744).get
+      relation.endNode mustEqual graph.nodes.find(_.id == 1516).get
     }
 
     "create graph with relation with properties" in {
@@ -105,7 +105,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = Graph(jsonGraph)
       val relation = graph.relations.head
 
-      relation.properties mustEqual mutable.Map("ki" -> StringPropertyValue("wäl"), "freitag" -> LongPropertyValue(13))
+      relation.properties mustEqual mutable.Map("ki" -> "wäl", "freitag" -> 13)
     }
   }
 }

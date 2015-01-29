@@ -21,7 +21,7 @@ class PropertiesSpec extends Specification with Mockito {
     "store property" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties("key") mustEqual StringPropertyValue("value")
+      A.properties("key") mustEqual "value"
     }
 
     "remove property" in new MockNode {
@@ -39,7 +39,7 @@ class PropertiesSpec extends Specification with Mockito {
     "get existing element" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties.get("key") mustEqual Some(StringPropertyValue("value"))
+      A.properties.get("key") mustEqual Some("value")
     }
 
     "provide iterator" in new MockNode {

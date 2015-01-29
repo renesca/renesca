@@ -173,7 +173,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val result = db.queryGraph("match (n) return n")
       result.nodes must haveSize(1)
       val resultNode = result.nodes.head
-      resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
+      resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
 
@@ -185,7 +185,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val result = db.queryGraph("match (n) return n")
       result.nodes must haveSize(1)
       val resultNode = result.nodes.head
-      resultNode.properties mustEqual Map(PropertyKey("test") -> LongPropertyValue(5))
+      resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
   }

@@ -72,7 +72,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.nodes must not contain A
       graph.relations must not contain ArB
       graph.relations must contain (BrC)
-      graph.changes must not contain(RelationDelete(3))
+      graph.changes must not contain RelationDelete(3)
       graph.changes must not contain RelationDelete(5)
     }
 
@@ -139,17 +139,17 @@ class GraphChangeSpec extends Specification with Mockito {
   "Relation" should {
     "emit change when setting property" in {
       val relation = Relation(1, Node(2), Node(3))
-      relation.properties += (("key", StringPropertyValue("value")))
+      relation.properties += ("key" -> "value")
       relation.properties -= "key"
 
       relation.changes must contain(
-        RelationSetProperty(1, "key", StringPropertyValue("value"))
+        RelationSetProperty(1, "key", "value")
       )
     }
 
     "emit change when removing property" in {
       val relation = Relation(1, Node(2), Node(3))
-      relation.properties += (("key", StringPropertyValue("value")))
+      relation.properties += ("key" -> "value")
       relation.properties -= "key"
 
       relation.changes must contain(

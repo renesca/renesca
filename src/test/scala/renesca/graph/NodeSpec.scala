@@ -25,8 +25,8 @@ class NodeSpec extends Specification with Mockito {
       val nodeId = 5
       val node = Node(nodeId)
 
-      node.labels.id.value mustEqual nodeId
-      node.properties.id.value mustEqual nodeId
+      node.labels.id mustEqual nodeId
+      node.properties.id mustEqual nodeId
     }
 
     "be equal to other nodes with same id" in {

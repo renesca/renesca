@@ -150,9 +150,26 @@ class ResponseSpec extends Specification with Mockito {
             "errors" : [ ]
           }          	 """
       val response = json.parseJson.convertTo[Response]
-      response mustEqual Response(
-      )
-    }.pendingUntilFixed
+      response mustEqual Response(None, List(Result(
+        List("bike", "p1", "p2"),
+        List(Data(Some(ArrayParameterValue(Vector(
+          MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
+          ArrayParameterValue(Vector(
+            MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
+            MapParameterValue(Map(PropertyKey("position") -> LongPropertyValue(1))),
+            MapParameterValue(Map(PropertyKey("spokes") -> LongPropertyValue(3))))),
+          ArrayParameterValue(Vector(
+            MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
+            MapParameterValue(Map(PropertyKey("position") -> LongPropertyValue(2))),
+            MapParameterValue(Map(PropertyKey("spokes") -> LongPropertyValue(32)))))))),
+          Some(Graph(List(
+            Node("4", List("Bike"), Map(PropertyKey("weight") -> LongPropertyValue(10))),
+            Node("5", List("Wheel"), Map(PropertyKey("spokes") -> LongPropertyValue(3))),
+            Node("6", List("Wheel"), Map(PropertyKey("spokes") -> LongPropertyValue(32)))),
+            List(Relationship("0", "HAS", "4", "5", Map(PropertyKey("position") -> LongPropertyValue(1))),
+              Relationship("1", "HAS", "4", "6", Map(PropertyKey("position") -> LongPropertyValue(2)))))))))),
+        None, List())
+    }
 
   }
 }

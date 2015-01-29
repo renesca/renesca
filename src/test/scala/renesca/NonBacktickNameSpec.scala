@@ -15,9 +15,9 @@ class NonBacktickNameSpec extends Specification {
       RelationType("foo`bar") must throwA[IllegalArgumentException]
     }
     "allow names without backticks" in {
-      Label("foobar") must not(throwA[IllegalArgumentException])
-      PropertyKey("foobar") must not(throwA[IllegalArgumentException])
-      RelationType("foo`bar") must throwA[IllegalArgumentException]
+      Label("foobar") must not (throwA[IllegalArgumentException])
+      PropertyKey("foobar") must not (throwA[IllegalArgumentException])
+      RelationType("foobar") must not (throwA[IllegalArgumentException])
     }
   }
 }

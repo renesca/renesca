@@ -67,24 +67,21 @@ class TransactionDbSpec extends IntegrationSpecification {
       val transaction = new Transaction
       transaction.restService = db.restService // TODO injection
 
-      println("##### batchQuery...")
-
-//      transaction.batchQuery("create (n) return n")
-//      println("##### commit...")
-//      transaction.commit("create (y) return y")
+      transaction.batchQuery("create (n) return n")
+      transaction.commit("create (y) return y")
 
       val result = db.queryGraph(Query("match n return n"))
       result.nodes must haveSize(2)
-    }.pendingUntilFixed("receiving json that cannot be parsed yet. -> ResponseSpec")
+    }
 
     "only commit with a query" in {
       val transaction = new Transaction
       transaction.restService = db.restService // TODO injection
 
-//      transaction.commit("create n return n")
+      transaction.commit("create n return n")
 
       val result = db.queryGraph(Query("match n return n"))
       result.nodes must haveSize(1)
-    }.pendingUntilFixed("receiving json that cannot be parsed yet. -> ResponseSpec")
+    }
   }
 }

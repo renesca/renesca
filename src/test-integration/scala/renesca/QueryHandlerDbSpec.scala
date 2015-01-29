@@ -2,7 +2,7 @@ package renesca
 
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import renesca.graph.{Graph, Label, Node}
+import renesca.graph._
 import renesca.json.PropertyKey._
 import renesca.json.{LongPropertyValue, PropertyKey, PropertyValue}
 import renesca.json.PropertyValue._
@@ -187,6 +187,48 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val resultNode = result.nodes.head
       resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
+    }
+
+    "add relation" in {
+      val graph = Graph()
+      val start = graph.addNode(Set("I"))
+      val end = graph.addNode(Set("cheezburger"))
+      val relation = graph.addRelation(start, end, "can haz")
+      relation.id.value must beLessThan(0L)
+      db.persistChanges(graph)
+      relation.id.value must beGreaterThan(0L)
+
+      val result = db.queryGraph("match ()-[r]->() return r")
+      result.relations must haveSize(1)
+      val resultRelation = result.relations.head
+      resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map.empty)
+    }
+
+    "add properties after RelationAdd" in {
+      val graph = Graph()
+      val start = graph.addNode(Set("I"))
+      val end = graph.addNode(Set("cheezburger"))
+      val relation = graph.addRelation(start, end, "can haz")
+      relation.properties += ("one" -> "yes")
+      db.persistChanges(graph)
+
+      val result = db.queryGraph("match ()-[r]->() return r")
+      result.relations must haveSize(1)
+      val resultRelation = result.relations.head
+      resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map("one" -> "yes"))
+    }
+
+    "set properties in RelationAdd" in {
+      val graph = Graph()
+      val start = graph.addNode(Set("I"))
+      val end = graph.addNode(Set("cheezburger"))
+      val relation = graph.addRelation(start, end, "can haz", Map("one" -> "yes"))
+      db.persistChanges(graph)
+
+      val result = db.queryGraph("match ()-[r]->() return r")
+      result.relations must haveSize(1)
+      val resultRelation = result.relations.head
+      resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map("one" -> "yes"))
     }
   }
 

@@ -18,5 +18,6 @@ case class RelationDelete(relationId:Id) extends GraphContentChange
 
 trait GraphStructureChange extends GraphChange
 case class NodeAdd(localNodeId:Id, labels:Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange
+case class RelationAdd(relationId: Id, start:Id, end:Id, relationType:RelationType, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange
 
 

@@ -10,6 +10,14 @@ object Id {
   implicit def IdToLong(id: Id):Long = id.value
   implicit def LongToId(id: Long):Id = Id(id)
   implicit def IntToId(id: Int):Id = Id(id)
+
+  private var currentLocalId:Long = -1
+
+  private[graph] def nextId() = {
+    val newId = currentLocalId
+    currentLocalId -= 1
+    Id(newId)
+  }
 }
 
 case class Id(private var _id: Long) {
@@ -84,6 +92,13 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     relations.foreach{relation =>
       relation.properties.localChanges.clear()
     }
+  }
+
+  def addRelation(start: Node, end: Node, relationType: RelationType, properties: Map[PropertyKey, PropertyValue] = Map.empty) = {
+    val relation = Relation.local(start, end, relationType, properties)
+    relations += relation
+    localChanges += RelationAdd(relation.id, start.id, end.id, relationType, properties)
+    relation
   }
 
   def addNode(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty):Node = {

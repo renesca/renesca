@@ -16,6 +16,9 @@ object Relation {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
+  def local(start:Node, end:Node, relationType:RelationType, properties:Map[PropertyKey, PropertyValue] = Map.empty) = {
+    apply(Id.nextId(), start, end, relationType, properties)
+  }
 }
 
 class Relation private[Relation] (

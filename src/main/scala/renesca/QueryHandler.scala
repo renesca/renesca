@@ -23,6 +23,9 @@ object QueryHandler {
       val labelDef = labels.map(l => s":`$l`").mkString
       val dbNode = db.queryGraph(s"create (n $labelDef) set n += {keyValue} return n", Map("keyValue" -> properties)).nodes.head
       localNodeId.value = dbNode.id.value
+    case RelationAdd(relationId, start, end, relationType, properties) => db => graph =>
+      val dbRelation = db.queryGraph(s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`$relationType`]->(end) set r += {keyValue} return r", Map("startId" -> start, "endId" -> end, "keyValue" -> properties)).relations.head
+      relationId.value = dbRelation.id.value
   }
 }
 

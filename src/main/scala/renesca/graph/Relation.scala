@@ -1,10 +1,11 @@
 package renesca.graph
 
+import renesca.NonBacktickName
 import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
 
-case class RelationType(name:String)
+case class RelationType(name:String) extends NonBacktickName
 
 object Relation {
   def apply(id:Id, start:Node, end:Node, relationType:RelationType = null, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {

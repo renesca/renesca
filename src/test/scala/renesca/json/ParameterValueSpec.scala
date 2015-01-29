@@ -8,95 +8,62 @@ import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class ParameterValueSpec extends Specification {
-  "PropertyValue" can {
-    def testFromAndToJson(json:String, propertyValue:PropertyValue) = {
-      val jsonAst = json.parseJson
-      val convertedPropertyValue = jsonAst.convertTo[PropertyValue]
+  "Parameters" can {
+    "have arrays of doubles" in {
+      val jsonAst = """{"key":[17.44, 15.16]}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-      convertedPropertyValue mustEqual propertyValue
-      propertyValue.toJson mustEqual jsonAst
+      properties mustEqual Map(PropertyKey("key") -> ArrayParameterValue(List(DoublePropertyValue(17.44), DoublePropertyValue(15.16))))
+      properties.toJson mustEqual jsonAst
     }
 
-    "have a long value" in { testFromAndToJson("1744", LongPropertyValue(1744)) }
-    "have a double value" in { testFromAndToJson("17.44", DoublePropertyValue(17.44)) }
-    "have a string value" in { testFromAndToJson(""" "value" """, StringPropertyValue("value")) }
-    "have a boolean value" in { testFromAndToJson("true", BooleanPropertyValue(true)) }
+    "have arrays of longs" in {
+      val jsonAst = """{"key":[1744, 1516]}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-    "have an array of longs" in { testFromAndToJson("[1744, 1516]", ArrayPropertyValue(List(LongPropertyValue(1744), LongPropertyValue(1516)))) }
-    "have an array of doubles" in { testFromAndToJson("[17.44, 15.16]", ArrayPropertyValue(List(DoublePropertyValue(17.44), DoublePropertyValue(15.16)))) }
-    "have an array of strings" in { testFromAndToJson("""["17.44", "15.16"] """, ArrayPropertyValue(List(StringPropertyValue("17.44"), StringPropertyValue("15.16")))) }
-    "have an array of booleans" in { testFromAndToJson("""[true, false] """, ArrayPropertyValue(List(BooleanPropertyValue(true), BooleanPropertyValue(false)))) }
-
-    "not equal objects of different type" in {
-      LongPropertyValue(1) mustNotEqual DoublePropertyValue(1)
-      LongPropertyValue(1) mustNotEqual StringPropertyValue("1")
-      LongPropertyValue(1) mustNotEqual BooleanPropertyValue(true)
-      LongPropertyValue(1) mustNotEqual ArrayPropertyValue(List(1))
-
-      DoublePropertyValue(1) mustNotEqual StringPropertyValue("1")
-      DoublePropertyValue(1) mustNotEqual BooleanPropertyValue(true)
-      DoublePropertyValue(1) mustNotEqual ArrayPropertyValue(List(1))
-
-      StringPropertyValue("1") mustNotEqual BooleanPropertyValue(true)
-      StringPropertyValue("1") mustNotEqual ArrayPropertyValue(List(1))
-
-      BooleanPropertyValue(true) mustNotEqual ArrayPropertyValue(List(1))
+      properties mustEqual Map(PropertyKey("key") -> ArrayParameterValue(List(LongPropertyValue(1744), LongPropertyValue(1516))))
+      properties.toJson mustEqual jsonAst
     }
 
-    "equal objects with same contents and its contents: Long" in {
-      LongPropertyValue(13) mustEqual LongPropertyValue(13)
-      LongPropertyValue(13) mustNotEqual LongPropertyValue(14)
-      LongPropertyValue(13) mustEqual 13L
-      LongPropertyValue(13) mustNotEqual 14L
-      LongPropertyValue(13) mustEqual 13 // Int
-      LongPropertyValue(13) mustNotEqual 14 // Int
+    "have arrays of strings" in {
+      val jsonAst = """{"key":["1744", "1516"]}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-      LongPropertyValue(13) mustNotEqual 13.0
-      LongPropertyValue(13) mustNotEqual "13"
+      properties mustEqual Map(PropertyKey("key") -> ArrayParameterValue(List(StringPropertyValue("1744"), StringPropertyValue("1516"))))
+      properties.toJson mustEqual jsonAst
     }
 
-    "equal objects with same contents and its contents: Double" in {
-      DoublePropertyValue(13.0) mustEqual DoublePropertyValue(13.0)
-      DoublePropertyValue(13.0) mustNotEqual DoublePropertyValue(14.0)
-      DoublePropertyValue(13.0) mustEqual 13.0
-      DoublePropertyValue(13.0) mustNotEqual 14.0
+    "have arrays of booleans" in {
+      val jsonAst = """{"key":[true, false]}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-      DoublePropertyValue(13.0) mustNotEqual "13"
+      properties mustEqual Map(PropertyKey("key") -> ArrayParameterValue(List(BooleanPropertyValue(true), BooleanPropertyValue(false))))
+      properties.toJson mustEqual jsonAst
     }
 
-    "equal objects with same contents and its contents: String" in {
-      StringPropertyValue("13") mustEqual StringPropertyValue("13")
-      StringPropertyValue("13") mustNotEqual StringPropertyValue("14")
-      StringPropertyValue("13") mustEqual "13"
-      StringPropertyValue("13") mustNotEqual "14"
+    "have nested objects" in {
+      val jsonAst = """{"key":{"foo":1,"bar":{"id":2}}}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-      StringPropertyValue("13") mustNotEqual 13
-      StringPropertyValue("13") mustNotEqual 13.0
+      properties mustEqual Map(PropertyKey("key") -> MapParameterValue(
+        Map(PropertyKey("foo") -> LongPropertyValue(1), PropertyKey("bar") -> MapParameterValue(
+          Map(PropertyKey("id") -> LongPropertyValue(2))
+        ))
+      ))
+      properties.toJson mustEqual jsonAst
     }
 
-    "equal objects with same contents and its contents: Boolean" in {
-      BooleanPropertyValue(true) mustEqual BooleanPropertyValue(true)
-      BooleanPropertyValue(true) mustNotEqual BooleanPropertyValue(false)
-      BooleanPropertyValue(true) mustEqual true
-      BooleanPropertyValue(true) mustNotEqual false
+    "have objects and literals in array in objects" in {
+      val jsonAst = """{"a":false, "key":[{"x":9999999999999},{"y":{"frei":"bier"}},{"brei": 3.14141414}, 7]}""".parseJson
+      val properties = jsonAst.convertTo[Map[PropertyKey, ParameterValue]]
 
-      BooleanPropertyValue(true) mustNotEqual 13
-      BooleanPropertyValue(true) mustNotEqual 13.0
+      properties mustEqual Map(PropertyKey("a") -> BooleanPropertyValue(false), PropertyKey("key") -> ArrayParameterValue(List(
+        MapParameterValue(Map(PropertyKey("x") -> LongPropertyValue(9999999999999L))),
+        MapParameterValue(Map(PropertyKey("y") -> MapParameterValue(Map(PropertyKey("frei") -> StringPropertyValue("bier"))))),
+        MapParameterValue(Map(PropertyKey("brei") -> DoublePropertyValue(3.14141414))),
+        LongPropertyValue(7)
+      )))
+      properties.toJson mustEqual jsonAst
     }
-
-    "equal objects with same contents and its contents: Array" in {
-      ArrayPropertyValue(List(1)) mustEqual ArrayPropertyValue(List(1))
-      ArrayPropertyValue(List(1)) mustNotEqual ArrayPropertyValue(List(2))
-      ArrayPropertyValue(List(1)) mustEqual List(1)
-      ArrayPropertyValue(List(1)) mustNotEqual List(2)
-
-      ArrayPropertyValue(List(1)) mustNotEqual 13
-      ArrayPropertyValue(List(1)) mustNotEqual 13.0
-    }
-
-    "equal objects with same contents and its contents: Map" in todo
-    "equal objects with same contents and its contents: ParameterArray and PropertyArray" in todo
-
-    "hashcodes" in todo
   }
 }

@@ -26,7 +26,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
       val B = Node(2)
 
-      val ArB = Relation(3, A, B)
+      val ArB = Relation(3, A, B, "r")
       ArB.properties.localChanges += relationPropertiesChange
 
       val graph = Graph(List(A,B), List(ArB))
@@ -63,8 +63,8 @@ class GraphChangeSpec extends Specification with Mockito {
       val A = Node(1)
       val B = Node(2)
       val C = Node(4)
-      val ArB = Relation(3, A, B)
-      val BrC = Relation(5, B, C)
+      val ArB = Relation(3, A, B, "r")
+      val BrC = Relation(5, B, C, "r")
       val graph = Graph(List(A, B, C), List(ArB, BrC))
 
       graph.delete(A)
@@ -79,7 +79,7 @@ class GraphChangeSpec extends Specification with Mockito {
     "emit change when deleting relation" in {
       val A = Node(1)
       val B = Node(2)
-      val ArB = Relation(3, A, B)
+      val ArB = Relation(3, A, B, "r")
       val graph = Graph(List(A,B), List(ArB))
 
       graph.delete(ArB)
@@ -138,7 +138,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
   "Relation" should {
     "emit change when setting property" in {
-      val relation = Relation(1, Node(2), Node(3))
+      val relation = Relation(1, Node(2), Node(3), "r")
       relation.properties += ("key" -> "value")
       relation.properties -= "key"
 
@@ -148,7 +148,7 @@ class GraphChangeSpec extends Specification with Mockito {
     }
 
     "emit change when removing property" in {
-      val relation = Relation(1, Node(2), Node(3))
+      val relation = Relation(1, Node(2), Node(3), "r")
       relation.properties += ("key" -> "value")
       relation.properties -= "key"
 

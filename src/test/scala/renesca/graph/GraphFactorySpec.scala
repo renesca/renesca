@@ -18,8 +18,8 @@ class GraphFactorySpec extends Specification with Mockito {
     //  \_7
     val A = Node(1)
     val B = Node(2)
-    val ArB = Relation(4, A, B)
-    val BrA = Relation(5, B, A)
+    val ArB = Relation(4, A, B, "r")
+    val BrA = Relation(5, B, A, "r")
 
     val nodesList = List(A,B)
     val relationsList = List(ArB, BrA)

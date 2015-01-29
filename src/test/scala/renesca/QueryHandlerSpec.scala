@@ -5,7 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.graph.{Graph, Node, Relation}
+import renesca.graph.{RelationType, Graph, Node, Relation}
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 
@@ -117,7 +117,7 @@ class QueryHandlerSpec extends Specification with Mockito {
        } """)
 
       graph.nodes must contain(exactly(Node(1), Node(2)))
-      graph.relations must contain(exactly(Relation(9, Node(1), Node(2))))
+      graph.relations must contain(exactly(Relation(9, Node(1), Node(2), RelationType("HAS"))))
     }
 
     "create a graph from multiple results" in new GraphQuery {
@@ -184,9 +184,9 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
       graph.relations must contain(exactly(
-        Relation(9, Node(1), Node(2)),
-        Relation(10, Node(3), Node(4)),
-        Relation(11, Node(1), Node(3))
+        Relation(9, Node(1), Node(2), RelationType("HAS")),
+        Relation(10, Node(3), Node(4), RelationType("HAS")),
+        Relation(11, Node(1), Node(3), RelationType("HAS"))
       ))
     }
 
@@ -251,9 +251,9 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
       graph.relations must contain(exactly(
-        Relation(9, Node(1), Node(2)),
-        Relation(10, Node(3), Node(4)),
-        Relation(11, Node(1), Node(3))
+        Relation(9, Node(1), Node(2), RelationType("HAS")),
+        Relation(10, Node(3), Node(4), RelationType("HAS")),
+        Relation(11, Node(1), Node(3), RelationType("HAS"))
       ))
     }
 
@@ -291,7 +291,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       graph.nodes must contain(exactly(Node(1), Node(2)))
       graph.relations must contain(exactly(
-        Relation(9, Node(1), Node(2))
+        Relation(9, Node(1), Node(2), RelationType("HAS"))
       ))
     }
   }

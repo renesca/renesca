@@ -5,10 +5,14 @@ import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
 
+object RelationType {
+  implicit def StringToRelationType(name: String):RelationType = RelationType(name)
+}
+
 case class RelationType(name:String) extends NonBacktickName
 
 object Relation {
-  def apply(id:Id, start:Node, end:Node, relationType:RelationType = null, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {
+  def apply(id:Id, start:Node, end:Node, relationType:RelationType, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }

@@ -21,6 +21,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     resultGraph.nodes.head
   }
 
+  def resultRelation:Relation = {
+    val resultGraph = db.queryGraph("match ()-[r]-() return r")
+    resultGraph.relations.head
+  }
+
   def testNodeSetProperty(data:PropertyValue) = {
     val (graph,node) = createNode("create n return n")
 
@@ -135,7 +140,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation.properties -= "yes"
       db.persistChanges(graph)
 
-      val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
       resultRelation.properties must beEmpty
     }
 
@@ -153,14 +157,14 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add node" in {
       val graph = Graph()
-      graph.addNode()
-      val node = graph.nodes.head
+      val node = graph.addNode()
       node.id.value must beLessThan(0L)
       db.persistChanges(graph)
       node.id.value must beGreaterThan(0L)
 
-      val result = db.queryGraph("match (n) return n")
-      result.nodes must haveSize(1)
+      resultNode.id mustEqual node.id
+      resultNode.labels must beEmpty
+      resultNode.properties must beEmpty
     }
 
     "add properties and labels after NodeAdd" in {
@@ -170,9 +174,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       node.labels ++= Set("foo", "bar")
       db.persistChanges(graph)
 
-      val result = db.queryGraph("match (n) return n")
-      result.nodes must haveSize(1)
-      val resultNode = result.nodes.head
       resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
@@ -182,9 +183,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.addNode(Set("foo", "bar"), Map("test" -> 5))
       db.persistChanges(graph)
 
-      val result = db.queryGraph("match (n) return n")
-      result.nodes must haveSize(1)
-      val resultNode = result.nodes.head
       resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
@@ -198,9 +196,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph)
       relation.id.value must beGreaterThan(0L)
 
-      val result = db.queryGraph("match ()-[r]->() return r")
-      result.relations must haveSize(1)
-      val resultRelation = result.relations.head
       resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map.empty)
     }
 
@@ -212,9 +207,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation.properties += ("one" -> "yes")
       db.persistChanges(graph)
 
-      val result = db.queryGraph("match ()-[r]->() return r")
-      result.relations must haveSize(1)
-      val resultRelation = result.relations.head
       resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map("one" -> "yes"))
     }
 
@@ -225,9 +217,6 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val relation = graph.addRelation(start, end, "can haz", Map("one" -> "yes"))
       db.persistChanges(graph)
 
-      val result = db.queryGraph("match ()-[r]->() return r")
-      result.relations must haveSize(1)
-      val resultRelation = result.relations.head
       resultRelation mustEqual Relation(relation.id, start, end, RelationType("can haz"), Map("one" -> "yes"))
     }
   }

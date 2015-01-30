@@ -1,6 +1,7 @@
 package renesca.graph
 
 import renesca.json
+import renesca.json.PropertyValue.PropertyMap
 import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
@@ -94,14 +95,14 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     }
   }
 
-  def addRelation(start: Node, end: Node, relationType: RelationType, properties: Map[PropertyKey, PropertyValue] = Map.empty) = {
+  def addRelation(start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
     val relation = Relation.local(start, end, relationType, properties)
     relations += relation
     localChanges += RelationAdd(relation.id, start.id, end.id, relationType, properties)
     relation
   }
 
-  def addNode(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty):Node = {
+  def addNode(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty):Node = {
     val node = Node.local(labels, properties)
     nodes += node
     localChanges += NodeAdd(node.id, labels, properties)

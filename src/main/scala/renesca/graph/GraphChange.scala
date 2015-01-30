@@ -1,5 +1,6 @@
 package renesca.graph
 
+import renesca.json.PropertyValue.PropertyMap
 import renesca.json.{PropertyKey, PropertyValue}
 
 sealed trait GraphChange {
@@ -17,7 +18,7 @@ case class RelationRemoveProperty(relationId:Id, key:PropertyKey) extends GraphC
 case class RelationDelete(relationId:Id) extends GraphContentChange
 
 trait GraphStructureChange extends GraphChange
-case class NodeAdd(localNodeId:Id, labels:Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange
-case class RelationAdd(relationId: Id, start:Id, end:Id, relationType:RelationType, properties: Map[PropertyKey, PropertyValue] = Map.empty) extends GraphStructureChange
+case class NodeAdd(localNodeId:Id, labels:Traversable[Label] = Nil, properties: PropertyMap = Map.empty) extends GraphStructureChange
+case class RelationAdd(relationId: Id, start:Id, end:Id, relationType:RelationType, properties: PropertyMap = Map.empty) extends GraphStructureChange
 
 

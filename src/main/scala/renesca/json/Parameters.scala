@@ -1,8 +1,9 @@
 package renesca.json
 
 import renesca.NonBacktickName
+import renesca.json.ParameterValue.ParameterMap
 
-import scala.collection.immutable
+import scala.collection.mutable
 
 case class PropertyKey(name:String) extends NonBacktickName
 
@@ -62,7 +63,7 @@ case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterV
   }
   override def hashCode = value.hashCode
 }
-case class MapParameterValue(value:Map[PropertyKey,ParameterValue]) extends SoleParameterValue {
+case class MapParameterValue(value:ParameterMap) extends SoleParameterValue {
   override def equals(other: Any): Boolean = other match {
     case that: MapParameterValue => value == that.value
     case that: Map[_,_] => value.sameElements(that)
@@ -79,6 +80,9 @@ object PropertyKey {
 }
 
 object PropertyValue {
+  type PropertyMap = Map[PropertyKey, PropertyValue]
+  type MutablePropertyMap = mutable.Map[PropertyKey, PropertyValue]
+
   implicit def primitiveToPropertyValue(x: Long): PropertyValue = LongPropertyValue(x)
   implicit def primitiveToPropertyValue(x: Int): PropertyValue = LongPropertyValue(x)
   implicit def primitiveToPropertyValue(x: Double): PropertyValue = DoublePropertyValue(x)
@@ -103,9 +107,10 @@ object PropertyValue {
 }
 
 object ParameterValue {
-  implicit def PropertyKeyMapToMapParameterValue(map:Map[PropertyKey, ParameterValue]):MapParameterValue = MapParameterValue(map)
+  type ParameterMap = Map[PropertyKey,ParameterValue]
 
-  implicit def MapParameterValueToPropertyKeyMap(map:MapParameterValue):Map[PropertyKey,ParameterValue] = map.value
+  implicit def ParameterMapToMapParameterValue(map:ParameterMap):MapParameterValue = MapParameterValue(map)
+  implicit def MapParameterValueToParameterMap(map:MapParameterValue):ParameterMap = map.value
 }
 
 

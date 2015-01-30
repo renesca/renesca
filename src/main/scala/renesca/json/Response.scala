@@ -1,5 +1,7 @@
 package renesca.json
 
+import renesca.json.PropertyValue.PropertyMap
+
 case class Response(
                      commit: Option[String] = None,
                      results : List[Result] = Nil,
@@ -15,8 +17,8 @@ case class Relationship(
                          `type` : String,
                          startNode:String,
                          endNode:String,
-                         properties : Map[PropertyKey, PropertyValue] = Map.empty
+                         properties : PropertyMap = Map.empty
                          )
-case class Node(id : String, labels : List[String] = Nil, properties : Map[PropertyKey, PropertyValue] = Map.empty)
+case class Node(id : String, labels : List[String] = Nil, properties : PropertyMap = Map.empty)
 case class Graph(nodes : List[Node] = Nil, relationships : List[Relationship] = Nil)
 

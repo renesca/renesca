@@ -1,6 +1,7 @@
 package renesca.graph
 
 import renesca.NonBacktickName
+import renesca.json.PropertyValue.PropertyMap
 import renesca.json.{PropertyKey, PropertyValue}
 import scala.collection.mutable
 
@@ -11,12 +12,12 @@ object Label {
 case class Label(name:String) extends NonBacktickName
 
 object Node {
-  def apply(id: Id, labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
+  def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
     val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)
   }
-  def local(labels: Traversable[Label] = Nil, properties: Map[PropertyKey, PropertyValue] = Map.empty): Node = {
+  def local(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     apply(Id.nextId(), labels, properties)
   }
 }

@@ -1,5 +1,6 @@
 package renesca.graph
 
+import renesca.json.PropertyValue.MutablePropertyMap
 import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
@@ -7,9 +8,9 @@ import scala.collection.mutable
 class Properties(val id: Id,
   setPropertyChange: (Id, PropertyKey, PropertyValue) => GraphChange,
   removePropertyChange: (Id, PropertyKey) => GraphChange,
-  self: mutable.Map[PropertyKey, PropertyValue] = mutable.HashMap.empty[PropertyKey, PropertyValue])
+  self: MutablePropertyMap = mutable.HashMap.empty)
 
-  extends mutable.Map[PropertyKey, PropertyValue] with mutable.MapLike[PropertyKey, PropertyValue, Properties] {
+  extends MutablePropertyMap with mutable.MapLike[PropertyKey, PropertyValue, Properties] {
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 

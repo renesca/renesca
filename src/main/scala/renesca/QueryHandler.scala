@@ -1,10 +1,11 @@
 package renesca
 
 import renesca.graph._
+import renesca.json.ParameterValue.ParameterMap
 import renesca.json.{ParameterValue, PropertyKey, PropertyValue}
 import renesca.json.PropertyKey._
 
-case class Query(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty)
+case class Query(statement:String, parameters:ParameterMap = Map.empty)
 
 object QueryHandler {
   private val graphContentChangeToQuery:GraphContentChange => Query = {
@@ -32,17 +33,17 @@ object QueryHandler {
 trait QueryHandler {
   import QueryHandler._
 
-  def queryGraph(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty):Graph = queryGraph(Query(statement, parameters))
+  def queryGraph(statement:String, parameters:ParameterMap = Map.empty):Graph = queryGraph(Query(statement, parameters))
   def queryGraph(query:Query):Graph = {
     val results = executeQueries(List(query), List("graph"))
     buildResults(results)
   }
 
-  def batchQuery(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty):Unit = batchQuery(Query(statement, parameters))
+  def batchQuery(statement:String, parameters:ParameterMap = Map.empty):Unit = batchQuery(Query(statement, parameters))
   def batchQuery(query:Query) { executeQueries(List(query), Nil) }
   def batchQuery(queries:Seq[Query]) { executeQueries(queries, Nil) }
 
-  def queryRows(query:String, parameters:Map[PropertyKey,PropertyValue]) = ???
+  def queryRows(query:String, parameters:ParameterMap) = ???
 
   def persistChanges(graph:Graph) {
     //TODO: optimizations
@@ -118,7 +119,7 @@ class Transaction extends QueryHandler {
       restService.commitTransaction(transactionId)
   }
 
-  def commit(statement:String, parameters:Map[PropertyKey, ParameterValue] = Map.empty):Graph = {
+  def commit(statement:String, parameters:ParameterMap = Map.empty):Graph = {
     commit(Query(statement, parameters))
   }
 

@@ -1,6 +1,7 @@
 package renesca.json
 
 import renesca.Query
+import renesca.json.ParameterValue.ParameterMap
 
 case class Request(statements:List[Statement] = Nil)
 
@@ -14,4 +15,4 @@ object Statement {
   }
 }
 
-case class Statement(statement:String, parameters:Option[Map[PropertyKey,ParameterValue]] = None, resultDataContents:Option[List[String]] = None)
+case class Statement(statement:String, parameters:Option[ParameterMap] = None, resultDataContents:Option[List[String]] = None)

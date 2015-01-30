@@ -74,7 +74,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.commit(statement)
 
     there was one(tx.restService).singleRequest(jsonRequest)
-    
+
     there was no(tx.restService).openTransaction(jsonRequest)
     there was no(tx.restService).commitTransaction(TransactionId("1"))
     there was no(tx.restService).resumeTransaction(TransactionId("1"),jsonRequest)

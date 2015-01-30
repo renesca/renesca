@@ -1,6 +1,7 @@
 package renesca.graph
 
 import renesca.NonBacktickName
+import renesca.json.PropertyValue.PropertyMap
 import renesca.json.{PropertyKey, PropertyValue}
 
 import scala.collection.mutable
@@ -12,11 +13,11 @@ object RelationType {
 case class RelationType(name:String) extends NonBacktickName
 
 object Relation {
-  def apply(id:Id, start:Node, end:Node, relationType:RelationType, properties:Map[PropertyKey,PropertyValue] = Map.empty) = {
+  def apply(id:Id, start:Node, end:Node, relationType:RelationType, properties:PropertyMap = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
-  def local(start:Node, end:Node, relationType:RelationType, properties:Map[PropertyKey, PropertyValue] = Map.empty) = {
+  def local(start:Node, end:Node, relationType:RelationType, properties:PropertyMap = Map.empty) = {
     apply(Id.nextId(), start, end, relationType, properties)
   }
 }

@@ -1,34 +1,13 @@
-package renesca.json
+package renesca.parameter
 
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.protocols.ParameterProtocol._
-import renesca.parameter._
 import renesca.parameter.implicits._
-import spray.json._
 
 @RunWith(classOf[JUnitRunner])
-class PropertyValueSpec extends Specification {
-  "PropertyValue" can {
-    def testFromAndToJson(json:String, propertyValue:PropertyValue) = {
-      val jsonAst = json.parseJson
-      val convertedPropertyValue = jsonAst.convertTo[PropertyValue]
-
-      convertedPropertyValue mustEqual propertyValue
-      propertyValue.toJson mustEqual jsonAst
-    }
-
-    "have a long value" in { testFromAndToJson("1744", LongPropertyValue(1744)) }
-    "have a double value" in { testFromAndToJson("17.44", DoublePropertyValue(17.44)) }
-    "have a string value" in { testFromAndToJson(""" "value" """, StringPropertyValue("value")) }
-    "have a boolean value" in { testFromAndToJson("true", BooleanPropertyValue(true)) }
-
-    "have an array of longs" in { testFromAndToJson("[1744, 1516]", ArrayPropertyValue(List(LongPropertyValue(1744), LongPropertyValue(1516)))) }
-    "have an array of doubles" in { testFromAndToJson("[17.44, 15.16]", ArrayPropertyValue(List(DoublePropertyValue(17.44), DoublePropertyValue(15.16)))) }
-    "have an array of strings" in { testFromAndToJson("""["17.44", "15.16"] """, ArrayPropertyValue(List(StringPropertyValue("17.44"), StringPropertyValue("15.16")))) }
-    "have an array of booleans" in { testFromAndToJson("""[true, false] """, ArrayPropertyValue(List(BooleanPropertyValue(true), BooleanPropertyValue(false)))) }
-
+class ParameterSpec extends Specification {
+  "Property" should {
     "not equal objects of different type" in {
       LongPropertyValue(1) mustNotEqual DoublePropertyValue(1)
       LongPropertyValue(1) mustNotEqual StringPropertyValue("1")
@@ -95,8 +74,8 @@ class PropertyValueSpec extends Specification {
       ArrayPropertyValue(List(1)) mustNotEqual 13
       ArrayPropertyValue(List(1)) mustNotEqual 13.0
     }
-    
-    "equal key" in {
+
+    "have equal on keys" in {
       PropertyKey("13") mustEqual PropertyKey("13")
       PropertyKey("13") mustNotEqual PropertyKey("14")
       PropertyKey("13") mustEqual "13"
@@ -104,6 +83,43 @@ class PropertyValueSpec extends Specification {
 
       PropertyKey("13") mustNotEqual 13
       PropertyKey("13") mustNotEqual 13.0
+    }
+
+    "hashcodes" in todo
+  }
+
+  "Parameter" should {
+    "equal objects with same contents and its contents: Array" in {
+      ArrayParameterValue(List(1)) mustEqual ArrayParameterValue(List(1))
+      ArrayParameterValue(List(1)) mustNotEqual ArrayParameterValue(List(2))
+      ArrayParameterValue(List(1)) mustEqual List(1)
+      ArrayParameterValue(List(1)) mustNotEqual List(2)
+
+      ArrayParameterValue(List(1)) mustNotEqual 13
+      ArrayParameterValue(List(1)) mustNotEqual 13.0
+    }
+
+    "equal objects with same contents and its contents: Map" in {
+      MapParameterValue(Map("k" -> 1)) mustEqual MapParameterValue(Map("k" -> 1))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("k" -> 2))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("x" -> 1))
+      MapParameterValue(Map("k" -> 1)) mustEqual Map(("k" , 1))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual Map(("k" , 2))
+
+      MapParameterValue(Map("k" -> 1)) mustNotEqual 13
+      MapParameterValue(Map("k" -> 1)) mustNotEqual 13.0
+    }
+
+    "equal objects with same contents and its contents: nested Maps and Arrays" in {
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "x")), "b" -> 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual Map(("a",List("a", "b")), ("b", 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual Map(("a" , List("a", "x")), ("b" , 5))
+
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 7))))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustNotEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 8))))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustEqual List(Map(("a", 7)))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustNotEqual List(Map(("a", 8)))
     }
 
     "hashcodes" in todo

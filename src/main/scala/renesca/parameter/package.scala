@@ -58,6 +58,7 @@ package object parameter {
     //TODO: forbid nesting of propertyvalues
     override def equals(other: Any): Boolean = other match {
       case that: ArrayPropertyValue => this.value == that.value
+      case that: ArrayParameterValue => this.value == that.value
       case that: Seq[_] => value.sameElements(that)
       case _ => false
     }
@@ -67,6 +68,7 @@ package object parameter {
   case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue {
     override def equals(other: Any): Boolean = other match {
       case that: ArrayParameterValue => this.value == that.value
+      case that: ArrayPropertyValue => this.value == that.value
       case that: Seq[_] => value.sameElements(that)
       case _ => false
     }

@@ -1,8 +1,8 @@
 package renesca.graph
 
+
 import renesca.NonBacktickName
-import renesca.json.PropertyValue.PropertyMap
-import renesca.json.{PropertyKey, PropertyValue}
+import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
 
 import scala.collection.mutable
 

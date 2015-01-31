@@ -1,6 +1,6 @@
 package renesca.json.protocols
 
-import renesca.json.protocols.ValueProtocol._
+import renesca.json.protocols.ParameterProtocol._
 import renesca.json.{Request, Statement}
 import spray.json._
 

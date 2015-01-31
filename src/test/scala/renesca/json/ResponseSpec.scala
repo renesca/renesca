@@ -5,6 +5,8 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ResponseJsonProtocol._
+import renesca.parameter.implicits._
+import renesca.parameter.{ArrayParameterValue, MapParameterValue}
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])
@@ -152,22 +154,22 @@ class ResponseSpec extends Specification with Mockito {
       val response = json.parseJson.convertTo[Response]
       response mustEqual Response(None, List(Result(
         List("bike", "p1", "p2"),
-        List(Data(Some(ArrayParameterValue(Vector(
-          MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
-          ArrayParameterValue(Vector(
-            MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
-            MapParameterValue(Map(PropertyKey("position") -> LongPropertyValue(1))),
-            MapParameterValue(Map(PropertyKey("spokes") -> LongPropertyValue(3))))),
-          ArrayParameterValue(Vector(
-            MapParameterValue(Map(PropertyKey("weight") -> LongPropertyValue(10))),
-            MapParameterValue(Map(PropertyKey("position") -> LongPropertyValue(2))),
-            MapParameterValue(Map(PropertyKey("spokes") -> LongPropertyValue(32)))))))),
+        List(Data(Some(ArrayParameterValue(List(
+          Map("weight" -> 10),
+          ArrayParameterValue(List(
+            Map("weight" -> 10),
+            Map("position" -> 1),
+            Map("spokes" -> 3))),
+          ArrayParameterValue(List(
+            Map("weight" -> 10),
+            Map("position" -> 2),
+            Map("spokes" -> 32)))))),
           Some(Graph(List(
-            Node("4", List("Bike"), Map(PropertyKey("weight") -> LongPropertyValue(10))),
-            Node("5", List("Wheel"), Map(PropertyKey("spokes") -> LongPropertyValue(3))),
-            Node("6", List("Wheel"), Map(PropertyKey("spokes") -> LongPropertyValue(32)))),
-            List(Relationship("0", "HAS", "4", "5", Map(PropertyKey("position") -> LongPropertyValue(1))),
-              Relationship("1", "HAS", "4", "6", Map(PropertyKey("position") -> LongPropertyValue(2)))))))))),
+            Node("4", List("Bike"), Map("weight" -> 10)),
+            Node("5", List("Wheel"), Map("spokes" -> 3)),
+            Node("6", List("Wheel"), Map("spokes" -> 32))),
+            List(Relationship("0", "HAS", "4", "5", Map("position" -> 1)),
+              Relationship("1", "HAS", "4", "6", Map("position" -> 2))))))))),
         None, List())
     }
 

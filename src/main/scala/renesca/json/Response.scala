@@ -1,6 +1,7 @@
 package renesca.json
 
-import renesca.json.PropertyValue.PropertyMap
+import renesca.parameter.{ParameterValue, PropertyMap}
+
 
 case class Response(
                      commit: Option[String] = None,

@@ -1,12 +1,13 @@
 package renesca.graph
 
 import renesca.json
-import renesca.json.PropertyValue.PropertyMap
-import renesca.json.{PropertyKey, PropertyValue}
+import renesca.parameter.{PropertyMap, PropertyValue}
 
 import scala.collection.mutable
 
 object Id {
+  import renesca.parameter.implicits._
+
   implicit def IdToPropertyValue(id: Id):PropertyValue = id.value
   implicit def IdToLong(id: Id):Long = id.value
   implicit def LongToId(id: Long):Id = Id(id)

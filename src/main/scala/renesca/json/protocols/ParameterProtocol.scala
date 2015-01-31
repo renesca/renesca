@@ -1,9 +1,9 @@
 package renesca.json.protocols
 
-import renesca.json._
+import renesca.parameter._
 import spray.json._
 
-object ValueProtocol extends DefaultJsonProtocol {
+object ParameterProtocol extends DefaultJsonProtocol {
   implicit object JsonPropertyKeyFormat extends RootJsonFormat[PropertyKey] {
     override def write(pv: PropertyKey) = JsString(pv.name)
 

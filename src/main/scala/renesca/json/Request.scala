@@ -1,7 +1,7 @@
 package renesca.json
 
 import renesca.Query
-import renesca.json.ParameterValue.ParameterMap
+import renesca.parameter.ParameterMap
 
 case class Request(statements:List[Statement] = Nil)
 

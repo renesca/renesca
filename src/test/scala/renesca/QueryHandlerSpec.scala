@@ -5,7 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.graph.{RelationType, Graph, Node, Relation}
+import renesca.graph.{Graph, Node, Relation, RelationType}
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.json._
 

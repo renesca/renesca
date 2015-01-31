@@ -1,9 +1,8 @@
 package renesca
 
 import renesca.graph._
-import renesca.json.ParameterValue.ParameterMap
-import renesca.json.{ParameterValue, PropertyKey, PropertyValue}
-import renesca.json.PropertyKey._
+import renesca.parameter.ParameterMap
+import renesca.parameter.implicits._
 
 case class Query(statement:String, parameters:ParameterMap = Map.empty)
 
@@ -31,7 +30,7 @@ object QueryHandler {
 }
 
 trait QueryHandler {
-  import QueryHandler._
+  import renesca.QueryHandler._
 
   def queryGraph(statement:String, parameters:ParameterMap = Map.empty):Graph = queryGraph(Query(statement, parameters))
   def queryGraph(query:Query):Graph = {

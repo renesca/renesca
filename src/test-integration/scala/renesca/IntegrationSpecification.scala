@@ -1,8 +1,7 @@
 package renesca
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.{AfterExample, Step, Fragments}
-import spray.can.Http.ConnectionAttemptFailedException
+import org.specs2.specification.AfterExample
 
 object IntegrationTestSetup  {
   val db = new DbService

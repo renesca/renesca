@@ -4,7 +4,7 @@ import renesca.json._
 import spray.json.DefaultJsonProtocol
 
 object ResponseJsonProtocol extends DefaultJsonProtocol {
-  import ValueProtocol._
+  import renesca.json.protocols.ParameterProtocol._
 
   implicit val relationshipFormat = jsonFormat5(Relationship)
   implicit val nodeFormat = jsonFormat3(Node)

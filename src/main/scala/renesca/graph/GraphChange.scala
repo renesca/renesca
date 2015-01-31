@@ -1,7 +1,7 @@
 package renesca.graph
 
-import renesca.json.PropertyValue.PropertyMap
-import renesca.json.{PropertyKey, PropertyValue}
+import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
+
 
 sealed trait GraphChange {
   val timestamp:Long = System.nanoTime

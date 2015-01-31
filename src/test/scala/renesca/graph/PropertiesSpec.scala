@@ -5,8 +5,8 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.json.{PropertyKey, PropertyValue, StringPropertyValue}
-import renesca.json.PropertyValue._
+import renesca.parameter.implicits._
+import renesca.parameter.{PropertyKey, PropertyValue, StringPropertyValue}
 
 @RunWith(classOf[JUnitRunner])
 class PropertiesSpec extends Specification with Mockito {

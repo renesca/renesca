@@ -4,10 +4,6 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import org.specs2.specification.Scope
-import renesca.graph.{Graph, Node, Relation}
-import renesca.json.protocols.ResponseJsonProtocol._
-import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {

@@ -5,12 +5,11 @@ import akka.util.Timeout
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
-import spray.http.HttpHeaders.{Location, Accept}
+import spray.http.HttpHeaders.Location
+import spray.http.MediaTypes._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import MediaTypes._
-import HttpCharsets._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}

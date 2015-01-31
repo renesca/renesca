@@ -3,7 +3,9 @@ package renesca.json
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.protocols.ValueProtocol._
+import renesca.json.protocols.ParameterProtocol._
+import renesca.parameter._
+import renesca.parameter.implicits._
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])

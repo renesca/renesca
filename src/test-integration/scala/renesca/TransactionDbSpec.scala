@@ -2,7 +2,7 @@ package renesca
 
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import renesca.json.PropertyKey._
+import renesca.parameter.implicits._
 
 @RunWith(classOf[JUnitRunner])
 class TransactionDbSpec extends IntegrationSpecification {

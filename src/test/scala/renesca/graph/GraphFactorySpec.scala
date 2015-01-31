@@ -6,8 +6,8 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.json
-import renesca.json.{LongPropertyValue, Relationship, StringPropertyValue}
-import renesca.json.PropertyKey._
+import renesca.json.Relationship
+import renesca.parameter.implicits._
 
 import scala.collection.mutable
 
@@ -68,7 +68,6 @@ class GraphFactorySpec extends Specification with Mockito {
     }
 
     "create graph with single node with properties" in {
-      import renesca.json.PropertyValue._
       val jsonGraph = json.Graph( List(json.Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
 
       val graph = Graph(jsonGraph)

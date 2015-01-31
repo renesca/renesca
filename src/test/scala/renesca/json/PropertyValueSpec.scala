@@ -93,9 +93,16 @@ class PropertyValueSpec extends Specification {
       ArrayPropertyValue(List(1)) mustNotEqual 13
       ArrayPropertyValue(List(1)) mustNotEqual 13.0
     }
+    
+    "equal key" in {
+      PropertyKey("13") mustEqual PropertyKey("13")
+      PropertyKey("13") mustNotEqual PropertyKey("14")
+      PropertyKey("13") mustEqual "13"
+      PropertyKey("13") mustNotEqual "14"
 
-    "equal objects with same contents and its contents: Map" in todo
-    "equal objects with same contents and its contents: ParameterArray and PropertyArray" in todo
+      PropertyKey("13") mustNotEqual 13
+      PropertyKey("13") mustNotEqual 13.0
+    }
 
     "hashcodes" in todo
   }

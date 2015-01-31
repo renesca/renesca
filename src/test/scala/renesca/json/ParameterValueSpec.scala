@@ -3,7 +3,9 @@ package renesca.json
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.ParameterValue.ParameterMap
+import renesca.json.ParameterValue._
+import renesca.json.PropertyValue._
+import renesca.json.PropertyKey._
 import renesca.json.protocols.ValueProtocol._
 import spray.json._
 
@@ -66,5 +68,39 @@ class ParameterValueSpec extends Specification {
       )))
       parameters.toJson mustEqual jsonAst
     }
+
+    "equal objects with same contents and its contents: Array" in {
+      ArrayParameterValue(List(1)) mustEqual ArrayParameterValue(List(1))
+      ArrayParameterValue(List(1)) mustNotEqual ArrayParameterValue(List(2))
+      ArrayParameterValue(List(1)) mustEqual List(1)
+      ArrayParameterValue(List(1)) mustNotEqual List(2)
+
+      ArrayParameterValue(List(1)) mustNotEqual 13
+      ArrayParameterValue(List(1)) mustNotEqual 13.0
+    }
+
+    "equal objects with same contents and its contents: Map" in {
+      MapParameterValue(Map("k" -> 1)) mustEqual MapParameterValue(Map("k" -> 1))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("k" -> 2))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("x" -> 1))
+      MapParameterValue(Map("k" -> 1)) mustEqual Map(("k" , 1))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual Map(("k" , 2))
+
+      MapParameterValue(Map("k" -> 1)) mustNotEqual 13
+      MapParameterValue(Map("k" -> 1)) mustNotEqual 13.0
+    }
+
+    "equal objects with same contents and its contents: nested Maps and Arrays" in {
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "x")), "b" -> 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual Map(("a",List("a", "b")), ("b", 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual Map(("a" , List("a", "x")), ("b" , 5))
+
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 7))))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustNotEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 8))))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustEqual List(Map(("a", 7)))
+      ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustNotEqual List(Map(("a", 8)))
+    }
+
   }
 }

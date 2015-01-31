@@ -5,7 +5,14 @@ import renesca.json.ParameterValue.ParameterMap
 
 import scala.collection.mutable
 
-case class PropertyKey(name:String) extends NonBacktickName
+case class PropertyKey(name:String) extends NonBacktickName {
+  override def equals(other: Any): Boolean = other match {
+    case that: PropertyKey => this.name == that.name
+    case that: String => name == that
+    case _ => false
+  }
+  override def hashCode = name.hashCode
+}
 
 sealed trait ParameterValue
 sealed trait SoleParameterValue extends ParameterValue
@@ -13,7 +20,7 @@ sealed trait PropertyValue extends ParameterValue
 
 final case class LongPropertyValue(value:Long) extends PropertyValue {
   override def equals(other: Any): Boolean = other match {
-    case that: LongPropertyValue => value == that.value
+    case that: LongPropertyValue => this.value == that.value
     case that: Int => value == that
     case that: Long => value == that
     case _ => false
@@ -23,7 +30,7 @@ final case class LongPropertyValue(value:Long) extends PropertyValue {
 
 final case class DoublePropertyValue(value:Double) extends PropertyValue {
   override def equals(other: Any): Boolean = other match {
-    case that: DoublePropertyValue => value == that.value
+    case that: DoublePropertyValue => this.value == that.value
     case that: Double => value == that
     case _ => false
   }
@@ -31,7 +38,7 @@ final case class DoublePropertyValue(value:Double) extends PropertyValue {
 }
 case class StringPropertyValue(value:String) extends PropertyValue {
   override def equals(other: Any): Boolean = other match {
-    case that: StringPropertyValue => value == that.value
+    case that: StringPropertyValue => this.value == that.value
     case that: String => value == that
     case _ => false
   }
@@ -39,7 +46,7 @@ case class StringPropertyValue(value:String) extends PropertyValue {
 }
 case class BooleanPropertyValue(value:Boolean) extends PropertyValue {
   override def equals(other: Any): Boolean = other match {
-    case that: BooleanPropertyValue => value == that.value
+    case that: BooleanPropertyValue => this.value == that.value
     case that: Boolean => value == that
     case _ => false
   }
@@ -48,7 +55,7 @@ case class BooleanPropertyValue(value:Boolean) extends PropertyValue {
 case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
   //TODO: forbid nesting of propertyvalues
   override def equals(other: Any): Boolean = other match {
-    case that: ArrayPropertyValue => value == that.value
+    case that: ArrayPropertyValue => this.value == that.value
     case that: Seq[_] => value.sameElements(that)
     case _ => false
   }
@@ -57,7 +64,7 @@ case class ArrayPropertyValue(value:Seq[PropertyValue]) extends PropertyValue {
 
 case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue {
   override def equals(other: Any): Boolean = other match {
-    case that: ArrayParameterValue => value == that.value
+    case that: ArrayParameterValue => this.value == that.value
     case that: Seq[_] => value.sameElements(that)
     case _ => false
   }
@@ -65,7 +72,7 @@ case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterV
 }
 case class MapParameterValue(value:ParameterMap) extends SoleParameterValue {
   override def equals(other: Any): Boolean = other match {
-    case that: MapParameterValue => value == that.value
+    case that: MapParameterValue => this.value == that.value
     case that: Map[_,_] => value.sameElements(that)
     case _ => false
   }

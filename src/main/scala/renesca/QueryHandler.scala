@@ -99,11 +99,22 @@ trait QueryHandler {
 }
 
 class Transaction extends QueryHandler {
+
   var restService:RestService = null //TODO: inject
 
   var id:Option[TransactionId] = None
 
+  private var valid = true
+  def isValid = valid
+  def invalidate() {valid = false}
+  private def throwIfNotValid() {
+    if(!valid)
+      throw new RuntimeException("Transaction is not valid anymore.")
+  }
+
+
   override protected def queryService(jsonRequest:json.Request):json.Response = {
+    throwIfNotValid()
     id match {
       case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
       case None =>
@@ -114,8 +125,11 @@ class Transaction extends QueryHandler {
   }
 
   def commit() {
+    throwIfNotValid()
     for( transactionId <- id)
       restService.commitTransaction(transactionId)
+
+    invalidate()
   }
 
   def commit(statement:String, parameters:ParameterMap = Map.empty):Graph = {
@@ -123,11 +137,14 @@ class Transaction extends QueryHandler {
   }
 
   def commit(query:Query):Graph = {
+    throwIfNotValid()
     val jsonRequest = buildJsonRequest(List(query), List("graph"))
     val jsonResponse = id match {
       case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
       case None =>                restService.singleRequest(jsonRequest)
     }
+
+    invalidate()
     buildResults(handleError(jsonResponse))
   }
 }

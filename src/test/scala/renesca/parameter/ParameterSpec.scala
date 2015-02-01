@@ -12,16 +12,16 @@ class ParameterSpec extends Specification {
       LongPropertyValue(1) mustNotEqual DoublePropertyValue(1)
       LongPropertyValue(1) mustNotEqual StringPropertyValue("1")
       LongPropertyValue(1) mustNotEqual BooleanPropertyValue(true)
-      LongPropertyValue(1) mustNotEqual ArrayPropertyValue(List(1))
+      LongPropertyValue(1) mustNotEqual LongArrayPropertyValue(1)
 
       DoublePropertyValue(1) mustNotEqual StringPropertyValue("1")
       DoublePropertyValue(1) mustNotEqual BooleanPropertyValue(true)
-      DoublePropertyValue(1) mustNotEqual ArrayPropertyValue(List(1))
+      DoublePropertyValue(1) mustNotEqual LongArrayPropertyValue(1)
 
       StringPropertyValue("1") mustNotEqual BooleanPropertyValue(true)
-      StringPropertyValue("1") mustNotEqual ArrayPropertyValue(List(1))
+      StringPropertyValue("1") mustNotEqual LongArrayPropertyValue(1)
 
-      BooleanPropertyValue(true) mustNotEqual ArrayPropertyValue(List(1))
+      BooleanPropertyValue(true) mustNotEqual LongArrayPropertyValue(1)
     }
 
     "equal objects with same contents and its contents: Long" in {
@@ -66,13 +66,13 @@ class ParameterSpec extends Specification {
     }
 
     "equal objects with same contents and its contents: Array" in {
-      ArrayPropertyValue(List(1)) mustEqual ArrayPropertyValue(List(1))
-      ArrayPropertyValue(List(1)) mustNotEqual ArrayPropertyValue(List(2))
-      ArrayPropertyValue(List(1)) mustEqual List(1)
-      ArrayPropertyValue(List(1)) mustNotEqual List(2)
+      LongArrayPropertyValue(1) mustEqual LongArrayPropertyValue(1)
+      LongArrayPropertyValue(1) mustNotEqual LongArrayPropertyValue(2)
+      LongArrayPropertyValue(1) mustEqual List(1)
+      LongArrayPropertyValue(1) mustNotEqual List(2)
 
-      ArrayPropertyValue(List(1)) mustNotEqual 13
-      ArrayPropertyValue(List(1)) mustNotEqual 13.0
+      LongArrayPropertyValue(1) mustNotEqual 13
+      LongArrayPropertyValue(1) mustNotEqual 13.0
     }
 
     "have equal on keys" in {

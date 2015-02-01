@@ -24,10 +24,10 @@ class ParameterSpec extends Specification {
     "have a string value" in { testFromAndToJson(""" "value" """, StringPropertyValue("value")) }
     "have a boolean value" in { testFromAndToJson("true", BooleanPropertyValue(true)) }
 
-    "have an array of longs" in { testFromAndToJson("[1744, 1516]", ArrayPropertyValue(List(LongPropertyValue(1744), LongPropertyValue(1516)))) }
-    "have an array of doubles" in { testFromAndToJson("[17.44, 15.16]", ArrayPropertyValue(List(DoublePropertyValue(17.44), DoublePropertyValue(15.16)))) }
-    "have an array of strings" in { testFromAndToJson("""["17.44", "15.16"] """, ArrayPropertyValue(List(StringPropertyValue("17.44"), StringPropertyValue("15.16")))) }
-    "have an array of booleans" in { testFromAndToJson("""[true, false] """, ArrayPropertyValue(List(BooleanPropertyValue(true), BooleanPropertyValue(false)))) }
+    "have an array of longs" in { testFromAndToJson("[1744, 1516]", LongArrayPropertyValue(1744, 1516)) }
+    "have an array of doubles" in { testFromAndToJson("[17.44, 15.16]", DoubleArrayPropertyValue(17.44, 15.16)) }
+    "have an array of strings" in { testFromAndToJson("""["17.44", "15.16"] """, StringArrayPropertyValue("17.44", "15.16")) }
+    "have an array of booleans" in { testFromAndToJson("""[true, false] """, BooleanArrayPropertyValue(true, false)) }
   }
 
   "Parameter" can {

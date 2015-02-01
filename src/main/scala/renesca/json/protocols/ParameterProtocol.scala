@@ -2,6 +2,7 @@ package renesca.json.protocols
 
 import renesca.parameter._
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 object ParameterProtocol extends DefaultJsonProtocol {
   implicit object JsonPropertyKeyFormat extends RootJsonFormat[PropertyKey] {
@@ -13,13 +14,12 @@ object ParameterProtocol extends DefaultJsonProtocol {
     }
   }
 
-  implicit object JsonPropertyValueFormat extends RootJsonFormat[PropertyValue] {
-    override def write(pv: PropertyValue) = pv match {
+  implicit object JsonPrimitivePropertyValueFormat extends RootJsonFormat[PrimitivePropertyValue] {
+    override def write(pv: PrimitivePropertyValue) = pv match {
       case LongPropertyValue(value) => JsNumber(value)
       case DoublePropertyValue(value) => JsNumber(value)
       case StringPropertyValue(value) => JsString(value)
       case BooleanPropertyValue(value) => JsBoolean(value)
-      case ArrayPropertyValue(value) => JsArray((value map write).toVector)
     }
 
     override def read(value: JsValue) = value match {
@@ -27,22 +27,48 @@ object ParameterProtocol extends DefaultJsonProtocol {
       case JsNumber(num) if num.isValidLong => LongPropertyValue(num.toLong)
       case JsNumber(num) if !num.isValidLong => DoublePropertyValue(num.toDouble)
       case JsBoolean(bool) => BooleanPropertyValue(bool)
-      case JsArray(arr) => ArrayPropertyValue(arr.map(read))
+      case json => deserializationError(s"can not deserialize property value of type $json")
+    }
+  }
+
+  implicit object JsonPropertyValueFormat extends RootJsonFormat[PropertyValue] {
+    override def write(pv: PropertyValue) = pv match {
+      case x:PrimitivePropertyValue => x.toJson
+      case apv:ArrayPropertyValue => apv.elements.toJson
+    }
+
+    override def read(value: JsValue) = value match {
+      case x@(_:JsString | _:JsNumber | _:JsBoolean | JsNull) => x.convertTo[PrimitivePropertyValue]
+      case jsArray:JsArray =>
+        try {
+          val elements = jsArray.convertTo[Seq[PrimitivePropertyValue]]
+          elements.head match {
+            case x: LongPropertyValue => LongArrayPropertyValue(elements.asInstanceOf[Seq[LongPropertyValue]]: _*)
+            case x: DoublePropertyValue => DoubleArrayPropertyValue(elements.asInstanceOf[Seq[DoublePropertyValue]]: _*)
+            case x: StringPropertyValue => StringArrayPropertyValue(elements.asInstanceOf[Seq[StringPropertyValue]]: _*)
+            case x: BooleanPropertyValue => BooleanArrayPropertyValue(elements.asInstanceOf[Seq[BooleanPropertyValue]]: _*)
+          }
+        } catch {
+          case e:ClassCastException =>
+            deserializationError(s"can not deserialize property array of type $jsArray")
+        }
       case json => deserializationError(s"can not deserialize property value of type $json")
     }
   }
 
   implicit object JsonParameterValueFormat extends RootJsonFormat[ParameterValue] {
+    // Parameters can be arbitrarily nested maps and arrays
+    // therefore we need to call write and read recursively
     override def write(pv: ParameterValue) = pv match {
-      case pv:PropertyValue => JsonPropertyValueFormat.write(pv)
-      case ArrayParameterValue(seq) => JsArray((seq map write).toVector)
-      case MapParameterValue(map) => JsObject(map.map { case (key, value) => (key.name, write(value))})
+      case pv:PropertyValue => pv.toJson
+      case ArrayParameterValue(elements) => JsArray(elements map write:_*)
+      case MapParameterValue(keyValuePairs) => JsObject(keyValuePairs.map { case (key, value) => (key.name, write(value))})
     }
 
     override def read(value: JsValue) = value match {
-      case x@(_:JsString | _:JsNumber | _:JsBoolean | JsNull) => JsonPropertyValueFormat.read(x)
-      case JsArray(array) => ArrayParameterValue(array map read)
-      case JsObject(map) => MapParameterValue(map.map { case (key, value) => (PropertyKey(key), read(value))})
+      case x@(_:JsString | _:JsNumber | _:JsBoolean | JsNull) => x.convertTo[PropertyValue]
+      case JsArray(elements) => ArrayParameterValue(elements map read)
+      case JsObject(keyValuePairs) => MapParameterValue(keyValuePairs.map { case (key, value) => (PropertyKey(key), read(value))})
     }
   }
 }

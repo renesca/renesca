@@ -1,65 +1,103 @@
 package renesca
 
+import scala.concurrent.duration._
+import akka.util.Timeout
+import org.specs2.execute.{AsResult, Result, ResultExecution, Skipped}
 import org.specs2.mutable.Specification
-import org.specs2.specification.AfterExample
+import org.specs2.specification._
+
+case class DbState(serverAvailable:Boolean, dbEmpty:Boolean, errorMsg:Option[String] = None) {
+  def isAvailableAndEmpty = serverAvailable && dbEmpty
+  def notReadyMessage:String = {
+    if (!isAvailableAndEmpty) {
+      (if (!serverAvailable)
+        "Cannot connect to Database Server."
+      else if (!dbEmpty) {
+        "Test database is not empty."
+      }) + errorMsg.map(" (" + _ + ")").getOrElse("")
+    } else ""
+  }
+}
 
 object IntegrationTestSetup  {
-  val db = new DbService
-  db.restService = new RestService("http://localhost:7474") // TODO: don't hardcode, configure in environment
+  val testDb = new DbService
+  testDb.restService = new RestService( // TODO: don't hardcode, configure in environment
+    "http://localhost:7474",
+    Timeout(5.seconds) // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
+  )
 
-  lazy val testDbReady = {
-    lazy val (dbServerIsAvailable, dbIsEmpty, error) = {
-      try {
-        val graph = db.queryGraph("MATCH (n) RETURN n LIMIT 1")
-        (true, graph.isEmpty, None)
-      }
-      catch{
-        case e:Exception =>
-          (false, false, Some(e.getMessage))
-      }
+  def dbState = {
+    try {
+      val graph = testDb.queryGraph("MATCH (n) RETURN n LIMIT 1")
+      DbState(serverAvailable = true, dbEmpty = graph.isEmpty)
     }
-
-    val ready = dbServerIsAvailable && dbIsEmpty
-
-    if(!ready) {
-      println("")
-      if(!dbServerIsAvailable) {
-        // TODO: log error
-        println("Cannot connect to Database Server.")
-
-      } else if(!dbIsEmpty) {
-        println("Test database is not empty.")
-      }
-      for(errorMessage <- error) println("Exception: " + errorMessage)
-      println("Skipping all integration tests.")
-      println("")
+    catch{
+      case e:Exception =>
+        DbState(serverAvailable = false, dbEmpty = false, Some(s"Exception: ${e.getMessage}"))
     }
+  }
+  
+  def dbIsReady = dbState.isAvailableAndEmpty
 
-    ready
+  val cleanupFailedMsg = "WARNING: Database cleanup failed on first try. Is there an unfinished transaction?"
+  def cleanupDb() = {
+    def deleteEverything() { testDb.batchQuery("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r") }
+
+    try {
+      deleteEverything() // fails if there is an unfinished Transaction
+      true
+    } catch {
+      case e:Exception =>
+        deleteEverything() // fails if requestTimeout <= neo4jTransactionTimeout
+        false
+    }
   }
 
-  def cleanupDb() {
-    db.batchQuery("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
-  }
 }
 
 class IntegrationTestSetupSpec extends Specification {
   // Fails the whole run if testing db is not set up
   "Database should be available and empty" in {
-    IntegrationTestSetup.testDbReady mustEqual true
+    IntegrationTestSetup.dbIsReady mustEqual true
   }
 }
 
-trait IntegrationSpecification extends Specification with AfterExample {
+trait CleanUpContext {
+  def context(exampleDescription: String) = new WithCleanDatabase(exampleDescription)
+
+  case class WithCleanDatabase(exampleDescription: String) extends Around {
+    def around[T : AsResult](t: =>T): Result = {
+      import IntegrationTestSetup._
+      val db = dbState
+      if(db.isAvailableAndEmpty) {
+        val result = ResultExecution.execute(AsResult(t))
+        if(cleanupDb())
+          result
+        else { // cleanUp succeeded with warning
+          if (result.isFailure)
+            result.mapMessage(oldMessage =>
+              s"$cleanupFailedMsg\n$oldMessage")
+          else
+            result.mapExpected(_ => s"    $cleanupFailedMsg")
+        }
+      } else {
+        new Skipped(s"\n    WARNING: ${db.notReadyMessage}")
+      }
+    }
+  }
+}
+
+trait IntegrationSpecification extends Specification with CleanUpContext {
   sequential // Specs are also executed sequentially (build.sbt)
-  if(!IntegrationTestSetup.testDbReady) skipAll
 
-  // clean database after every Spec
-  // override def map(fs: =>Fragments) = fs ^ Step(IntegrationTestSetup.cleanUpDb())
+  // check for clean database before,
+  // and clean database after every example
+  // https://etorreborre.github.io/specs2/guide/org.specs2.guide.HowTo.html#Print+execution+data
+  override lazy val exampleFactory = new MutableExampleFactory {
+    override def newExample[T : AsResult](description: String, t: =>T): Example =
+      super.newExample(description, context(description)(AsResult(t)))
+  }
 
-  // clean database after every example
-  override protected def after = IntegrationTestSetup.cleanupDb()
-
-  implicit val db = IntegrationTestSetup.db
+  implicit val db = IntegrationTestSetup.testDb
 }
 

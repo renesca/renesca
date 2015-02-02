@@ -18,11 +18,10 @@ case class TransactionId(id:String) {
   override def toString = id
 }
 
-class RestService(server:String) {
+class RestService(val server:String, implicit val timeout:Timeout = Timeout(10.seconds)) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
   implicit val system: ActorSystem = ActorSystem()
-  implicit val timeout: Timeout = Timeout(15.seconds)
   import system.dispatcher // provides execution context
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive

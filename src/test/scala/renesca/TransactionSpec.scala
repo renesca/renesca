@@ -8,7 +8,8 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
   val statement = "match n return n"
-  val jsonRequest = json.Request(List(json.Statement(Query(statement), List("graph"))))
+  val jsonRequest = json.Request(List(json.Statement(statement, List("graph"))))
+  val jsonRequestWithoutResult = json.Request(List(json.Statement(statement)))
   val jsonResponse = json.Response(
     commit = Some("http://localhost:7474/db/data/transaction/1/commit"),
     transaction = Some(json.Transaction("Thu, 29 Jan 2015 11:56:08 +0000"))
@@ -22,11 +23,13 @@ class TransactionSpec extends Specification with Mockito {
 
   def newTransaction = {
     val tx = new Transaction
-    tx.restService = mock[RestService]
+    tx.restService = mock[RestService].smart
 
     tx.restService.singleRequest(jsonRequest) returns jsonResponse
     tx.restService.openTransaction(jsonRequest) returns transactionResponse
+    tx.restService.openTransaction(jsonRequestWithoutResult) returns transactionResponse
     tx.restService.resumeTransaction(TransactionId("1"),jsonRequest) returns jsonResponse
+    tx.restService.resumeTransaction(TransactionId("1"),jsonRequestWithoutResult) returns jsonResponse
 
     tx
   }
@@ -35,10 +38,10 @@ class TransactionSpec extends Specification with Mockito {
     "open transaction on first request" in {
       val tx = newTransaction
 
-      tx.queryGraph(statement)
+      tx.query(statement)
       tx.commit()
 
-      there was one(tx.restService).openTransaction(jsonRequest)
+      there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
       there was one(tx.restService).commitTransaction(TransactionId("1"))
       there was no(tx.restService).resumeTransaction(TransactionId("1"),jsonRequest)
     }
@@ -47,19 +50,19 @@ class TransactionSpec extends Specification with Mockito {
   "open transaction on first, resume on second request" in {
     val tx = newTransaction
 
-    tx.queryGraph(statement)
-    tx.queryGraph(statement)
+    tx.query(statement)
+    tx.query(statement)
     tx.commit()
 
-    there was one(tx.restService).openTransaction(jsonRequest)
-    there was one(tx.restService).resumeTransaction(TransactionId("1"),jsonRequest)
+    there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
+    there was one(tx.restService).resumeTransaction(TransactionId("1"),jsonRequestWithoutResult)
     there was one(tx.restService).commitTransaction(TransactionId("1"))
   }
 
   "open transaction on commit" in {
     val tx = newTransaction
 
-    tx.commit(statement)
+    tx.queryGraphsAndCommit(statement)
 
     there was one(tx.restService).singleRequest(jsonRequest)
     there was no(tx.restService).openTransaction(jsonRequest)
@@ -78,7 +81,7 @@ class TransactionSpec extends Specification with Mockito {
   "invalidate transaction on commit with query" in {
     val tx = newTransaction
 
-    tx.commit(statement)
+    tx.queryGraphsAndCommit(statement)
 
     tx.isValid mustEqual false
   }
@@ -89,7 +92,7 @@ class TransactionSpec extends Specification with Mockito {
 
     tx.queryGraph(statement) must throwA[RuntimeException]
     tx.commit() must throwA[RuntimeException]
-    tx.commit(statement) must throwA[RuntimeException]
+    tx.queryGraphsAndCommit(statement) must throwA[RuntimeException]
   }
 
   "error in transaction rollbacks transaction and throws exception" in {

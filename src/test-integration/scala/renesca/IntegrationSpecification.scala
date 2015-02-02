@@ -41,7 +41,7 @@ object IntegrationTestSetup  {
 
   val cleanupFailedMsg = "WARNING: Database cleanup failed on first try. Is there an unfinished transaction?"
   def cleanupDb() = {
-    def deleteEverything() { testDb.batchQuery("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r") }
+    def deleteEverything() { testDb.query("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r") }
 
     try {
       deleteEverything() // fails if there is an unfinished Transaction

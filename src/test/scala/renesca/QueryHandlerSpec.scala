@@ -16,12 +16,12 @@ class QueryHandlerSpec extends Specification with Mockito {
     val dbService = new DbService
     dbService.restService = mock[RestService]
 
-    var graph:Graph = null
+    var graphs:Seq[Graph] = null
 
     def respond(response:String): Unit = {
       def jsonResponse = response.parseJson.convertTo[json.Response]
       dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
-      graph = dbService.queryGraph(Query(""))
+      graphs = dbService.queryGraphs(Query(""))
     }
   }
 
@@ -40,7 +40,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(graph).clearChanges()
     }
 
-    "create no graph as an empty graph" in new GraphQuery {
+    "create no graph data as an empty graph" in new GraphQuery {
 
       respond("""
          {
@@ -61,8 +61,9 @@ class QueryHandlerSpec extends Specification with Mockito {
                        """)
 
 
-      graph.nodes must beEmpty
-      graph.relations must beEmpty
+      graphs must haveSize(1)
+      graphs.head.nodes must beEmpty
+      graphs.head.relations must beEmpty
     }
 
     "create an empty graph" in new GraphQuery {
@@ -82,8 +83,9 @@ class QueryHandlerSpec extends Specification with Mockito {
          } """)
 
 
-      graph.nodes must beEmpty
-      graph.relations must beEmpty
+      graphs must haveSize(1)
+      graphs.head.nodes must beEmpty
+      graphs.head.relations must beEmpty
     }
 
 
@@ -117,11 +119,12 @@ class QueryHandlerSpec extends Specification with Mockito {
        "errors" : [ ]
        } """)
 
-      graph.nodes must contain(exactly(Node(1), Node(2)))
-      graph.relations must contain(exactly(Relation(9, Node(1), Node(2), RelationType("HAS"))))
+      graphs must haveSize(1)
+      graphs.head.nodes must contain(exactly(Node(1), Node(2)))
+      graphs.head.relations must contain(exactly(Relation(9, Node(1), Node(2), RelationType("HAS"))))
     }
 
-    "create a graph from multiple results" in new GraphQuery {
+    "create multiple graphs from multiple results" in new GraphQuery {
 
       respond("""
        {
@@ -183,9 +186,13 @@ class QueryHandlerSpec extends Specification with Mockito {
        "errors" : [ ]
        } """)
 
-      graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
-      graph.relations must contain(exactly(
-        Relation(9, Node(1), Node(2), RelationType("HAS")),
+      graphs must haveSize(2)
+      graphs(0).nodes must contain(exactly(Node(1), Node(2)))
+      graphs(0).relations must contain(exactly(
+        Relation(9, Node(1), Node(2), RelationType("HAS"))
+      ))
+      graphs(1).nodes must contain(exactly(Node(1), Node(3), Node(4)))
+      graphs(1).relations must contain(exactly(
         Relation(10, Node(3), Node(4), RelationType("HAS")),
         Relation(11, Node(1), Node(3), RelationType("HAS"))
       ))
@@ -250,8 +257,9 @@ class QueryHandlerSpec extends Specification with Mockito {
        "errors" : [ ]
        } """)
 
-      graph.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
-      graph.relations must contain(exactly(
+      graphs must haveSize(1)
+      graphs.head.nodes must contain(exactly(Node(1), Node(2), Node(3), Node(4)))
+      graphs.head.relations must contain(exactly(
         Relation(9, Node(1), Node(2), RelationType("HAS")),
         Relation(10, Node(3), Node(4), RelationType("HAS")),
         Relation(11, Node(1), Node(3), RelationType("HAS"))
@@ -290,8 +298,9 @@ class QueryHandlerSpec extends Specification with Mockito {
        "errors" : [ ]
        } """)
 
-      graph.nodes must contain(exactly(Node(1), Node(2)))
-      graph.relations must contain(exactly(
+      graphs must haveSize(1)
+      graphs.head.nodes must contain(exactly(Node(1), Node(2)))
+      graphs.head.relations must contain(exactly(
         Relation(9, Node(1), Node(2), RelationType("HAS"))
       ))
     }

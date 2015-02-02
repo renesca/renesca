@@ -47,8 +47,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
   "QueryHandler" should {
     "throw exception on Neo4j Error" in {
-      db.batchQuery("this is invalid cypher syntax") must throwA[RuntimeException]
+      db.query("this is invalid cypher syntax") must throwA[RuntimeException]
     }
+
+    "return only graphs on queryGraphs" in todo
+    "return only parameters on queryTables" in todo
+    "return no data on query" in todo
   }
 
   "QueryHandler.persist" should {
@@ -107,7 +111,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       // 4. whole graph should be (m) and (q)
 
       val nid = db.queryGraph("create n return n").nodes.head.id
-      val graph = db.queryGraph("match n where id(n) = {id} create (m)-[r:INTERNAL]->(n)<-[l:EXTERNAL]-(q) return n,r,m", Map("id" -> nid))
+      val graph = db.queryGraph(Query(
+        "match n where id(n) = {id} create (m)-[r:INTERNAL]->(n)<-[l:EXTERNAL]-(q) return n,r,m",
+        Map("id" -> nid)))
 
       graph.nodes must haveSize(2) // m, n
       graph.relations must haveSize(1) // r

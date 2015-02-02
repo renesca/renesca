@@ -3,18 +3,29 @@ package renesca
 // QueryHandler ensures that we have the same query-interface in Transaction and in DbService.
 // Both must implement queryService and handleError.
 // The query-interface consists of the methods:
-// TODO: implement interface
 //  queryGraph  - submit one query [with parameters] and return a Graph
-//  queryRow    - submit one query [with parameters] and return a row set
+//  queryTable    - submit one query [with parameters] and return a row set
 //  queryGraphs - submit multiple queries [with parameters] and return a Graph for each result
-//  queryRows   - submit multiple queries [with parameters] and return a row set for each result
+//  queryTabless   - submit multiple queries [with parameters] and return a row set for each result
 //  query       - submit one or multiple queries [with parameters] as a side effect (returns Unit)
 
 import renesca.graph._
-import renesca.parameter.ParameterMap
+import renesca.parameter.{ParameterValue, ParameterMap}
 import renesca.parameter.implicits._
 
+object Query {
+  implicit def stringToQuery(statement:String):Query = Query(statement)
+}
 case class Query(statement:String, parameters:ParameterMap = Map.empty)
+
+trait QueryInterface {
+  def queryGraph(query:Query):Graph
+  def queryTable(query:Query):ParameterValue
+  def queryGraphs(queries:Query*):Seq[Graph]
+  def queryTables(queries:Query*):Seq[ParameterValue]
+  def query(queries:Query*):Unit
+  def persistChanges(graph:Graph):Unit
+}
 
 object QueryHandler {
   private val graphContentChangeToQuery:GraphContentChange => Query = {
@@ -31,28 +42,41 @@ object QueryHandler {
   private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
     case NodeAdd(localNodeId, labels, properties) => db => graph =>
       val labelDef = labels.map(l => s":`$l`").mkString
-      val dbNode = db.queryGraph(s"create (n $labelDef) set n += {keyValue} return n", Map("keyValue" -> properties)).nodes.head
+      val dbNode = db.queryGraph(Query(
+        s"create (n $labelDef) set n += {keyValue} return n",
+        Map("keyValue" -> properties
+        ))).nodes.head
       localNodeId.value = dbNode.id.value
+
     case RelationAdd(relationId, start, end, relationType, properties) => db => graph =>
-      val dbRelation = db.queryGraph(s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`$relationType`]->(end) set r += {keyValue} return r", Map("startId" -> start, "endId" -> end, "keyValue" -> properties)).relations.head
+      val dbRelation = db.queryGraph(Query(
+        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`$relationType`]->(end) set r += {keyValue} return r",
+        Map("startId" -> start, "endId" -> end, "keyValue" -> properties
+        ))).relations.head
       relationId.value = dbRelation.id.value
   }
 }
 
-trait QueryHandler {
+trait QueryHandler extends QueryInterface {
   import renesca.QueryHandler._
 
-  def queryGraph(statement:String, parameters:ParameterMap = Map.empty):Graph = queryGraph(Query(statement, parameters))
-  def queryGraph(query:Query):Graph = {
-    val results = executeQueries(List(query), List("graph"))
-    extractGraph(results)
+  override def queryGraph(query:Query):Graph = queryGraphs(query).head
+  override def queryTable(query:Query):ParameterValue = queryTables(query).head
+
+  override def queryGraphs(queries:Query*):Seq[Graph] = {
+    val results = executeQueries(queries, List("graph"))
+    extractGraphs(results)
   }
 
-  def batchQuery(statement:String, parameters:ParameterMap = Map.empty):Unit = batchQuery(Query(statement, parameters))
-  def batchQuery(query:Query) { executeQueries(List(query), Nil) }
-  def batchQuery(queries:Seq[Query]) { executeQueries(queries, Nil) }
+  override def queryTables(queries:Query*):Seq[ParameterValue] = {
+    val results = executeQueries(queries, List("rows"))
+    ???
+  }
 
-  def queryRows(query:String, parameters:ParameterMap) = ???
+  def query(queries:Query*) { executeQueries(queries, Nil) }
+
+
+
 
   def persistChanges(graph:Graph) {
     //TODO: optimizations
@@ -69,7 +93,7 @@ trait QueryHandler {
       val structuralChanges = changeSet collect {case c:GraphStructureChange => c }
 
       val contentChangeQueries:Seq[Query] = contentChanges.map(graphContentChangeToQuery)
-      batchQuery(contentChangeQueries)
+      query(contentChangeQueries:_*)
 
       for(structuralChange <- structuralChanges) {
         graphStructureChangeToEffect(structuralChange)(this)(graph)
@@ -86,10 +110,9 @@ trait QueryHandler {
     jsonResponse.results
   }
 
-  protected def extractGraph(results:Seq[json.Result]):Graph = {
-    val allJsonGraphs:Seq[json.Graph] = results.flatMap{_.data.flatMap(_.graph)}
-    val mergedGraph = allJsonGraphs.map(Graph(_)).fold(Graph())(_ merge _) //TODO: use Graph.empty
-    mergedGraph
+  protected def extractGraphs(results:Seq[json.Result]):Seq[Graph] = {
+    val allJsonGraphs:Seq[List[json.Graph]] = results.map(_.data.flatMap(_.graph))
+    allJsonGraphs.map(_.map(Graph(_)).fold(Graph())(_ merge _)) // TODO: use Graph.empty
   }
 
   protected def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {
@@ -150,23 +173,6 @@ class Transaction extends QueryHandler {
     invalidate()
   }
 
-  def commit(statement:String, parameters:ParameterMap = Map.empty):Graph = {
-    commit(Query(statement, parameters))
-  }
-
-  def commit(query:Query):Graph = {
-    throwIfNotValid()
-    val jsonRequest = buildJsonRequest(List(query), List("graph"))
-    val jsonResponse = id match {
-      case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
-      case None =>                restService.singleRequest(jsonRequest)
-    }
-
-    invalidate()
-    handleError(exceptionFromErrors(jsonResponse))
-    extractGraph(jsonResponse.results)
-  }
-
   def rollback() = {
     id match {
       case Some(transactionId) => restService.rollbackTransaction(transactionId)
@@ -174,6 +180,31 @@ class Transaction extends QueryHandler {
     }
     invalidate()
   }
+
+  def queryGraphAndCommit(query:Query):Graph = queryGraphsAndCommit(query).head
+  def queryTableAndCommit(query:Query):ParameterValue = queryTables(query).head
+  def queryGraphsAndCommit(queries:Query*):Seq[Graph] = {
+  def queryTablesAndCommit(queries:Query*):Seq[ParameterValue] = ???
+    val jsonResponse = requestAndCommit(queries,List("graph"))
+    extractGraphs(jsonResponse.results)
+  }
+  def queryAndCommit(queries:Query*) { requestAndCommit(queries,resultDataContents = Nil) }
+  // TODO: def persistchangesAndCommit(graph:Graph)
+
+  private def requestAndCommit(queries:Seq[Query], resultDataContents:List[String]):json.Response = {
+    // TODO: share code with queryService
+    throwIfNotValid()
+    val jsonRequest = buildJsonRequest(queries, resultDataContents)
+    val jsonResponse = id match {
+      case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
+      case None =>                restService.singleRequest(jsonRequest)
+    }
+
+    invalidate()
+    handleError(exceptionFromErrors(jsonResponse))
+    jsonResponse
+  }
+
 }
 
 class DbService extends QueryHandler {

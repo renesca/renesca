@@ -29,6 +29,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     "clear changes after persisting" in {
       val queryHandler = new QueryHandler() {
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions:Option[Exception]) {}
       }
 
       val graph = mock[Graph]

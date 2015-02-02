@@ -13,13 +13,18 @@ class TransactionSpec extends Specification with Mockito {
     commit = Some("http://localhost:7474/db/data/transaction/1/commit"),
     transaction = Some(json.Transaction("Thu, 29 Jan 2015 11:56:08 +0000"))
   )
+  val jsonResponseWithError = json.Response(
+    errors = List(json.Error(
+      "Neo.ClientError.Statement.InvalidSyntax",
+      "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"))
+  )
   val transactionResponse = ( TransactionId("1"), jsonResponse )
 
   def newTransaction = {
     val tx = new Transaction
     tx.restService = mock[RestService]
 
-    tx.restService.singleRequest(jsonRequest) returns json.Response()
+    tx.restService.singleRequest(jsonRequest) returns jsonResponse
     tx.restService.openTransaction(jsonRequest) returns transactionResponse
     tx.restService.resumeTransaction(TransactionId("1"),jsonRequest) returns jsonResponse
 
@@ -85,6 +90,17 @@ class TransactionSpec extends Specification with Mockito {
     tx.queryGraph(statement) must throwA[RuntimeException]
     tx.commit() must throwA[RuntimeException]
     tx.commit(statement) must throwA[RuntimeException]
+  }
+
+  "error in transaction rollbacks transaction and throws exception" in {
+    val tx = new Transaction
+    tx.restService = mock[RestService]
+    tx.restService.openTransaction(jsonRequest) returns (( TransactionId("1"), jsonResponseWithError ))
+
+    tx.queryGraph(statement) must throwA[RuntimeException]
+
+    tx.isValid mustEqual false
+    there was one (tx.restService).rollbackTransaction(TransactionId("1"))
   }
 }
 

@@ -1,5 +1,15 @@
 package renesca
 
+// QueryHandler ensures that we have the same query-interface in Transaction and in DbService.
+// Both must implement queryService and handleError.
+// The query-interface consists of the methods:
+// TODO: implement interface
+//  queryGraph  - submit one query [with parameters] and return a Graph
+//  queryRow    - submit one query [with parameters] and return a row set
+//  queryGraphs - submit multiple queries [with parameters] and return a Graph for each result
+//  queryRows   - submit multiple queries [with parameters] and return a row set for each result
+//  query       - submit one or multiple queries [with parameters] as a side effect (returns Unit)
+
 import renesca.graph._
 import renesca.parameter.ParameterMap
 import renesca.parameter.implicits._
@@ -35,7 +45,7 @@ trait QueryHandler {
   def queryGraph(statement:String, parameters:ParameterMap = Map.empty):Graph = queryGraph(Query(statement, parameters))
   def queryGraph(query:Query):Graph = {
     val results = executeQueries(List(query), List("graph"))
-    buildResults(results)
+    extractGraph(results)
   }
 
   def batchQuery(statement:String, parameters:ParameterMap = Map.empty):Unit = batchQuery(Query(statement, parameters))
@@ -72,11 +82,11 @@ trait QueryHandler {
   protected def executeQueries(queries:Seq[Query], resultDataContents:List[String]):List[json.Result] = {
     val jsonRequest = buildJsonRequest(queries, resultDataContents)
     val jsonResponse = queryService(jsonRequest)
-    val results = handleError(jsonResponse)
-    results
+    handleError(exceptionFromErrors(jsonResponse))
+    jsonResponse.results
   }
 
-  protected def buildResults(results:Seq[json.Result]):Graph = {
+  protected def extractGraph(results:Seq[json.Result]):Graph = {
     val allJsonGraphs:Seq[json.Graph] = results.flatMap{_.data.flatMap(_.graph)}
     val mergedGraph = allJsonGraphs.map(Graph(_)).fold(Graph())(_ merge _) //TODO: use Graph.empty
     mergedGraph
@@ -86,16 +96,17 @@ trait QueryHandler {
     json.Request(queries.map(query => json.Statement(query, resultDataContents)).toList)
   }
 
-  protected def handleError(jsonResponse:json.Response):List[json.Result] = {
-    jsonResponse match {
-      case json.Response(_, results, _, Nil) => results
-      case json.Response(_, Nil    , _, errors) =>
+  protected def exceptionFromErrors(jsonResponse:json.Response):Option[RuntimeException] = {
+    jsonResponse.errors match {
+      case Nil => None
+      case errors =>
         val message = errors.map{ case json.Error(code, msg) => s"$code\n$msg"}.mkString("\n","\n\n","\n")
-        throw new RuntimeException(message)
+        Some(new RuntimeException(message))
     }
   }
 
   protected def queryService(jsonRequest:json.Request):json.Response
+  protected def handleError(exceptions:Option[Exception]):Unit
 }
 
 class Transaction extends QueryHandler {
@@ -124,6 +135,13 @@ class Transaction extends QueryHandler {
     }
   }
 
+  protected def handleError(exceptions:Option[Exception]) {
+    for(exception <- exceptions) {
+      rollback()
+      throw exception
+    }
+  }
+
   def commit() {
     throwIfNotValid()
     for( transactionId <- id)
@@ -145,12 +163,26 @@ class Transaction extends QueryHandler {
     }
 
     invalidate()
-    buildResults(handleError(jsonResponse))
+    handleError(exceptionFromErrors(jsonResponse))
+    extractGraph(jsonResponse.results)
+  }
+
+  def rollback() = {
+    id match {
+      case Some(transactionId) => restService.rollbackTransaction(transactionId)
+      case None =>
+    }
+    invalidate()
   }
 }
 
 class DbService extends QueryHandler {
   var restService:RestService = null //TODO: inject
+
+  protected def handleError(exceptions:Option[Exception]) {
+    for(exception <- exceptions)
+      throw exception
+  }
 
   override protected def queryService(jsonRequest:json.Request):json.Response = {
     restService.singleRequest(jsonRequest)

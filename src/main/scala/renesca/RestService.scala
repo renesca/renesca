@@ -10,6 +10,7 @@ import spray.http.MediaTypes._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import spray.http.HttpMethods._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -28,16 +29,17 @@ class RestService(val server:String, implicit val timeout:Timeout = Timeout(10.s
 
   private def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
 
-  private def buildHttpRequest(path:String, jsonRequest:json.Request):HttpRequest = {
+  private def buildHttpPostRequest(path:String, jsonRequest:json.Request):HttpRequest = {
     //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
-    val uri = Uri(s"$server$path")
-    val content = jsonRequest
-    val accept:MediaRange = `application/json`// withCharset `UTF-8`
-    Post(uri, content)//.withHeaders(Accept(accept))
+    // val accept:MediaRange = `application/json`// withCharset `UTF-8`
+    Post(
+      uri = Uri(s"$server$path"),
+      content = jsonRequest
+    )//.withHeaders(Accept(accept))
   }
 
   private def awaitResponse(path:String, jsonRequest:json.Request):(List[HttpHeader], json.Response) = {
-    val httpRequest = buildHttpRequest(path, jsonRequest)
+    val httpRequest = buildHttpPostRequest(path, jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
     val Right(jsonResponse) = httpResponse.entity.as[json.Response]
     //TODO: error handling
@@ -75,5 +77,11 @@ class RestService(val server:String, implicit val timeout:Timeout = Timeout(10.s
     val (_,jsonResponse) = awaitResponse(path, jsonRequest)
     jsonResponse
   }
+
+  def rollbackTransaction(id: TransactionId) {
+    // we don't wait for a response here
+    pipeline(HttpRequest(DELETE, s"http://localhost:7474/db/data/transaction/$id"))
+  }
+
 }
 

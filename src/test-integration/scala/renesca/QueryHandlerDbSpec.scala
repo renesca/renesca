@@ -161,7 +161,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "add node" in {
-      val graph = Graph()
+      val graph = Graph.empty
       val node = graph.addNode()
       node.id.value must beLessThan(0L)
       db.persistChanges(graph)
@@ -173,7 +173,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "add properties and labels after NodeAdd" in {
-      val graph = Graph()
+      val graph = Graph.empty
       val node = graph.addNode()
       node.properties += ("test" -> 5)
       node.labels ++= Set("foo", "bar")
@@ -184,7 +184,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "set properties and labels in NodeAdd" in {
-      val graph = Graph()
+      val graph = Graph.empty
       graph.addNode(Set("foo", "bar"), Map("test" -> 5))
       db.persistChanges(graph)
 
@@ -193,7 +193,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "add relation" in {
-      val graph = Graph()
+      val graph = Graph.empty
       val start = graph.addNode(Set("I"))
       val end = graph.addNode(Set("cheezburger"))
       val relation = graph.addRelation(start, end, "can haz")
@@ -205,7 +205,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "add properties after RelationAdd" in {
-      val graph = Graph()
+      val graph = Graph.empty
       val start = graph.addNode(Set("I"))
       val end = graph.addNode(Set("cheezburger"))
       val relation = graph.addRelation(start, end, "can haz")
@@ -216,7 +216,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "set properties in RelationAdd" in {
-      val graph = Graph()
+      val graph = Graph.empty
       val start = graph.addNode(Set("I"))
       val end = graph.addNode(Set("cheezburger"))
       val relation = graph.addRelation(start, end, "can haz", Map("one" -> "yes"))

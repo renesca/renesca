@@ -107,5 +107,9 @@ class GraphFactorySpec extends Specification with Mockito {
       relation.properties mustEqual mutable.Map("ki" -> "wäl", "freitag" -> 13)
     }
   }
+
+  "create empty graph" in {
+    Graph.empty.isEmpty mustEqual true
+  }
 }
 

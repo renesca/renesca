@@ -40,7 +40,7 @@ case class Id(private var _id: Long) {
 }
 
 object Graph {
-  def apply(nodes: Traversable[Node] = Nil, relations: Traversable[Relation] = Nil):Graph = {
+  def apply(nodes: Traversable[Node], relations: Traversable[Relation] = Nil):Graph = {
     new Graph(
       mutable.LinkedHashSet.empty ++ nodes,
       mutable.LinkedHashSet.empty ++ relations)
@@ -64,6 +64,8 @@ object Graph {
 
     Graph(nodes, relations)
   }
+
+  def empty = new Graph(mutable.LinkedHashSet.empty, mutable.LinkedHashSet.empty)
 }
 
 
@@ -138,7 +140,7 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     graph
   }
 
-  def isEmpty = nodes.isEmpty //TODO: test
+  def isEmpty = nodes.isEmpty
   def nonEmpty = nodes.nonEmpty
 
   override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"

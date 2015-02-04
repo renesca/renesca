@@ -112,7 +112,7 @@ trait QueryHandler extends QueryInterface {
 
   protected def extractGraphs(results:Seq[json.Result]):Seq[Graph] = {
     val allJsonGraphs:Seq[List[json.Graph]] = results.map(_.data.flatMap(_.graph))
-    allJsonGraphs.map(_.map(Graph(_)).fold(Graph())(_ merge _)) // TODO: use Graph.empty
+    allJsonGraphs.map(_.map(Graph(_)).fold(Graph.empty)(_ merge _))
   }
 
   protected def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {

@@ -123,8 +123,8 @@ class GraphSpec extends Specification with Mockito {
     }
 
     "merge graphs with changes" in {
-      val graph1 = Graph()
-      val graph2 = Graph()
+      val graph1 = Graph.empty
+      val graph2 = Graph.empty
 
       val change1 = mock[GraphChange]
       val change2 = mock[GraphChange]
@@ -143,7 +143,7 @@ class GraphSpec extends Specification with Mockito {
     }
 
     "be equal to another empty graph" in {
-      Graph() mustEqual Graph()
+      Graph.empty mustEqual Graph.empty
     }
     
     "be equal to identical graph" in {
@@ -165,7 +165,7 @@ class GraphSpec extends Specification with Mockito {
     }
 
     "have the same hashcode as another empty graph" in {
-      Graph().hashCode mustEqual Graph().hashCode
+      Graph.empty.hashCode mustEqual Graph.empty.hashCode
     }
 
     "have the same hashcode as identical graph" in {
@@ -208,7 +208,15 @@ class GraphSpec extends Specification with Mockito {
       Id(1).toString mustEqual "1"
     }
 
+    "empty graph should be empty" in {
+      val graph1 = Graph(Nil)
+      val graph2 = Graph(List(Node(1)))
 
+      graph1.isEmpty mustEqual true
+      graph2.isEmpty mustEqual false
+      graph1.nonEmpty mustEqual false
+      graph2.nonEmpty mustEqual true
+    }
   }
 
 }

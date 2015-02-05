@@ -9,12 +9,6 @@ import renesca.parameter.implicits._
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerDbSpec extends IntegrationSpecification {
 
-  def createNode(query:String):(Graph,Node) = {
-    val graph = db.queryGraph(query)
-    val node = graph.nodes.head
-    (graph, node)
-  }
-  
   def resultNode:Node = {
     val resultGraph = db.queryGraph("match n return n")
     resultGraph.nodes.head
@@ -26,7 +20,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
   }
 
   def testNodeSetProperty(data:PropertyValue) = {
-    val (graph,node) = createNode("create n return n")
+    val graph = Graph.empty
+    val node = graph.addNode()
 
     node.properties("key") = data
     db.persistChanges(graph)
@@ -35,13 +30,14 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
   }
 
   def testRelationSetProperty(data:PropertyValue) = {
-    val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
-    val relation = graph.relations.head
+    val graph = Graph.empty
+    val start = graph.addNode()
+    val end = graph.addNode()
+    val relation = graph.addRelation(start, end, "EATS")
 
     relation.properties("key") = data
     db.persistChanges(graph)
 
-    val resultRelation = db.queryGraph("match ()-[r]-() return r").relations.head
     resultRelation.properties("key") mustEqual data
   }
 
@@ -68,7 +64,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "set boolean array property on node" in { testNodeSetProperty(List(true, false)) }
 
     "remove property from node" in {
-      val (graph,node) = createNode("create n set n.yes = 0 return n")
+      val graph = Graph.empty
+      val node = graph.addNode(properties = Map("yes" -> 0))
+      db.persistChanges(graph)
 
       node.properties -= "yes"
       db.persistChanges(graph)
@@ -77,7 +75,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "set label on node" in {
-      val (graph,node) = createNode("create n return n")
+      val graph = Graph.empty
+      val node = graph.addNode()
+      db.persistChanges(graph)
 
       node.labels += Label("BEER")
       db.persistChanges(graph)
@@ -86,7 +86,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "remove label from node" in {
-      val (graph,node) = createNode("create (n:WINE) return n")
+      val graph = Graph.empty
+      val node = graph.addNode(Set("WINE"))
+      db.persistChanges(graph)
 
       node.labels -= Label("WINE")
       db.persistChanges(graph)
@@ -95,7 +97,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "delete node" in {
-      val (graph,node) = createNode("create n return n")
+      val graph = Graph.empty
+      val node = graph.addNode()
+      db.persistChanges(graph)
 
       graph.delete(node)
       db.persistChanges(graph)
@@ -110,17 +114,23 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       // 3. delete n (implicitly deletes relation r from graph and relation l which is only in the database)
       // 4. whole graph should be (m) and (q)
 
-      val nid = db.queryGraph("create n return n").nodes.head.id
-      val graph = db.queryGraph(Query(
-        "match n where id(n) = {id} create (m)-[r:INTERNAL]->(n)<-[l:EXTERNAL]-(q) return n,r,m",
-        Map("id" -> nid)))
-
-      graph.nodes must haveSize(2) // m, n
-      graph.relations must haveSize(1) // r
-
-      val n = graph.nodes.find(_.id == nid).get
-      graph.delete(n) // deletes node n and relations l,r
+      val graph = Graph.empty
+      val m = graph.addNode()
+      val n = graph.addNode()
+      val o = graph.addNode()
+      val rel1 = graph.addRelation(m, n, "INTERNAL")
+      val rel2 = graph.addRelation(n, o, "EXTERNAL")
       db.persistChanges(graph)
+
+      val reducedGraph = db.queryGraph(Query(
+        "match (m)-[r:INTERNAL]->(n) where id(m) = {mid} and id(n) = {nid} return n,r,m",
+        Map("mid" -> m.id, "nid" -> n.id)))
+
+      reducedGraph.nodes must haveSize(2) // m, n
+      reducedGraph.relations must haveSize(1) // r
+
+      reducedGraph.delete(n) // deletes node n and relations l,r
+      db.persistChanges(reducedGraph)
 
       val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
       resultGraph.nodes must haveSize(2)
@@ -139,8 +149,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "set boolean array property on relation" in { testRelationSetProperty(List(true, false)) }
 
     "remove property from relation" in {
-      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) set r.yes = 100 return chicken, r, horse")
-      val relation = graph.relations.head
+      val graph = Graph.empty
+      val start = graph.addNode()
+      val end = graph.addNode()
+      val relation = graph.addRelation(start, end, "EATS", Map("yes" -> 100))
+      db.persistChanges(graph)
 
       relation.properties -= "yes"
       db.persistChanges(graph)
@@ -149,8 +162,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
 
     "delete relation" in {
-      val graph = db.queryGraph("create (chicken)-[r:EATS]->(horse) return chicken, r, horse")
-      val relation = graph.relations.head
+      val graph = Graph.empty
+      val start = graph.addNode()
+      val end = graph.addNode()
+      val relation = graph.addRelation(start, end, "EATS")
+      db.persistChanges(graph)
 
       graph.delete(relation)
       db.persistChanges(graph)

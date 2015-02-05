@@ -41,19 +41,14 @@ object QueryHandler {
   }
 
   private val graphStructureChangeToEffect:GraphStructureChange => QueryHandler => Graph => Unit = {
-    case NodeAdd(localNodeId, labels, properties) => db => graph =>
-      val labelDef = labels.map(l => s":`$l`").mkString
-      val dbNode = db.queryGraph(Query(
-        s"create (n $labelDef) set n += {keyValue} return n",
-        Map("keyValue" -> properties
-        ))).nodes.head
+    case NodeAdd(localNodeId) => db => graph =>
+      val dbNode = db.queryGraph("create (n) return n").nodes.head
       localNodeId.value = dbNode.id.value
 
-    case RelationAdd(relationId, start, end, relationType, properties) => db => graph =>
+    case RelationAdd(relationId, start, end, relationType) => db => graph =>
       val dbRelation = db.queryGraph(Query(
-        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`$relationType`]->(end) set r += {keyValue} return r",
-        Map("startId" -> start, "endId" -> end, "keyValue" -> properties
-        ))).relations.head
+        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`$relationType`]->(end) return r",
+        Map("startId" -> start, "endId" -> end))).relations.head
       relationId.value = dbRelation.id.value
   }
 }

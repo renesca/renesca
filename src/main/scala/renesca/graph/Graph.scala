@@ -99,16 +99,19 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
   }
 
   def addRelation(start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
-    val relation = Relation.local(start, end, relationType, properties)
+    val relation = Relation.local(start, end, relationType)
     relations += relation
-    localChanges += RelationAdd(relation.id, start.id, end.id, relationType, properties)
+    localChanges += RelationAdd(relation.id, start.id, end.id, relationType)
+    relation.properties ++= properties
     relation
   }
 
   def addNode(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty):Node = {
-    val node = Node.local(labels, properties)
+    val node = Node.local
     nodes += node
-    localChanges += NodeAdd(node.id, labels, properties)
+    localChanges += NodeAdd(node.id)
+    node.properties ++= properties
+    node.labels ++= labels
     node
   }
 

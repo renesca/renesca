@@ -62,7 +62,7 @@ class TransactionSpec extends Specification with Mockito {
   "open transaction on commit" in {
     val tx = newTransaction
 
-    tx.queryGraphsAndCommit(statement)
+    tx.commit.queryGraphs(statement)
 
     there was one(tx.restService).singleRequest(jsonRequest)
     there was no(tx.restService).openTransaction(jsonRequest)
@@ -81,7 +81,7 @@ class TransactionSpec extends Specification with Mockito {
   "invalidate transaction on commit with query" in {
     val tx = newTransaction
 
-    tx.queryGraphsAndCommit(statement)
+    tx.commit.queryGraphs(statement)
 
     tx.isValid mustEqual false
   }
@@ -92,7 +92,7 @@ class TransactionSpec extends Specification with Mockito {
 
     tx.queryGraph(statement) must throwA[RuntimeException]
     tx.commit() must throwA[RuntimeException]
-    tx.queryGraphsAndCommit(statement) must throwA[RuntimeException]
+    tx.commit.queryGraphs(statement) must throwA[RuntimeException]
   }
 
   "error in transaction rollbacks transaction and throws exception" in {

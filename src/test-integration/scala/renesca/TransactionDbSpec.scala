@@ -64,7 +64,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       val transaction = newTransaction
 
       transaction.query("create (n) return n")
-      transaction.queryGraphsAndCommit("create (y) return y")
+      transaction.commit.queryGraphs("create (y) return y")
 
       val result = db.queryGraph("match n return n")
       result.nodes must haveSize(2)
@@ -73,7 +73,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "only commit with a query" in {
       val transaction = newTransaction
 
-      transaction.queryGraphsAndCommit("create n return n")
+      transaction.commit.queryGraphs("create n return n")
 
       val result = db.queryGraph("match n return n")
       result.nodes must haveSize(1)

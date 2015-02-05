@@ -4,10 +4,11 @@ package renesca
 // Both must implement queryService and handleError.
 // The query-interface consists of the methods:
 //  queryGraph  - submit one query [with parameters] and return a Graph
-//  queryTable    - submit one query [with parameters] and return a row set
+//  queryTable  - submit one query [with parameters] and return a row set
 //  queryGraphs - submit multiple queries [with parameters] and return a Graph for each result
-//  queryTabless   - submit multiple queries [with parameters] and return a row set for each result
+//  queryTables - submit multiple queries [with parameters] and return a row set for each result
 //  query       - submit one or multiple queries [with parameters] as a side effect (returns Unit)
+//  persist     - save a modified graph to the database
 
 import renesca.graph._
 import renesca.parameter.{ParameterValue, ParameterMap}
@@ -165,14 +166,6 @@ class Transaction extends QueryHandler {
     }
   }
 
-  def commit() {
-    throwIfNotValid()
-    for( transactionId <- id)
-      restService.commitTransaction(transactionId)
-
-    invalidate()
-  }
-
   def rollback() = {
     id match {
       case Some(transactionId) => restService.rollbackTransaction(transactionId)
@@ -181,29 +174,40 @@ class Transaction extends QueryHandler {
     invalidate()
   }
 
-  def queryGraphAndCommit(query:Query):Graph = queryGraphsAndCommit(query).head
-  def queryTableAndCommit(query:Query):ParameterValue = queryTables(query).head
-  def queryGraphsAndCommit(queries:Query*):Seq[Graph] = {
-  def queryTablesAndCommit(queries:Query*):Seq[ParameterValue] = ???
-    val jsonResponse = requestAndCommit(queries,List("graph"))
-    extractGraphs(jsonResponse.results)
-  }
-  def queryAndCommit(queries:Query*) { requestAndCommit(queries,resultDataContents = Nil) }
-  // TODO: def persistchangesAndCommit(graph:Graph)
+  val commit = new QueryInterface {
+    def apply() {
+      throwIfNotValid()
+      for( transactionId <- id)
+        restService.commitTransaction(transactionId)
 
-  private def requestAndCommit(queries:Seq[Query], resultDataContents:List[String]):json.Response = {
-    // TODO: share code with queryService
-    throwIfNotValid()
-    val jsonRequest = buildJsonRequest(queries, resultDataContents)
-    val jsonResponse = id match {
-      case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
-      case None =>                restService.singleRequest(jsonRequest)
+      invalidate()
     }
+    
+    def queryGraph(query:Query):Graph = queryGraphs(query).head
+    def queryTable(query:Query):ParameterValue = queryTables(query).head
+    def queryGraphs(queries:Query*):Seq[Graph] = {
+      val jsonResponse = requestAndCommit(queries,List("graph"))
+      extractGraphs(jsonResponse.results)
+    }
+    def queryTables(queries:Query*):Seq[ParameterValue] = ???
+    def query(queries:Query*) { requestAndCommit(queries,resultDataContents = Nil) }
+    def persistChanges(graph:Graph) = ???
 
-    invalidate()
-    handleError(exceptionFromErrors(jsonResponse))
-    jsonResponse
+    private def requestAndCommit(queries:Seq[Query], resultDataContents:List[String]):json.Response = {
+      // TODO: share code with queryService
+      throwIfNotValid()
+      val jsonRequest = buildJsonRequest(queries, resultDataContents)
+      val jsonResponse = id match {
+        case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
+        case None =>                restService.singleRequest(jsonRequest)
+      }
+
+      invalidate()
+      handleError(exceptionFromErrors(jsonResponse))
+      jsonResponse
+    }
   }
+
 
 }
 

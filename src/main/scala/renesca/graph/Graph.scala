@@ -24,7 +24,7 @@ object Id {
 
 case class Id(private var _id: Long) {
   def value = _id
-  def value_=(id: Long) {
+  private[renesca] def value_=(id: Long) {
     _id = id
   }
 

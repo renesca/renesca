@@ -17,8 +17,14 @@ object Node {
     val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)
   }
-  def local: Node = {
-    apply(Id.nextId(), Set.empty, Map.empty)
+
+  def local:Node = local()
+  def local(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
+    val node = apply(Id.nextId())
+    node.labels ++= labels
+    node.properties ++= properties
+
+    node
   }
 }
 

@@ -42,8 +42,9 @@ case class Id(private var _id: Long) {
 object Graph {
   def apply(nodes: Traversable[Node], relations: Traversable[Relation] = Nil):Graph = {
     new Graph(
-      mutable.LinkedHashSet.empty ++ nodes,
-      mutable.LinkedHashSet.empty ++ relations)
+      new Nodes(mutable.LinkedHashSet.empty ++ nodes),
+      new Relations(mutable.LinkedHashSet.empty ++ relations)
+    )
   }
 
   def apply(jsonGraph:json.Graph):Graph = {
@@ -65,12 +66,13 @@ object Graph {
     Graph(nodes, relations)
   }
 
-  def empty = new Graph(mutable.LinkedHashSet.empty, mutable.LinkedHashSet.empty)
+  def empty = new Graph(new Nodes, new Relations)
 }
 
-
-class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relations: mutable.LinkedHashSet[Relation]) {
+class Graph private[graph] (val nodes: Nodes, val relations: Relations) {
   // private constructor to force usage of Factory
+
+  nodes.graph = this // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
 
   // graph must be consistent
   require(relations.forall{ relation =>
@@ -82,8 +84,11 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
 
   def changes: Seq[GraphChange] = {
     val unsortedChanges = localChanges ++
-    (nodes.flatMap(node => node.changes) ++
-      relations.flatMap(relation => relation.changes))
+      nodes.localChanges ++
+      relations.localChanges ++
+      nodes.toSeq.flatMap(_.changes) ++
+      relations.toSeq.flatMap(_.changes)
+
     unsortedChanges.sortBy(_.timestamp)
   }
 
@@ -96,34 +101,8 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
     relations.foreach{relation =>
       relation.properties.localChanges.clear()
     }
-  }
-
-  def addRelation(start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
-    val relation = Relation.local(start, end, relationType)
-    relations += relation
-    localChanges += RelationAdd(relation.id, start.id, end.id, relationType)
-    relation.properties ++= properties
-    relation
-  }
-
-  def addNode(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty):Node = {
-    val node = Node.local
-    nodes += node
-    localChanges += NodeAdd(node.id)
-    node.properties ++= properties
-    node.labels ++= labels
-    node
-  }
-
-  def delete(relation: Relation) {
-    relations -= relation
-    localChanges += RelationDelete(relation.id)
-  }
-
-  def delete(node: Node) {
-    nodes -= node
-    relations --= incidentRelations(node)
-    localChanges += NodeDelete(node.id)
+    nodes.localChanges.clear()
+    relations.localChanges.clear()
   }
 
   def outRelations(node: Node) = relations.filter(node == _.startNode).toSet
@@ -146,7 +125,7 @@ class Graph private[graph] (val nodes: mutable.LinkedHashSet[Node], val relation
   def isEmpty = nodes.isEmpty
   def nonEmpty = nodes.nonEmpty
 
-  override def toString = s"Graph(nodes:(${nodes.map(_.id).mkString(", ")}), relations:(${relations.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"
+  override def toString = s"Graph(nodes:(${nodes.toSeq.map(_.id).mkString(", ")}), relations:(${relations.toSeq.map( r => s"${r.id}:${r.startNode.id}->${r.endNode.id}").mkString(", ")}))"
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
 

@@ -14,6 +14,9 @@ class GraphChangeSpec extends Specification with Mockito {
     "collect all changes in one collection and clear it" in {
       val graphChange = mock[GraphChange]
 
+      val nodesChange = mock[GraphChange]
+      val relationsChange = mock[GraphChange]
+
       val nodeLabelChange = mock[GraphChange]
       val nodePropertiesChange = mock[GraphChange]
 
@@ -30,13 +33,17 @@ class GraphChangeSpec extends Specification with Mockito {
 
       val graph = Graph(List(A,B), List(ArB))
       graph.localChanges += graphChange
+      graph.nodes.localChanges += nodesChange
+      graph.relations.localChanges += relationsChange
 
       A.changes must contain(exactly(nodeLabelChange, nodePropertiesChange))
       ArB.changes must contain(exactly(relationPropertiesChange))
 
-      graph.changes.size mustEqual 4
+      graph.changes.size mustEqual 6
       graph.changes must contain(exactly(
         graphChange,
+        nodesChange,
+        relationsChange,
         nodeLabelChange,
         nodePropertiesChange,
         relationPropertiesChange
@@ -47,18 +54,29 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.changes must beEmpty
     }
 
-    "emit change when deleting node" in {
+    "emit change when adding node to nodes" in {
+      val graph = Graph.empty
+
+      graph.nodes += Node.local
+
+      val nodeId = graph.nodes.head.id
+      graph.nodes.localChanges must contain(exactly(
+        NodeAdd(nodeId).asInstanceOf[GraphChange]
+      ))
+    }
+
+    "emit change when deleting node from nodes" in {
       val A = Node(1)
       val graph = Graph(List(A), Nil)
 
-      graph.delete(A)
+      graph.nodes -= A
 
-      graph.localChanges must contain(exactly(
+      graph.nodes.localChanges must contain(exactly(
         NodeDelete(A.id).asInstanceOf[GraphChange]
       ))
     }
 
-    "emit changes when deleting node with relations" in {
+    "emit changes when deleting node with relations from nodes" in {
       val A = Node(1)
       val B = Node(2)
       val C = Node(4)
@@ -66,7 +84,7 @@ class GraphChangeSpec extends Specification with Mockito {
       val BrC = Relation(5, B, C, "r")
       val graph = Graph(List(A, B, C), List(ArB, BrC))
 
-      graph.delete(A)
+      graph.nodes -= A
 
       graph.nodes must not contain A
       graph.relations must not contain ArB
@@ -81,11 +99,71 @@ class GraphChangeSpec extends Specification with Mockito {
       val ArB = Relation(3, A, B, "r")
       val graph = Graph(List(A,B), List(ArB))
 
-      graph.delete(ArB)
+      graph.relations -= ArB
 
       graph.changes must contain(exactly(
         RelationDelete(ArB.id).asInstanceOf[GraphChange]
       ))
+    }
+
+    "emit change when adding local node with properties/labels" in {
+      val graph = Graph.empty
+      val node = Node.local
+
+      node.properties("ciao") = "mit V"
+      node.labels += "boom"
+      graph.nodes += node
+
+      graph.changes must contain(allOf(
+        NodeAdd(node.id).asInstanceOf[GraphChange],
+        NodeSetProperty(node.id, "ciao", "mit V").asInstanceOf[GraphChange],
+        NodeSetLabel(node.id, "boom").asInstanceOf[GraphChange]
+      )).inOrder
+    }
+
+    "emit change when adding local node and then properties/labels" in {
+      val graph = Graph.empty
+      val node = Node.local
+
+      graph.nodes += node
+      node.properties("ciao") = "mit V"
+      node.labels += "boom"
+
+      graph.changes must contain(allOf(
+        NodeAdd(node.id).asInstanceOf[GraphChange],
+        NodeSetProperty(node.id, "ciao", "mit V").asInstanceOf[GraphChange],
+        NodeSetLabel(node.id, "boom").asInstanceOf[GraphChange]
+      )).inOrder
+    }
+
+    "emit change when adding local relation with properties" in {
+      val node1 = Node(1)
+      val node2 = Node(2)
+      val graph = Graph(List(node1, node2))
+      val relation = Relation.local(node1, node2, "nagut")
+
+      relation.properties("ciao") = "mit V"
+      graph.relations += relation
+
+      graph.changes must contain(allOf(
+        RelationAdd(relation.id, relation.startNode.id, relation.endNode.id, relation.relationType).asInstanceOf[GraphChange],
+        RelationSetProperty(relation.id, "ciao", "mit V").asInstanceOf[GraphChange]
+      )).inOrder
+    }
+
+    "emit change when adding local relation and then properties" in {
+      val node1 = Node(1)
+      val node2 = Node(2)
+      val graph = Graph(List(node1, node2))
+      val relation = Relation.local(node1, node2, "nagut")
+
+      graph.relations += relation
+      relation.properties("ciao") = "mit V"
+
+      graph.changes must contain(allOf(
+        RelationAdd(relation.id, relation.startNode.id, relation.endNode.id, relation.relationType).asInstanceOf[GraphChange],
+        RelationSetProperty(relation.id, "ciao", "mit V").asInstanceOf[GraphChange]
+      )).inOrder
     }
   }
 

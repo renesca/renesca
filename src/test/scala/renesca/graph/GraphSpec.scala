@@ -78,7 +78,7 @@ class GraphSpec extends Specification with Mockito {
     "delete itself from graph" in new ExampleGraph {
       import graph._
 
-      delete(B)
+      graph.nodes -= B
 
       nodes must contain(exactly(A,C))
       relations must contain(exactly(ArC))

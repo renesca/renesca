@@ -32,7 +32,7 @@ class RelationSpec extends Specification with Mockito {
     }
 
     "delete itself from graph" in new ExampleGraph {
-      graph.delete(ArB)
+      graph.relations -= ArB
 
       graph.nodes must contain(exactly(A,B,C))
       graph.relations must contain(exactly(ArC, BrC))

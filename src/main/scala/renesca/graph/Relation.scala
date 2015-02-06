@@ -17,8 +17,10 @@ object Relation {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
-  def local(start:Node, end:Node, relationType:RelationType) = {
-    apply(Id.nextId(), start, end, relationType, Map.empty)
+  def local(start:Node, end:Node, relationType:RelationType, properties:PropertyMap = Map.empty) = {
+    val relation = apply(Id.nextId(), start, end, relationType)
+    relation.properties ++= properties
+    relation
   }
 }
 

@@ -51,7 +51,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
       val List(first, second) = graph.nodes.toList
-      graph.delete(first)
+      graph.nodes -= first
       transaction.persistChanges(graph)
       transaction.commit()
 

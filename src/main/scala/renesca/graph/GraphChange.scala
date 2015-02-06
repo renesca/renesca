@@ -4,7 +4,10 @@ import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
 
 
 sealed trait GraphChange {
-  val timestamp:Long = System.nanoTime
+  private var _timestamp:Long = System.nanoTime
+  def timestamp = _timestamp
+
+  private[graph] def updateTimestamp() { _timestamp = System.nanoTime }
 }
 
 trait GraphContentChange extends GraphChange

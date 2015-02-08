@@ -33,7 +33,7 @@ package object parameter {
   sealed trait PrimitivePropertyValue extends PropertyValue
   sealed trait ArrayPropertyValue extends PropertyValue { def elements:Seq[PrimitivePropertyValue]}
 
-  final case class LongPropertyValue(value:Long) extends PrimitivePropertyValue {
+  case class LongPropertyValue(value:Long) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: LongPropertyValue => this.value == that.value
       case that: Int => value == that
@@ -43,7 +43,7 @@ package object parameter {
     override def hashCode = value.hashCode
   }
 
-  final case class DoublePropertyValue(value:Double) extends PrimitivePropertyValue {
+  case class DoublePropertyValue(value:Double) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: DoublePropertyValue => this.value == that.value
       case that: Double => value == that
@@ -68,6 +68,10 @@ package object parameter {
       case _ => false
     }
     override def hashCode = value.hashCode
+  }
+
+  case object NullPropertyValue extends PrimitivePropertyValue {
+    //TODO: equals/hashCode/implicits?
   }
 
   case class LongArrayPropertyValue(elements:LongPropertyValue*) extends ArrayPropertyValue {

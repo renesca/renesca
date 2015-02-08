@@ -27,6 +27,7 @@ object ParameterProtocol extends DefaultJsonProtocol {
       case JsNumber(num) if num.isValidLong => LongPropertyValue(num.toLong)
       case JsNumber(num) if !num.isValidLong => DoublePropertyValue(num.toDouble)
       case JsBoolean(bool) => BooleanPropertyValue(bool)
+      case JsNull => NullPropertyValue
       case json => deserializationError(s"can not deserialize property value of type $json")
     }
   }

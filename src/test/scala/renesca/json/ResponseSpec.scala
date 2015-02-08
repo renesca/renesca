@@ -5,7 +5,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ResponseJsonProtocol._
-import renesca.parameter.ArrayParameterValue
+import renesca.parameter.{NullPropertyValue, ArrayParameterValue}
 import renesca.parameter.implicits._
 import spray.json._
 
@@ -88,6 +88,31 @@ class ResponseSpec extends Specification with Mockito {
       )
     }
 
+    "handle null" in {
+      val json = """
+          {
+            "results": [
+              {
+                "columns": ["nulled", "nulledarray"],
+                "data": [
+                  {
+                    "graph": { "nodes": [ ], "relationships": [ ] },
+                    "row": [null, [null, null]]
+                  }
+                ]
+              }
+            ],
+            "errors": [ ]
+          }
+    """
+
+      val response = json.parseJson.convertTo[Response]
+      response mustEqual Response(results = List(Result(List("nulled", "nulledarray"), List(Data(
+        row = Some(ArrayParameterValue(List(NullPropertyValue, ArrayParameterValue(List(NullPropertyValue, NullPropertyValue))))),
+        graph = Some(Graph())
+      )))))
+    }
+
     "parse complicated result" in {
       val json = """
           {
@@ -154,17 +179,18 @@ class ResponseSpec extends Specification with Mockito {
       val response = json.parseJson.convertTo[Response]
       response mustEqual Response(None, List(Result(
         List("bike", "p1", "p2"),
-        List(Data(Some(ArrayParameterValue(List(
-          Map("weight" -> 10),
-          ArrayParameterValue(List(
+        List(Data(
+          row = Some(ArrayParameterValue(List(
             Map("weight" -> 10),
-            Map("position" -> 1),
-            Map("spokes" -> 3))),
-          ArrayParameterValue(List(
-            Map("weight" -> 10),
-            Map("position" -> 2),
-            Map("spokes" -> 32)))))),
-          Some(Graph(List(
+            ArrayParameterValue(List(
+              Map("weight" -> 10),
+              Map("position" -> 1),
+              Map("spokes" -> 3))),
+            ArrayParameterValue(List(
+              Map("weight" -> 10),
+              Map("position" -> 2),
+              Map("spokes" -> 32)))))),
+          graph = Some(Graph(List(
             Node("4", List("Bike"), Map("weight" -> 10)),
             Node("5", List("Wheel"), Map("spokes" -> 3)),
             Node("6", List("Wheel"), Map("spokes" -> 32))),

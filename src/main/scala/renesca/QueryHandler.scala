@@ -13,6 +13,7 @@ package renesca
 import renesca.graph._
 import renesca.parameter.{ParameterValue, ParameterMap}
 import renesca.parameter.implicits._
+import renesca.table.Table
 
 object Query {
   implicit def stringToQuery(statement:String):Query = Query(statement)
@@ -21,9 +22,9 @@ case class Query(statement:String, parameters:ParameterMap = Map.empty)
 
 trait QueryInterface {
   def queryGraph(query:Query):Graph
-  def queryTable(query:Query):ParameterValue
+  def queryTable(query:Query):Table
   def queryGraphs(queries:Query*):Seq[Graph]
-  def queryTables(queries:Query*):Seq[ParameterValue]
+  def queryTables(queries:Query*):Seq[Table]
   def query(queries:Query*):Unit
   def persistChanges(graph:Graph):Unit
 }
@@ -57,16 +58,16 @@ trait QueryHandler extends QueryInterface {
   import renesca.QueryHandler._
 
   override def queryGraph(query:Query):Graph = queryGraphs(query).head
-  override def queryTable(query:Query):ParameterValue = queryTables(query).head
+  override def queryTable(query:Query):Table = queryTables(query).head
 
   override def queryGraphs(queries:Query*):Seq[Graph] = {
     val results = executeQueries(queries, List("graph"))
     extractGraphs(results)
   }
 
-  override def queryTables(queries:Query*):Seq[ParameterValue] = {
-    val results = executeQueries(queries, List("rows"))
-    ???
+  override def queryTables(queries:Query*):Seq[Table] = {
+    val results = executeQueries(queries, List("row"))
+    extractTables(results)
   }
 
   def query(queries:Query*) { executeQueries(queries, Nil) }
@@ -109,6 +110,10 @@ trait QueryHandler extends QueryInterface {
   protected def extractGraphs(results:Seq[json.Result]):Seq[Graph] = {
     val allJsonGraphs:Seq[List[json.Graph]] = results.map(_.data.flatMap(_.graph))
     allJsonGraphs.map(_.map(Graph(_)).fold(Graph.empty)(_ merge _))
+  }
+
+  protected def extractTables(results:Seq[json.Result]):Seq[Table] = {
+    results.map(r => Table(r.columns, r.data))
   }
 
   protected def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {
@@ -179,14 +184,14 @@ class Transaction extends QueryHandler {
     }
     
     def queryGraph(query:Query):Graph = queryGraphs(query).head
-    def queryTable(query:Query):ParameterValue = queryTables(query).head
+    def queryTable(query:Query):Table = queryTables(query).head
     def queryGraphs(queries:Query*):Seq[Graph] = {
       val jsonResponse = requestAndCommit(queries,List("graph"))
       extractGraphs(jsonResponse.results)
     }
-    def queryTables(queries:Query*):Seq[ParameterValue] = ???
+    def queryTables(queries:Query*):Seq[Table] = ??? // TODO: implement
     def query(queries:Query*) { requestAndCommit(queries,resultDataContents = Nil) }
-    def persistChanges(graph:Graph) = ???
+    def persistChanges(graph:Graph) = ??? // TODO: implement
 
     private def requestAndCommit(queries:Seq[Query], resultDataContents:List[String]):json.Response = {
       // TODO: share code with queryService

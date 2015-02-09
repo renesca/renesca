@@ -1,6 +1,6 @@
 package renesca.json
 
-import renesca.parameter.{ParameterValue, PropertyMap}
+import renesca.parameter.{ArrayParameterValue, ParameterValue, PropertyMap}
 
 
 case class Response(
@@ -11,7 +11,7 @@ case class Response(
                      )
 case class Transaction(expires:String)
 case class Error(code : String, message : String)
-case class Data(row : Option[ParameterValue] = None, graph : Option[Graph] = None)
+case class Data(row : Option[ArrayParameterValue] = None, graph : Option[Graph] = None)
 case class Result(columns : List[String], data : List[Data])
 case class Relationship(
                          id : String,

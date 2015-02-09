@@ -59,6 +59,11 @@ pomExtra := {
         <name>Sascha Nordquist</name>
         <url>https://github.com/snordquist</url>
       </developer>
+      <developer>
+        <id>jkaroff</id>
+        <name>Johannes Karoff</name>
+        <url>https://github.com/cornerman</url>
+      </developer>
     </developers>
 }
 

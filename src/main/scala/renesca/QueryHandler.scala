@@ -113,7 +113,7 @@ trait QueryHandler extends QueryInterface {
   }
 
   protected def extractTables(results:Seq[json.Result]):Seq[Table] = {
-    results.map(r => Table(r.columns, r.data))
+    results.map(r => Table(r))
   }
 
   protected def buildJsonRequest(queries:Seq[Query], resultDataContents:List[String]):json.Request = {

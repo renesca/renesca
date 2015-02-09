@@ -28,6 +28,23 @@ class TableSpec extends Specification with Mockito {
       table(0) mustEqual row1
       table(1) mustEqual row2
     }
+
+    "test non-emptyness" in {
+      val table = Table(List("a", "b"), Vector.empty[Vector[ParameterValue]])
+
+      table.nonEmpty mustEqual false
+      table.isEmpty mustEqual true
+    }
+
+    "test non-emptyness" in {
+      val columnToIndex = Map(("a", 0), ("b", 1))
+      val row1 = Row(IndexedSeq("x", "y"), columnToIndex)
+      val row2 = Row(IndexedSeq("hau", "rein"), columnToIndex)
+      val table = Table(List("a", "b"), Vector(row1, row2))
+
+      table.nonEmpty mustEqual true
+      table.isEmpty mustEqual false
+    }
   }
 
   "TableFactory" should {
@@ -40,10 +57,10 @@ class TableSpec extends Specification with Mockito {
     }
 
     "create Table from json classes" in {
-      val table = Table(List("x","y","z"),List(
+      val table = Table(json.Result(List("x","y","z"),List(
         json.Data(row = Some(ArrayParameterValue(List(1,2,3)))),
         json.Data(row = Some(ArrayParameterValue(List(4,5,6))))
-      ))
+      )))
 
       table.columns mustEqual List("x", "y", "z")
       table.rows(0) mustEqual Row(Array[ParameterValue](1,2,3), Map(("x", 0), ("y", 1), ("z", 2)))

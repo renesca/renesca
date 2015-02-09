@@ -13,9 +13,9 @@ object Table {
     new Table(columns, rows)
   }
   
-  def apply(columns:Seq[String], jsonData:Seq[json.Data]):Table = {
-    val data = jsonData.map{_.row.get.value}
-    Table(columns, data)
+  def apply(result:json.Result):Table = {
+    val data = result.data.flatMap{_.row.map(_.value)}
+    Table(result.columns, data)
   }
 }
 
@@ -25,4 +25,6 @@ case class Row private[table] (cells:IndexedSeq[ParameterValue], private[table] 
 
 case class Table private[table] (columns:Seq[String], rows:IndexedSeq[Row]) {
   def apply(index:Int):Row = rows(index)
+  def isEmpty = rows.isEmpty
+  def nonEmpty = rows.nonEmpty
 }

@@ -3,8 +3,9 @@ package renesca
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.graph._
-import renesca.parameter.PropertyValue
+import renesca.parameter.{NullPropertyValue, ArrayParameterValue, ParameterValue, PropertyValue}
 import renesca.parameter.implicits._
+import renesca.table.Table
 
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerDbSpec extends IntegrationSpecification {
@@ -51,9 +52,22 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.query("this is invalid cypher syntax") must throwA[RuntimeException]
     }
 
-    "return only graphs on queryGraphs" in todo
-    "return only parameters on queryTables" in todo
-    "return no data on query" in todo
+    "query table" in {
+      db.query("create (n {a:1}),(m {a:2})")
+      val table = db.queryTable("match x return x.a")
+
+      table mustEqual Table(
+        columns = List("x.a"),
+        data = List(
+          List[ParameterValue](1),
+          List[ParameterValue](2)
+        )
+      )
+    }
+
+    "return only graphs in json data on queryGraphs" in todo
+    "return only parameters in json data on queryTables" in todo
+    "return no json data on query" in todo
   }
 
   "QueryHandler.persist" should {

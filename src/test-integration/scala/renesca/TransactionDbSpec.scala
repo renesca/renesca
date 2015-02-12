@@ -6,6 +6,9 @@ import renesca.parameter.implicits._
 
 @RunWith(classOf[JUnitRunner])
 class TransactionDbSpec extends IntegrationSpecification {
+  // neo4j does not isolate transactions
+  skipAll
+
   "Transactions" should {
     def newTransaction = {
       val transaction = new Transaction

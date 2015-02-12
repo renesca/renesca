@@ -23,7 +23,7 @@ class TransactionSpec extends Specification with Mockito {
 
   def newTransaction = {
     val tx = new Transaction
-    tx.restService = mock[RestService].smart
+    tx.restService = mock[RestService]
 
     tx.restService.singleRequest(jsonRequest) returns jsonResponse
     tx.restService.openTransaction(jsonRequest) returns transactionResponse

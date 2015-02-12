@@ -110,5 +110,15 @@ class TransactionDbSpec extends IntegrationSpecification {
       val result = db.queryGraph("match n return n")
       result.nodes must haveSize(0)
     }
+
+    "be isolated" in {
+      val transaction = newTransaction
+
+      transaction.query("create n return n")
+      val graph = db.queryGraph("match n return n")
+      transaction.rollback()
+
+      graph.nodes must haveSize(0)
+    }
   }
 }

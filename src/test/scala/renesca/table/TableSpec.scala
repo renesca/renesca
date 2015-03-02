@@ -52,19 +52,19 @@ class TableSpec extends Specification with Mockito {
       val table = Table(List("p", "q"), List(List[ParameterValue](1, 2), List[ParameterValue](1, 4)))
 
       table.columns mustEqual List("p", "q")
-      table.rows(0) mustEqual Row(Array[ParameterValue](1,2), Map(("p", 0), ("q", 1)))
-      table.rows(1) mustEqual Row(Array[ParameterValue](1,4), Map(("p", 0), ("q", 1)))
+      table.rows(0) mustEqual Row(Array[ParameterValue](1, 2), Map(("p", 0), ("q", 1)))
+      table.rows(1) mustEqual Row(Array[ParameterValue](1, 4), Map(("p", 0), ("q", 1)))
     }
 
     "create Table from json classes" in {
-      val table = Table(json.Result(List("x","y","z"),List(
-        json.Data(row = Some(ArrayParameterValue(List(1,2,3)))),
-        json.Data(row = Some(ArrayParameterValue(List(4,5,6))))
+      val table = Table(json.Result(List("x", "y", "z"), List(
+        json.Data(row = Some(ArrayParameterValue(List(1, 2, 3)))),
+        json.Data(row = Some(ArrayParameterValue(List(4, 5, 6))))
       )))
 
       table.columns mustEqual List("x", "y", "z")
-      table.rows(0) mustEqual Row(Array[ParameterValue](1,2,3), Map(("x", 0), ("y", 1), ("z", 2)))
-      table.rows(1) mustEqual Row(Array[ParameterValue](4,5,6), Map(("x", 0), ("y", 1), ("z", 2)))
+      table.rows(0) mustEqual Row(Array[ParameterValue](1, 2, 3), Map(("x", 0), ("y", 1), ("z", 2)))
+      table.rows(1) mustEqual Row(Array[ParameterValue](4, 5, 6), Map(("x", 0), ("y", 1), ("z", 2)))
     }
   }
 }

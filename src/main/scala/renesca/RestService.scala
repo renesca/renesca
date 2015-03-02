@@ -15,30 +15,33 @@ import spray.http.HttpMethods._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-case class TransactionId(id:String) {
+case class TransactionId(id: String) {
   override def toString = id
 }
 
-class RestService(val server:String, implicit val timeout:Timeout = Timeout(10.seconds)) {
+class RestService(val server: String, implicit val timeout: Timeout = Timeout(10.seconds)) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
   implicit val system: ActorSystem = ActorSystem()
-  import system.dispatcher // provides execution context
+
+  import system.dispatcher
+
+  // provides execution context
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
-  private def awaitResponse(request:HttpRequest):HttpResponse = Await.result(pipeline(request), timeout.duration)
+  private def awaitResponse(request: HttpRequest): HttpResponse = Await.result(pipeline(request), timeout.duration)
 
-  private def buildHttpPostRequest(path:String, jsonRequest:json.Request):HttpRequest = {
+  private def buildHttpPostRequest(path: String, jsonRequest: json.Request): HttpRequest = {
     //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
     // val accept:MediaRange = `application/json`// withCharset `UTF-8`
     Post(
       uri = Uri(s"$server$path"),
       content = jsonRequest
-    )//.withHeaders(Accept(accept))
+    ) //.withHeaders(Accept(accept))
   }
 
-  private def awaitResponse(path:String, jsonRequest:json.Request):(List[HttpHeader], json.Response) = {
+  private def awaitResponse(path: String, jsonRequest: json.Request): (List[HttpHeader], json.Response) = {
     val httpRequest = buildHttpPostRequest(path, jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
     val Right(jsonResponse) = httpResponse.entity.as[json.Response]
@@ -46,35 +49,35 @@ class RestService(val server:String, implicit val timeout:Timeout = Timeout(10.s
     (httpResponse.headers, jsonResponse)
   }
 
-  def singleRequest(jsonRequest:json.Request):json.Response = {
+  def singleRequest(jsonRequest: json.Request): json.Response = {
     val path = "/db/data/transaction/commit"
-    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    val (_, jsonResponse) = awaitResponse(path, jsonRequest)
     jsonResponse
   }
 
-  def openTransaction(jsonRequest:json.Request = json.Request()):(TransactionId, json.Response) = {
+  def openTransaction(jsonRequest: json.Request = json.Request()): (TransactionId, json.Response) = {
     val path = "/db/data/transaction"
     val (headers, jsonResponse) = awaitResponse(path, jsonRequest)
     val uris = headers.collectFirst({ case Location(uri) => uri })
-    val optionId = for (uri <- uris) yield {
+    val optionId = for(uri <- uris) yield {
       uri.path.reverse.head.toString
     }
 
     optionId match {
       case Some(id) => (TransactionId(id), jsonResponse)
-      case None => throw new RuntimeException("Cannot get transaction id")
+      case None     => throw new RuntimeException("Cannot get transaction id")
     }
   }
 
-  def resumeTransaction(id:TransactionId, jsonRequest:json.Request):json.Response = {
+  def resumeTransaction(id: TransactionId, jsonRequest: json.Request): json.Response = {
     val path = s"/db/data/transaction/$id"
-    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    val (_, jsonResponse) = awaitResponse(path, jsonRequest)
     jsonResponse
   }
 
-  def commitTransaction(id:TransactionId, jsonRequest:json.Request = json.Request()):json.Response = {
+  def commitTransaction(id: TransactionId, jsonRequest: json.Request = json.Request()): json.Response = {
     val path = s"/db/data/transaction/$id/commit"
-    val (_,jsonResponse) = awaitResponse(path, jsonRequest)
+    val (_, jsonResponse) = awaitResponse(path, jsonRequest)
     jsonResponse
   }
 

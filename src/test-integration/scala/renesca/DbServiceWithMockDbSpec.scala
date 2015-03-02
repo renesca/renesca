@@ -38,7 +38,7 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   val dbService = new DbService
   dbService.restService = new RestService(requestUrl)
 
-  override def requestUrl = s"${mockServer.baseUri}${super.requestUrl}"
+  override def requestUrl = s"${ mockServer.baseUri }${ super.requestUrl }"
 
   def when(query: Query): Stubbing = {
     val url = "/db/data/transaction/commit"
@@ -48,7 +48,7 @@ class DbMock(mockServer: HttpMockServer) extends HttpMock(mockServer) {
   def post(url: String) = request().post(url)
 
   implicit def graphToJsonResponse(jsonGraph: json.Graph): ResponseDto = {
-    json.Response(results=List(json.Result(Nil, List(json.Data(None, Some(jsonGraph))))))
+    json.Response(results = List(json.Result(Nil, List(json.Data(None, Some(jsonGraph))))))
   }
 
   implicit def jsonResponseToHttpResponse(jsonResponse: json.Response): ResponseDto = {

@@ -19,9 +19,9 @@ class QueryHandlerSpec extends Specification with Mockito {
     val dbService = new DbService
     dbService.restService = mock[RestService]
 
-    var graphs:Seq[Graph] = null
+    var graphs: Seq[Graph] = null
 
-    def respond(response:String): Unit = {
+    def respond(response: String): Unit = {
       def jsonResponse = response.parseJson.convertTo[json.Response]
       dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
       graphs = dbService.queryGraphs(Query(""))
@@ -32,7 +32,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     "clear changes after persisting" in {
       val queryHandler = new QueryHandler() {
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions:Option[Exception]) {}
+        override protected def handleError(exceptions: Option[Exception]) {}
       }
 
       val graph = mock[Graph]
@@ -45,7 +45,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create no graph data as an empty graph" in new GraphQuery {
 
-      respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
+      respond( """{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
       graphs must haveSize(1)
       graphs.head.isEmpty mustEqual true
@@ -53,7 +53,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create an empty graph" in new GraphQuery {
 
-      respond("""
+      respond( """
           {
             "results": [{ "columns": [ ], "data": [{ "graph": { "nodes": [ ], "relationships": [ ] } }] }],
             "errors": [ ]
@@ -67,7 +67,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create a graph" in new GraphQuery {
 
-      respond("""
+      respond( """
        {
           "results": [
             {
@@ -92,7 +92,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create multiple graphs from multiple results" in new GraphQuery {
 
-      respond("""
+      respond( """
        {
           "results": [
             {
@@ -142,7 +142,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create a graph from multiple graph datas" in new GraphQuery {
 
-      respond("""
+      respond( """
        {
           "results": [
             {
@@ -184,7 +184,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create a graph from multiple datas - allow data without graph data" in new GraphQuery {
 
-      respond("""
+      respond( """
         {
           "results": [
             {
@@ -202,7 +202,7 @@ class QueryHandlerSpec extends Specification with Mockito {
           ],
           "errors": [ ]
         }
-         """)
+               """)
 
       graphs must haveSize(1)
       graphs.head.nodes must contain(exactly(Node(1), Node(2)))
@@ -216,9 +216,9 @@ class QueryHandlerSpec extends Specification with Mockito {
     val dbService = new DbService
     dbService.restService = mock[RestService]
 
-    var tables:Seq[Table] = null
+    var tables: Seq[Table] = null
 
-    def respond(response:String): Unit = {
+    def respond(response: String): Unit = {
       def jsonResponse = response.parseJson.convertTo[json.Response]
       dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
       tables = dbService.queryTables(Query(""))
@@ -227,14 +227,14 @@ class QueryHandlerSpec extends Specification with Mockito {
 
   "create no table data as an empty table" in new TableQuery {
 
-    respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
+    respond( """{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
     tables must haveSize(1)
     tables.head.isEmpty mustEqual true
   }
 
   "create a table" in new TableQuery {
-    respond("""
+    respond( """
     {
       "results": [
       {
@@ -254,14 +254,14 @@ class QueryHandlerSpec extends Specification with Mockito {
       columns = List("id", "n.a"),
       data = List(
         List[ParameterValue](620, 1),
-        List[ParameterValue](1089, ArrayParameterValue(List(1,2,3,4,2))),
+        List[ParameterValue](1089, ArrayParameterValue(List(1, 2, 3, 4, 2))),
         List[ParameterValue](1093, NullPropertyValue)
       )
     )
   }
 
   "create multiple graphs from multiple results" in new TableQuery {
-    respond("""
+    respond( """
     {
       "results": [
       {
@@ -287,7 +287,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       columns = List("id", "n.a"),
       data = List(
         List[ParameterValue](620, 1),
-        List[ParameterValue](1089, ArrayParameterValue(List(1,2,3,4,2))),
+        List[ParameterValue](1089, ArrayParameterValue(List(1, 2, 3, 4, 2))),
         List[ParameterValue](1093, NullPropertyValue)
       )
     )
@@ -301,7 +301,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
   "create a table from multiple datas - ignore data without row data" in new TableQuery {
 
-    respond("""
+    respond( """
     {
       "results": [
       {

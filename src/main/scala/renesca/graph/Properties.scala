@@ -6,9 +6,9 @@ import renesca.parameter.{MutablePropertyMap, PropertyKey, PropertyValue}
 import scala.collection.mutable
 
 class Properties(val id: Id,
-  setPropertyChange: (Id, PropertyKey, PropertyValue) => GraphChange,
-  removePropertyChange: (Id, PropertyKey) => GraphChange,
-  self: MutablePropertyMap = mutable.HashMap.empty)
+                 setPropertyChange: (Id, PropertyKey, PropertyValue) => GraphChange,
+                 removePropertyChange: (Id, PropertyKey) => GraphChange,
+                 self: MutablePropertyMap = mutable.HashMap.empty)
 
   extends MutablePropertyMap with mutable.MapLike[PropertyKey, PropertyValue, Properties] {
 

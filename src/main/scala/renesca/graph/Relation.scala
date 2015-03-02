@@ -7,35 +7,35 @@ import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
 import scala.collection.mutable
 
 object RelationType {
-  implicit def StringToRelationType(name: String):RelationType = RelationType(name)
+  implicit def StringToRelationType(name: String): RelationType = RelationType(name)
 }
 
-case class RelationType(name:String) extends NonBacktickName
+case class RelationType(name: String) extends NonBacktickName
 
 object Relation {
-  def apply(id:Id, start:Node, end:Node, relationType:RelationType, properties:PropertyMap = Map.empty) = {
+  def apply(id: Id, start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }
-  def local(start:Node, end:Node, relationType:RelationType, properties:PropertyMap = Map.empty) = {
+  def local(start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
     val relation = apply(Id.nextId(), start, end, relationType)
     relation.properties ++= properties
     relation
   }
 }
 
-class Relation private[Relation] (
-    val id:Id,
-    val startNode:Node,
-    val endNode:Node,
-    val relationType:RelationType,
-    val properties:Properties
-    ) {
+class Relation private[Relation](
+                                  val id: Id,
+                                  val startNode: Node,
+                                  val endNode: Node,
+                                  val relationType: RelationType,
+                                  val properties: Properties
+                                  ) {
   // private constructor to force usage of factory
 
-  def changes:Seq[GraphChange] = properties.localChanges
+  def changes: Seq[GraphChange] = properties.localChanges
 
-  def other(node:Node) = if(startNode == node) endNode else startNode
+  def other(node: Node) = if(startNode == node) endNode else startNode
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Relation]
 
@@ -43,12 +43,12 @@ class Relation private[Relation] (
     case that: Relation =>
       (that canEqual this) &&
         this.id == that.id
-    case _ => false
+    case _              => false
   }
 
   override def hashCode = id.hashCode
 
-  override def toString = s"Relation($id: ${startNode.id} -> ${endNode.id})"
+  override def toString = s"Relation($id: ${ startNode.id } -> ${ endNode.id })"
 }
 
 

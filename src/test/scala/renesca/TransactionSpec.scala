@@ -19,7 +19,7 @@ class TransactionSpec extends Specification with Mockito {
       "Neo.ClientError.Statement.InvalidSyntax",
       "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"))
   )
-  val transactionResponse = ( TransactionId("1"), jsonResponse )
+  val transactionResponse = (TransactionId("1"), jsonResponse)
 
   def newTransaction = {
     val tx = new Transaction
@@ -28,8 +28,8 @@ class TransactionSpec extends Specification with Mockito {
     tx.restService.singleRequest(jsonRequest) returns jsonResponse
     tx.restService.openTransaction(jsonRequest) returns transactionResponse
     tx.restService.openTransaction(jsonRequestWithoutResult) returns transactionResponse
-    tx.restService.resumeTransaction(TransactionId("1"),jsonRequest) returns jsonResponse
-    tx.restService.resumeTransaction(TransactionId("1"),jsonRequestWithoutResult) returns jsonResponse
+    tx.restService.resumeTransaction(TransactionId("1"), jsonRequest) returns jsonResponse
+    tx.restService.resumeTransaction(TransactionId("1"), jsonRequestWithoutResult) returns jsonResponse
 
     tx
   }
@@ -43,7 +43,7 @@ class TransactionSpec extends Specification with Mockito {
 
       there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
       there was one(tx.restService).commitTransaction(TransactionId("1"))
-      there was no(tx.restService).resumeTransaction(TransactionId("1"),jsonRequest)
+      there was no(tx.restService).resumeTransaction(TransactionId("1"), jsonRequest)
     }
   }
 
@@ -55,7 +55,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.commit()
 
     there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
-    there was one(tx.restService).resumeTransaction(TransactionId("1"),jsonRequestWithoutResult)
+    there was one(tx.restService).resumeTransaction(TransactionId("1"), jsonRequestWithoutResult)
     there was one(tx.restService).commitTransaction(TransactionId("1"))
   }
 
@@ -67,7 +67,7 @@ class TransactionSpec extends Specification with Mockito {
     there was one(tx.restService).singleRequest(jsonRequest)
     there was no(tx.restService).openTransaction(jsonRequest)
     there was no(tx.restService).commitTransaction(TransactionId("1"))
-    there was no(tx.restService).resumeTransaction(TransactionId("1"),jsonRequest)
+    there was no(tx.restService).resumeTransaction(TransactionId("1"), jsonRequest)
   }
 
   "invalidate transaction on commit" in {
@@ -98,12 +98,12 @@ class TransactionSpec extends Specification with Mockito {
   "error in transaction rollbacks transaction and throws exception" in {
     val tx = new Transaction
     tx.restService = mock[RestService]
-    tx.restService.openTransaction(jsonRequest) returns (( TransactionId("1"), jsonResponseWithError ))
+    tx.restService.openTransaction(jsonRequest) returns ((TransactionId("1"), jsonResponseWithError))
 
     tx.queryGraph(statement) must throwA[RuntimeException]
 
     tx.isValid mustEqual false
-    there was one (tx.restService).rollbackTransaction(TransactionId("1"))
+    there was one(tx.restService).rollbackTransaction(TransactionId("1"))
   }
 }
 

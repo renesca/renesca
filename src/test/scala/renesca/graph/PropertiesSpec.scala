@@ -48,7 +48,7 @@ class PropertiesSpec extends Specification with Mockito {
       A.properties.iterator must contain(exactly(PropertyKey("key") -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
     }
 
-    "provide empty"in new MockNode  {
+    "provide empty" in new MockNode {
       A.properties("key") = "value"
 
       A.properties.empty must beEmpty

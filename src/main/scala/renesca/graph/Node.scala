@@ -6,10 +6,10 @@ import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
 import scala.collection.mutable
 
 object Label {
-  implicit def StringToLabel(name: String):Label = Label(name)
+  implicit def StringToLabel(name: String): Label = Label(name)
 }
 
-case class Label(name:String) extends NonBacktickName
+case class Label(name: String) extends NonBacktickName
 
 object Node {
   def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
@@ -18,7 +18,7 @@ object Node {
     new Node(id, nodeLabels, nodeProperties)
   }
 
-  def local:Node = local()
+  def local: Node = local()
   def local(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     val node = apply(Id.nextId())
     node.labels ++= labels
@@ -28,13 +28,13 @@ object Node {
   }
 }
 
-class Node private[graph] (
-    val id: Id, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
-    val labels: NodeLabels,
-    val properties: Properties
-    ) {
+class Node private[graph](
+                           val id: Id, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
+                           val labels: NodeLabels,
+                           val properties: Properties
+                           ) {
 
-  def changes:Seq[GraphChange] = labels.localChanges ++ properties.localChanges
+  def changes: Seq[GraphChange] = labels.localChanges ++ properties.localChanges
 
   def outRelations(implicit graph: Graph) = graph.outRelations(this)
   def inRelations(implicit graph: Graph) = graph.inRelations(this)
@@ -52,7 +52,7 @@ class Node private[graph] (
     case that: Node =>
       (that canEqual this) &&
         this.id == that.id
-    case _ => false
+    case _          => false
   }
 
   override def hashCode: Int = id.hashCode

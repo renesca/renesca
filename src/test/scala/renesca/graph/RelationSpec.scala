@@ -28,13 +28,13 @@ class RelationSpec extends Specification with Mockito {
       val ArC = Relation(5, A, C, "r")
       val BrC = Relation(6, B, C, "r")
 
-      implicit val graph = Graph(List(A,B,C), List(ArB, ArC, BrC))
+      implicit val graph = Graph(List(A, B, C), List(ArB, ArC, BrC))
     }
 
     "delete itself from graph" in new ExampleGraph {
       graph.relations -= ArB
 
-      graph.nodes must contain(exactly(A,B,C))
+      graph.nodes must contain(exactly(A, B, C))
       graph.relations must contain(exactly(ArC, BrC))
     }
 

@@ -2,10 +2,10 @@ package renesca.graph
 
 import collection.mutable
 
-class Nodes( self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node] )
+class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
   extends mutable.Set[Node] with mutable.SetLike[Node, Nodes] {
 
-  private[graph] var graph:Graph = null
+  private[graph] var graph: Graph = null
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 

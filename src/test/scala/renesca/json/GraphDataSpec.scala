@@ -10,19 +10,19 @@ import spray.json._
 @RunWith(classOf[JUnitRunner])
 class GraphDataSpec extends Specification with Mockito {
   "GraphData" can {
-     "be empty" in {
-       val json = """
+    "be empty" in {
+      val json = """
         {
           "nodes": [],
           "relationships" : []
         }
-        """
-       val graphData = json.parseJson.convertTo[Graph]
-       graphData mustEqual Graph()
-     }
+                 """
+      val graphData = json.parseJson.convertTo[Graph]
+      graphData mustEqual Graph()
+    }
 
-     "have nodes" in {
-    	 val json = """
+    "have nodes" in {
+      val json = """
     			 {
     			 "nodes": [{
              "id" : "1",
@@ -35,13 +35,13 @@ class GraphDataSpec extends Specification with Mockito {
            }],
     			 "relationships" : []
 			 }
-			 """
-			 val graphData = json.parseJson.convertTo[Graph]
-			 graphData mustEqual Graph(List(Node("1"), Node("2")))
-     }
+                 			 """
+      val graphData = json.parseJson.convertTo[Graph]
+      graphData mustEqual Graph(List(Node("1"), Node("2")))
+    }
 
-     "have relationships" in {
-    	 val json = """
+    "have relationships" in {
+      val json = """
     			 {
     			 "nodes": [{
              "id" : "1",
@@ -60,13 +60,13 @@ class GraphDataSpec extends Specification with Mockito {
                 "properties":{}
             }]
 			 }
-			 """
-    	 val graphData = json.parseJson.convertTo[Graph]
-			 graphData mustEqual Graph(List(Node("1"), Node("2")), List(Relationship("9","HAS","1","2")))
-     }
+                 			 """
+      val graphData = json.parseJson.convertTo[Graph]
+      graphData mustEqual Graph(List(Node("1"), Node("2")), List(Relationship("9", "HAS", "1", "2")))
+    }
 
-     "nodes have properties" in {
-       todo
-     }
+    "nodes have properties" in {
+      todo
+    }
   }
 }

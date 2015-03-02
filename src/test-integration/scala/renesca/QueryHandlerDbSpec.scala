@@ -10,17 +10,17 @@ import renesca.table.Table
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerDbSpec extends IntegrationSpecification {
 
-  def resultNode:Node = {
+  def resultNode: Node = {
     val resultGraph = db.queryGraph("match n return n")
     resultGraph.nodes.head
   }
 
-  def resultRelation:Relation = {
+  def resultRelation: Relation = {
     val resultGraph = db.queryGraph("match ()-[r]-() return r")
     resultGraph.relations.head
   }
 
-  def testNodeSetProperty(data:PropertyValue) = {
+  def testNodeSetProperty(data: PropertyValue) = {
     val graph = Graph.empty
     val node = Node.local
 
@@ -32,7 +32,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     resultNode.properties("key") mustEqual data
   }
 
-  def testRelationSetProperty(data:PropertyValue) = {
+  def testRelationSetProperty(data: PropertyValue) = {
     val graph = Graph.empty
     val start = Node.local
     val end = Node.local
@@ -79,7 +79,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set long array property on node" in { testNodeSetProperty(List(1, 3)) }
     "set double array property on node" in { testNodeSetProperty(List(1.7, 2.555555)) }
-    "set string array property on node" in { testNodeSetProperty(List("schnipp","schnapp")) }
+    "set string array property on node" in { testNodeSetProperty(List("schnipp", "schnapp")) }
     "set boolean array property on node" in { testNodeSetProperty(List(true, false)) }
 
     "remove property from node" in {
@@ -141,7 +141,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val m = Node.local
       val n = Node.local
       val o = Node.local
-      graph.nodes ++= List(m,n,o)
+      graph.nodes ++= List(m, n, o)
       val rel1 = Relation.local(m, n, "INTERNAL")
       val rel2 = Relation.local(n, o, "EXTERNAL")
       graph.relations ++= List(rel1, rel2)
@@ -170,7 +170,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set long array property on relation" in { testRelationSetProperty(List(1, 3)) }
     "set double array property on relation" in { testRelationSetProperty(List(1.7, 2.555555)) }
-    "set string array property on relation" in { testRelationSetProperty(List("schnipp","schnapp")) }
+    "set string array property on relation" in { testRelationSetProperty(List("schnipp", "schnapp")) }
     "set boolean array property on relation" in { testRelationSetProperty(List(true, false)) }
 
     "remove property from relation" in {
@@ -234,7 +234,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set properties and labels in NodeAdd" in {
       val graph = Graph.empty
-      val node =  Node.local(Set("foo", "bar"), Map("test" -> 5))
+      val node = Node.local(Set("foo", "bar"), Map("test" -> 5))
       graph.nodes += node
       db.persistChanges(graph)
 

@@ -103,8 +103,8 @@ class ParameterSpec extends Specification {
       MapParameterValue(Map("k" -> 1)) mustEqual MapParameterValue(Map("k" -> 1))
       MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("k" -> 2))
       MapParameterValue(Map("k" -> 1)) mustNotEqual MapParameterValue(Map("x" -> 1))
-      MapParameterValue(Map("k" -> 1)) mustEqual Map(("k" , 1))
-      MapParameterValue(Map("k" -> 1)) mustNotEqual Map(("k" , 2))
+      MapParameterValue(Map("k" -> 1)) mustEqual Map(("k", 1))
+      MapParameterValue(Map("k" -> 1)) mustNotEqual Map(("k", 2))
 
       MapParameterValue(Map("k" -> 1)) mustNotEqual 13
       MapParameterValue(Map("k" -> 1)) mustNotEqual 13.0
@@ -113,8 +113,8 @@ class ParameterSpec extends Specification {
     "equal objects with same contents and its contents: nested Maps and Arrays" in {
       MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5))
       MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "x")), "b" -> 5))
-      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual Map(("a",List("a", "b")), ("b", 5))
-      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual Map(("a" , List("a", "x")), ("b" , 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustEqual Map(("a", List("a", "b")), ("b", 5))
+      MapParameterValue(Map("a" -> ArrayParameterValue(List("a", "b")), "b" -> 5)) mustNotEqual Map(("a", List("a", "x")), ("b", 5))
 
       ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 7))))
       ArrayParameterValue(List(MapParameterValue(Map("a" -> 7)))) mustNotEqual ArrayParameterValue(List(MapParameterValue(Map("a" -> 8))))

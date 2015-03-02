@@ -2,7 +2,7 @@ package renesca.graph
 
 import collection.mutable
 
-class Relations( private[graph] val self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation] )
+class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation])
   extends mutable.Set[Relation] with mutable.SetLike[Relation, Relations] {
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]

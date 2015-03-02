@@ -16,56 +16,60 @@ import scala.collection.mutable
 package object parameter {
   type PropertyMap = Map[PropertyKey, PropertyValue]
   type MutablePropertyMap = mutable.Map[PropertyKey, PropertyValue]
-  type ParameterMap = Map[PropertyKey,ParameterValue]
+  type ParameterMap = Map[PropertyKey, ParameterValue]
 
-  case class PropertyKey(name:String) extends NonBacktickName {
+  case class PropertyKey(name: String) extends NonBacktickName {
     override def equals(other: Any): Boolean = other match {
       case that: PropertyKey => this.name == that.name
-      case that: String => name == that
-      case _ => false
+      case that: String      => name == that
+      case _                 => false
     }
     override def hashCode = name.hashCode
   }
 
   sealed trait ParameterValue
-  sealed trait SoleParameterValue extends ParameterValue
-  sealed trait PropertyValue extends ParameterValue
-  sealed trait PrimitivePropertyValue extends PropertyValue
-  sealed trait ArrayPropertyValue extends PropertyValue { def elements:Seq[PrimitivePropertyValue]}
 
-  case class LongPropertyValue(value:Long) extends PrimitivePropertyValue {
+  sealed trait SoleParameterValue extends ParameterValue
+
+  sealed trait PropertyValue extends ParameterValue
+
+  sealed trait PrimitivePropertyValue extends PropertyValue
+
+  sealed trait ArrayPropertyValue extends PropertyValue {def elements: Seq[PrimitivePropertyValue] }
+
+  case class LongPropertyValue(value: Long) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: LongPropertyValue => this.value == that.value
-      case that: Int => value == that
-      case that: Long => value == that
-      case _ => false
+      case that: Int               => value == that
+      case that: Long              => value == that
+      case _                       => false
     }
     override def hashCode = value.hashCode
   }
 
-  case class DoublePropertyValue(value:Double) extends PrimitivePropertyValue {
+  case class DoublePropertyValue(value: Double) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: DoublePropertyValue => this.value == that.value
-      case that: Double => value == that
-      case _ => false
+      case that: Double              => value == that
+      case _                         => false
     }
     override def hashCode = value.hashCode
   }
 
-  case class StringPropertyValue(value:String) extends PrimitivePropertyValue {
+  case class StringPropertyValue(value: String) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: StringPropertyValue => this.value == that.value
-      case that: String => value == that
-      case _ => false
+      case that: String              => value == that
+      case _                         => false
     }
     override def hashCode = value.hashCode
   }
 
-  case class BooleanPropertyValue(value:Boolean) extends PrimitivePropertyValue {
+  case class BooleanPropertyValue(value: Boolean) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: BooleanPropertyValue => this.value == that.value
-      case that: Boolean => value == that
-      case _ => false
+      case that: Boolean              => value == that
+      case _                          => false
     }
     override def hashCode = value.hashCode
   }
@@ -74,64 +78,64 @@ package object parameter {
     //TODO: equals/hashCode/implicits?
   }
 
-  case class LongArrayPropertyValue(elements:LongPropertyValue*) extends ArrayPropertyValue {
+  case class LongArrayPropertyValue(elements: LongPropertyValue*) extends ArrayPropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: LongArrayPropertyValue => this.elements == that.elements
-      case that: ArrayParameterValue => this.elements == that.value
-      case that: Seq[_] => elements.sameElements(that)
-      case _ => false
+      case that: ArrayParameterValue    => this.elements == that.value
+      case that: Seq[_]                 => elements.sameElements(that)
+      case _                            => false
     }
     override def hashCode = elements.hashCode
   }
 
-  case class DoubleArrayPropertyValue(elements:DoublePropertyValue*) extends ArrayPropertyValue {
+  case class DoubleArrayPropertyValue(elements: DoublePropertyValue*) extends ArrayPropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: DoubleArrayPropertyValue => this.elements == that.elements
-      case that: ArrayParameterValue => this.elements == that.value
-      case that: Seq[_] => elements.sameElements(that)
-      case _ => false
+      case that: ArrayParameterValue      => this.elements == that.value
+      case that: Seq[_]                   => elements.sameElements(that)
+      case _                              => false
     }
     override def hashCode = elements.hashCode
   }
 
-  case class StringArrayPropertyValue(elements:StringPropertyValue*) extends ArrayPropertyValue {
+  case class StringArrayPropertyValue(elements: StringPropertyValue*) extends ArrayPropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: StringArrayPropertyValue => this.elements == that.elements
-      case that: ArrayParameterValue => this.elements == that.value
-      case that: Seq[_] => elements.sameElements(that)
-      case _ => false
+      case that: ArrayParameterValue      => this.elements == that.value
+      case that: Seq[_]                   => elements.sameElements(that)
+      case _                              => false
     }
     override def hashCode = elements.hashCode
   }
 
-  case class BooleanArrayPropertyValue(elements:BooleanPropertyValue*) extends ArrayPropertyValue {
+  case class BooleanArrayPropertyValue(elements: BooleanPropertyValue*) extends ArrayPropertyValue {
     override def equals(other: Any): Boolean = other match {
       case that: BooleanArrayPropertyValue => this.elements == that.elements
-      case that: ArrayParameterValue => this.elements == that.value
-      case that: Seq[_] => elements.sameElements(that)
-      case _ => false
+      case that: ArrayParameterValue       => this.elements == that.value
+      case that: Seq[_]                    => elements.sameElements(that)
+      case _                               => false
     }
     override def hashCode = elements.hashCode
   }
 
-  case class ArrayParameterValue(value:Seq[ParameterValue]) extends SoleParameterValue {
+  case class ArrayParameterValue(value: Seq[ParameterValue]) extends SoleParameterValue {
     override def equals(other: Any): Boolean = other match {
-      case that: ArrayParameterValue => this.value == that.value
-      case that: LongArrayPropertyValue => this.value == that.elements
-      case that: DoubleArrayPropertyValue => this.value == that.elements
-      case that: StringArrayPropertyValue => this.value == that.elements
+      case that: ArrayParameterValue       => this.value == that.value
+      case that: LongArrayPropertyValue    => this.value == that.elements
+      case that: DoubleArrayPropertyValue  => this.value == that.elements
+      case that: StringArrayPropertyValue  => this.value == that.elements
       case that: BooleanArrayPropertyValue => this.value == that.elements
-      case that: Seq[_] => value.sameElements(that)
-      case _ => false
+      case that: Seq[_]                    => value.sameElements(that)
+      case _                               => false
     }
     override def hashCode = value.hashCode
   }
 
-  case class MapParameterValue(value:ParameterMap) extends SoleParameterValue {
+  case class MapParameterValue(value: ParameterMap) extends SoleParameterValue {
     override def equals(other: Any): Boolean = other match {
       case that: MapParameterValue => this.value == that.value
-      case that: Map[_,_] => value.sameElements(that)
-      case _ => false
+      case that: Map[_, _]         => value.sameElements(that)
+      case _                       => false
     }
     override def hashCode = value.hashCode
   }

@@ -71,28 +71,28 @@ class NodeSpec extends Specification with Mockito {
     }
 
     "ask graph for predecessors" in new ForwardTest {
-    	node.predecessors(graph)
-    	there was one(graph).predecessors(node)
+      node.predecessors(graph)
+      there was one(graph).predecessors(node)
     }
 
     "ask graph for successors" in new ForwardTest {
-    	node.successors(graph)
-    	there was one(graph).successors(node)
+      node.successors(graph)
+      there was one(graph).successors(node)
     }
 
     "ask graph for inDegree" in new ForwardTest {
-    	node.inDegree(graph)
-    	there was one(graph).inDegree(node)
+      node.inDegree(graph)
+      there was one(graph).inDegree(node)
     }
 
     "ask graph for outDegree" in new ForwardTest {
-    	node.outDegree(graph)
+      node.outDegree(graph)
       there was one(graph).outDegree(node)
     }
 
     "ask graph for degree" in new ForwardTest {
-    	node.degree(graph)
-    	there was one(graph).degree(node)
+      node.degree(graph)
+      there was one(graph).degree(node)
     }
 
     "produce a string representation" in {

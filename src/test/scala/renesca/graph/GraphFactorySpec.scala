@@ -13,6 +13,7 @@ import scala.collection.mutable
 
 @RunWith(classOf[JUnitRunner])
 class GraphFactorySpec extends Specification with Mockito {
+
   trait ExampleGraph extends Scope {
     // A<--B
     //  \_7
@@ -21,7 +22,7 @@ class GraphFactorySpec extends Specification with Mockito {
     val ArB = Relation(4, A, B, "r")
     val BrA = Relation(5, B, A, "r")
 
-    val nodesList = List(A,B)
+    val nodesList = List(A, B)
     val relationsList = List(ArB, BrA)
 
     implicit val graph = Graph(nodesList, relationsList)
@@ -59,7 +60,7 @@ class GraphFactorySpec extends Specification with Mockito {
     }
 
     "create graph with single node with labels" in {
-      val jsonGraph = json.Graph( List(json.Node("1744", labels = List("hopfen", "malz"))))
+      val jsonGraph = json.Graph(List(json.Node("1744", labels = List("hopfen", "malz"))))
 
       val graph = Graph(jsonGraph)
       val node = graph.nodes.head
@@ -68,7 +69,7 @@ class GraphFactorySpec extends Specification with Mockito {
     }
 
     "create graph with single node with properties" in {
-      val jsonGraph = json.Graph( List(json.Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
+      val jsonGraph = json.Graph(List(json.Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
 
       val graph = Graph(jsonGraph)
       val node = graph.nodes.head
@@ -79,7 +80,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create graph with relations containing nodes" in {
       val jsonGraph = json.Graph(
         nodes = List(json.Node("1744"), json.Node("1516")),
-        relationships = List(Relationship("42",startNode = "1744", endNode = "1516", `type` = "wurst"))
+        relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst"))
       )
 
       val graph = Graph(jsonGraph)
@@ -97,7 +98,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create graph with relation with properties" in {
       val jsonGraph = json.Graph(
         nodes = List(json.Node("1744"), json.Node("1516")),
-        relationships = List(Relationship("42",startNode = "1744", endNode = "1516", `type` = "wurst",
+        relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst",
           properties = Map("ki" -> "wäl", "freitag" -> 13L)))
       )
 

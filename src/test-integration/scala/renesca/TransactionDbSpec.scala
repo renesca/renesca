@@ -42,7 +42,7 @@ class TransactionDbSpec extends IntegrationSpecification {
 
       val result = db.queryGraph("match n return n")
       result.nodes must not contain (first)
-      result.nodes must contain (second)
+      result.nodes must contain(second)
     }
 
     "Persist graph changes in transaction" in {
@@ -57,7 +57,7 @@ class TransactionDbSpec extends IntegrationSpecification {
 
       val result = db.queryGraph("match n return n")
       result.nodes must not contain (first)
-      result.nodes must contain (second)
+      result.nodes must contain(second)
     }
 
     "Submit last query on commit" in {

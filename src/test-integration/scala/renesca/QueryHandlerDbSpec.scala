@@ -54,7 +54,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "query table" in {
       db.query("create (n {a:1}),(m {a:2})")
-      val table = db.queryTable("match x return x.a")
+      val table = db.queryTable("match x return x.a order by x.a")
 
       table mustEqual Table(
         columns = List("x.a"),

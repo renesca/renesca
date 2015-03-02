@@ -23,7 +23,7 @@ after_success:
 env:
   matrix:
     # test across multiple versions of Neo4j:
-    - NEO4J_VERSION="2.2.0-M03"
+    - NEO4J_VERSION="2.2.0-M04"
     # - NEO4J_VERSION="2.1.7" # does not isolate transactions (same for version 2.1.6)
     # - NEO4J_VERSION="2.0.4" # does not support property += {...}
   global:

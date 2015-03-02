@@ -18,8 +18,7 @@ script:
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${TRAVIS_SCALA_VERSION}"
-  = "2.11.5" && sbt +publishSigned sonatypeRelease
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.2.0-M04' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take fixed combination from build matrix for each scala version and publish
 env:
   matrix:
     # test across multiple versions of Neo4j:

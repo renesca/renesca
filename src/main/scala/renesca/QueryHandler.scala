@@ -133,7 +133,7 @@ trait QueryHandler extends QueryInterface {
   protected def handleError(exceptions:Option[Exception]):Unit
 }
 
-class Transaction extends QueryHandler {
+class Transaction extends QueryHandler { thisTransaction =>
 
   var restService:RestService = null //TODO: inject
 
@@ -174,7 +174,7 @@ class Transaction extends QueryHandler {
     invalidate()
   }
 
-  val commit = new QueryInterface {
+  val commit = new QueryHandler {
     def apply() {
       throwIfNotValid()
       for( transactionId <- id)
@@ -182,30 +182,20 @@ class Transaction extends QueryHandler {
 
       invalidate()
     }
-    
-    def queryGraph(query:Query):Graph = queryGraphs(query).head
-    def queryTable(query:Query):Table = queryTables(query).head
-    def queryGraphs(queries:Query*):Seq[Graph] = {
-      val jsonResponse = requestAndCommit(queries,List("graph"))
-      extractGraphs(jsonResponse.results)
-    }
-    def queryTables(queries:Query*):Seq[Table] = ??? // TODO: implement
-    def query(queries:Query*) { requestAndCommit(queries,resultDataContents = Nil) }
-    def persistChanges(graph:Graph) = ??? // TODO: implement
 
-    private def requestAndCommit(queries:Seq[Query], resultDataContents:List[String]):json.Response = {
+    override protected def queryService(jsonRequest:json.Request):json.Response = {
       // TODO: share code with queryService
       throwIfNotValid()
-      val jsonRequest = buildJsonRequest(queries, resultDataContents)
       val jsonResponse = id match {
         case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
         case None =>                restService.singleRequest(jsonRequest)
       }
 
       invalidate()
-      handleError(exceptionFromErrors(jsonResponse))
       jsonResponse
     }
+
+    override protected def handleError(exceptions:Option[Exception]) = thisTransaction.handleError(exceptions)
   }
 
 

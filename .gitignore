@@ -4,8 +4,5 @@ target/
 # local stuff
 local.*
 
-# idea config
-/.idea/
-
 # tomcat distriubution folder
 .distribution

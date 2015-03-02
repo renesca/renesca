@@ -3,7 +3,7 @@ import SonatypeKeys._
 
 name := "renesca"
 
-version := "0.1.1"
+version := "0.1.2"
 
 scalaVersion := "2.11.5"
 
@@ -19,8 +19,8 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-client" % "1.3.2",
   "io.spray" %% "spray-json" % "1.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
-  "org.specs2" %% "specs2" % "2.4.15" % "test,test-integration",
-  "com.github.httpmock" % "mock-http-server-webapp" % "1.1.8" artifacts(Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
+  "org.specs2" %% "specs2" % "2.4.16" % "test,test-integration",
+  "com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts(Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
   "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "test,test-integration")
 
 

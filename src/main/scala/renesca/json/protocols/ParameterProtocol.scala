@@ -81,7 +81,7 @@ object ParameterProtocol extends DefaultJsonProtocol {
       case MapParameterValue(keyValuePairs) => JsObject(keyValuePairs.map { case (key, value) => (key.name, write(value))})
     }
 
-    override def read(value: JsValue) = value match {
+    override def read(jsvalue: JsValue) = jsvalue match {
       case x@(_:JsString | _:JsNumber | _:JsBoolean | JsNull) => x.convertTo[PropertyValue]
       case jsArray:JsArray => jsArray.convertTo[ArrayParameterValue]
       case JsObject(keyValuePairs) => MapParameterValue(keyValuePairs.map { case (key, value) => (PropertyKey(key), read(value))})

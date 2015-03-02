@@ -184,7 +184,7 @@ class Transaction extends QueryHandler { thisTransaction =>
     }
 
     override protected def queryService(jsonRequest:json.Request):json.Response = {
-      // TODO: share code with queryService
+      // TODO: share code with this.Transaction.queryService
       throwIfNotValid()
       val jsonResponse = id match {
         case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)

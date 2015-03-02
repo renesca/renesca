@@ -48,7 +48,7 @@ class Relation private[Relation] (
 
   override def hashCode = id.hashCode
 
-  override def toString = s"Relation(${id}: ${startNode.id} -> ${endNode.id})"
+  override def toString = s"Relation($id: ${startNode.id} -> ${endNode.id})"
 }
 
 

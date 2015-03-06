@@ -22,6 +22,7 @@ object Query {
 case class Query(statement: String, parameters: ParameterMap = Map.empty)
 
 trait QueryInterface {
+  def queryWholeGraph:Graph
   def queryGraph(query: Query): Graph
   def queryTable(query: Query): Table
   def queryGraphs(queries: Query*): Seq[Graph]
@@ -59,6 +60,7 @@ trait QueryHandler extends QueryInterface {
 
   import renesca.QueryHandler._
 
+  override def queryWholeGraph: Graph = queryGraph("match (n) optional match (n)-[r]-() return n,r")
   override def queryGraph(query: Query): Graph = queryGraphs(query).head
   override def queryTable(query: Query): Table = queryTables(query).head
 

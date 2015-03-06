@@ -157,7 +157,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       reducedGraph.nodes -= n // deletes node n and relations l,r
       db.persistChanges(reducedGraph)
 
-      val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
+      val resultGraph = db.queryWholeGraph
       resultGraph.nodes must haveSize(2)
       resultGraph.nodes must not contain n
       resultGraph.relations must beEmpty
@@ -202,7 +202,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.relations -= relation
       db.persistChanges(graph)
 
-      val resultGraph = db.queryGraph("match (n) optional match (n)-[r]-() return n,r")
+      val resultGraph = db.queryWholeGraph
       resultGraph.nodes must haveSize(2)
       resultGraph.relations must beEmpty
     }

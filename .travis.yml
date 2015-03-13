@@ -18,11 +18,11 @@ script:
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.2.0-RC01' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take fixed combination from build matrix for each scala version and publish
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.2.0-M04' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take fixed combination from build matrix for each scala version and publish
 env:
   matrix:
     # test across multiple versions of Neo4j:
-    - NEO4J_VERSION="2.2.0-RC01"
+    - NEO4J_VERSION="2.2.0-M04"
     # - NEO4J_VERSION="2.1.7" # does not isolate transactions (same for version 2.1.6)
     # - NEO4J_VERSION="2.0.4" # does not support property += {...}
   global:

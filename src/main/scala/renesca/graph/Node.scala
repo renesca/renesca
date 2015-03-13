@@ -12,7 +12,7 @@ object Label {
 case class Label(name: String) extends NonBacktickName
 
 object Node {
-  def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
+  private[renesca] def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
     val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Node(id, nodeLabels, nodeProperties)

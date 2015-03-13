@@ -13,7 +13,7 @@ object RelationType {
 case class RelationType(name: String) extends NonBacktickName
 
 object Relation {
-  def apply(id: Id, start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
+  private[renesca] def apply(id: Id, start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
     val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
     new Relation(id, start, end, relationType, relationProperties)
   }

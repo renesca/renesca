@@ -10,6 +10,6 @@ Query and modify subgraphs from a Neo4j REST Database with Scala.
 To use renesca in your sbt project, add this dependency to your ```build.sbt```:
 
 ```scala
-libraryDependencies += "com.github.renesca" %% "renesca" % "0.1.2"
+libraryDependencies += "com.github.renesca" %% "renesca" % "0.1.3"
 ```
 

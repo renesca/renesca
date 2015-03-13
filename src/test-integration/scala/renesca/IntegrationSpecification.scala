@@ -22,8 +22,8 @@ case class DbState(serverAvailable: Boolean, dbEmpty: Boolean, errorMsg: Option[
 object IntegrationTestSetup {
   val testDb = new DbService
   testDb.restService = new RestService(// TODO: don't hardcode, configure in environment
-    "http://localhost:7474",
-    Timeout(10.seconds) // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
+    server = "http://localhost:7474",
+    timeout = Timeout(10.seconds) // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
   )
 
   def dbState = {

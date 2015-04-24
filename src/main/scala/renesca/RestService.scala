@@ -25,9 +25,9 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
   // http://spray.io/documentation/1.2.2/spray-client/
   implicit val system: ActorSystem = ActorSystem()
 
-  import system.dispatcher
+  // dispatcher provides execution context
 
-  // provides execution context
+  import system.dispatcher
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
@@ -91,5 +91,6 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
     pipeline(HttpRequest(DELETE, s"http://localhost:7474/db/data/transaction/$id"))
   }
 
+  override def toString = s"RestService($server${ if(credentials.isDefined) " with credentials" else "" }, $timeout)"
 }
 

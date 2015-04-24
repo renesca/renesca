@@ -22,7 +22,7 @@ object Query {
 case class Query(statement: String, parameters: ParameterMap = Map.empty)
 
 trait QueryInterface {
-  def queryWholeGraph:Graph
+  def queryWholeGraph: Graph
   def queryGraph(query: Query): Graph
   def queryTable(query: Query): Table
   def queryGraphs(queries: Query*): Seq[Graph]
@@ -200,7 +200,7 @@ class Transaction extends QueryHandler {thisTransaction =>
     override protected def handleError(exceptions: Option[Exception]) = thisTransaction.handleError(exceptions)
   }
 
-
+  override def toString = s"Transaction(id=$id, valid:$isValid, $restService)"
 }
 
 class DbService extends QueryHandler {

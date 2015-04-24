@@ -16,7 +16,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "io.spray" %% "spray-client" % "1.3.2",
+  "io.spray" %% "spray-client" % "1.3.3",
   "io.spray" %% "spray-json" % "1.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "org.specs2" %% "specs2" % "2.4.17" % "test,test-integration",

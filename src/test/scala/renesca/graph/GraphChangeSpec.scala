@@ -140,7 +140,7 @@ class GraphChangeSpec extends Specification with Mockito {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
-      val relation = Relation.local(node1, node2, "nagut")
+      val relation = Relation.local(node1, "nagut", node2)
 
       relation.properties("ciao") = "mit V"
       graph.relations += relation
@@ -155,7 +155,7 @@ class GraphChangeSpec extends Specification with Mockito {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
-      val relation = Relation.local(node1, node2, "nagut")
+      val relation = Relation.local(node1, "nagut", node2)
 
       graph.relations += relation
       relation.properties("ciao") = "mit V"

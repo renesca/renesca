@@ -22,7 +22,7 @@ trait RelationFactory[STARTNODE <: Node, RELATION <: Relation[STARTNODE, ENDNODE
   def relationType: raw.RelationType
   def create(relation: raw.Relation): RELATION
   def local(startNode: STARTNODE, endNode: ENDNODE): RELATION = {
-    create(raw.Relation.local(startNode.node, endNode.node, relationType))
+    create(raw.Relation.local(startNode.node, relationType, endNode.node))
   }
 }
 
@@ -48,11 +48,11 @@ ENDNODE <: Node] extends NodeFactory[HYPERRELATION] with AbstractRelationFactory
   }
 
   def startRelationLocal(startNode: STARTNODE, middleNode: HYPERRELATION): STARTRELATION = {
-    startRelationCreate(raw.Relation.local(startNode.node, middleNode.node, startRelationType))
+    startRelationCreate(raw.Relation.local(startNode.node, startRelationType, middleNode.node))
   }
 
   def endRelationLocal(middleNode: HYPERRELATION, endNode: ENDNODE): ENDRELATION = {
-    endRelationCreate(raw.Relation.local(middleNode.node, endNode.node, endRelationType))
+    endRelationCreate(raw.Relation.local(middleNode.node, endRelationType, endNode.node))
   }
 
   def local(startNode: STARTNODE, endNode: ENDNODE): HYPERRELATION = {

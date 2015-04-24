@@ -38,7 +38,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     val end = Node.local
     graph.nodes += start
     graph.nodes += end
-    val relation = Relation.local(start, end, "EATS")
+    val relation = Relation.local(start, "EATS", end)
     graph.relations += relation
 
     relation.properties("key") = data
@@ -142,8 +142,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val n = Node.local
       val o = Node.local
       graph.nodes ++= List(m, n, o)
-      val rel1 = Relation.local(m, n, "INTERNAL")
-      val rel2 = Relation.local(n, o, "EXTERNAL")
+      val rel1 = Relation.local(m, "INTERNAL", n)
+      val rel2 = Relation.local(n, "EXTERNAL", o)
       graph.relations ++= List(rel1, rel2)
       db.persistChanges(graph)
 
@@ -179,7 +179,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.local
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.local(start, end, "EATS", Map("yes" -> 100))
+      val relation = Relation.local(start, "EATS", end, Map("yes" -> 100))
       graph.relations += relation
       db.persistChanges(graph)
 
@@ -195,7 +195,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.local
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.local(start, end, "EATS")
+      val relation = Relation.local(start, "EATS", end)
       graph.relations += relation
       db.persistChanges(graph)
 
@@ -248,7 +248,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.local(Set("cheezburger"))
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.local(start, end, "can haz")
+      val relation = Relation.local(start, "can haz", end)
       graph.relations += relation
       relation.id.value must beLessThan(0L)
       db.persistChanges(graph)
@@ -266,7 +266,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.local(Set("cheezburger"))
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.local(start, end, "can haz")
+      val relation = Relation.local(start, "can haz", end)
       graph.relations += relation
       relation.properties += ("one" -> "yes")
       db.persistChanges(graph)
@@ -280,7 +280,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.local
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.local(start, end, "can haz", Map("one" -> "yes"))
+      val relation = Relation.local(start, "can haz", end, Map("one" -> "yes"))
       graph.relations += relation
       db.persistChanges(graph)
 

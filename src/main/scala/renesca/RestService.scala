@@ -49,7 +49,10 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
   private def awaitResponse(path: String, jsonRequest: json.Request): (List[HttpHeader], json.Response) = {
     val httpRequest = buildHttpPostRequest(path, jsonRequest)
     val httpResponse = awaitResponse(httpRequest)
-    val Right(jsonResponse) = httpResponse.entity.as[json.Response]
+    val jsonResponse: json.Response = httpResponse.entity.as[json.Response] match {
+      case Right(json)                => json
+      case Left(deserializationError) => throw new RuntimeException(s"Deserialization Error: $deserializationError\n\n${ httpResponse.entity.asString }")
+    }
     //TODO: error handling
     (httpResponse.headers, jsonResponse)
   }

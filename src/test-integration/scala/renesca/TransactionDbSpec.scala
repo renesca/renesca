@@ -1,5 +1,6 @@
 package renesca
 
+import renesca.graph._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.parameter.implicits._
@@ -58,6 +59,33 @@ class TransactionDbSpec extends IntegrationSpecification {
       val result = db.queryGraph("match n return n")
       result.nodes must not contain (first)
       result.nodes must contain(second)
+    }
+
+    "Persist and commit graph changes in transaction (delete node)" in {
+      val transaction = newTransaction
+
+      transaction.query("create (n),(m)")
+      val graph = transaction.queryGraph("match (n) return n")
+      val List(first, second) = graph.nodes.toList
+      graph.nodes -= first
+      transaction.commit.persistChanges(graph)
+
+      val result = db.queryGraph("match n return n")
+      result.nodes must not contain (first)
+      result.nodes must contain(second)
+    }
+
+    "Persist and commit graph changes in transaction (add node)" in {
+      val transaction = newTransaction
+
+      transaction.query("create (n),(m)")
+      val graph = transaction.queryGraph("match (n) return n")
+      val node = Node.local
+      graph.nodes += node
+      transaction.commit.persistChanges(graph)
+
+      val result = db.queryGraph("match n return n")
+      result.nodes must contain(node)
     }
 
     "Submit last query on commit" in {

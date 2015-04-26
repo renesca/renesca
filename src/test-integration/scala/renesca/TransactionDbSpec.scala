@@ -75,7 +75,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       result.nodes must contain(second)
     }
 
-    "Persist and commit graph changes in transaction (add node)" in {
+    "Persist and commit graph changes in transaction - add node" in {
       val transaction = newTransaction
 
       transaction.query("create (n),(m)")
@@ -86,6 +86,22 @@ class TransactionDbSpec extends IntegrationSpecification {
 
       val result = db.queryGraph("match n return n")
       result.nodes must contain(node)
+    }
+
+    "Persist and commit graph changes in transaction - add relation" in {
+      val transaction = newTransaction
+
+      transaction.query("create (n),(m)")
+      val graph = transaction.queryGraph("match (n) return n")
+      val List(first, second) = graph.nodes.toList
+      val relation = Relation.local(first, "likes", second)
+      graph.relations += relation
+      transaction.commit.persistChanges(graph)
+
+      val result = db.queryGraph("MATCH (n) OPTIONAL MATCH (n)-[r]-() return n,r")
+      result.nodes must contain(first)
+      result.nodes must contain(second)
+      result.relations must contain(relation)
     }
 
     "Submit last query on commit" in {

@@ -88,12 +88,13 @@ trait QueryHandler extends QueryInterface {
     }
 
     for(changeSet <- changeSets) {
+      // fire one query for all content changes (properties/labels)
       val contentChanges = changeSet collect { case c: GraphContentChange => c }
-      val structuralChanges = changeSet collect { case c: GraphStructureChange => c }
-
       val contentChangeQueries: Seq[Query] = contentChanges.map(graphContentChangeToQuery)
       query(contentChangeQueries: _*)
 
+      // fire queries for each structural change (add nodes/relations, ...)
+      val structuralChanges = changeSet collect { case c: GraphStructureChange => c }
       for(structuralChange <- structuralChanges) {
         graphStructureChangeToEffect(structuralChange)(this)(graph)
       }
@@ -177,6 +178,11 @@ class Transaction extends QueryHandler {thisTransaction =>
   }
 
   val commit = new QueryHandler {
+    // Important:
+    // queryService can be called only once, because it commits and invalidates the transaction.
+    // This means that methods like persistChanges which are firing multiple queries and thus calling querySerice
+    // multiple times need to be modified or wrapped.
+
     def apply() {
       throwIfNotValid()
       for(transactionId <- id)
@@ -196,6 +202,13 @@ class Transaction extends QueryHandler {thisTransaction =>
       invalidate()
       jsonResponse
     }
+
+    override def persistChanges(graph: Graph) {
+      //TODO: this solution can send one REST request more than needed, as the commit request does not do any changes
+      thisTransaction.persistChanges(graph)
+      apply() // commit
+    }
+
 
     override protected def handleError(exceptions: Option[Exception]) = thisTransaction.handleError(exceptions)
   }

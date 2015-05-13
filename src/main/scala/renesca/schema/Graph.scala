@@ -10,9 +10,29 @@ import renesca.parameter.StringPropertyValue
 import renesca.parameter.implicits._
 
 
+//TODO: implicits from Graph to raw.Graph
 trait Graph extends NodeFilter {
-  def add(schemaItem: Item) {
-    schemaItem match {
+  def nodesAs[T <: Node](nodeFactory: NodeFactory[T]) = {
+    filterNodes(graph.nodes.toSet, nodeFactory)
+  }
+
+  def relationsAs[RELATION <: Relation[START, END], START <: Node, END <: Node]
+  (relationFactory: RelationFactory[START, RELATION, END]) = {
+    filterRelations(graph.relations.toSet, relationFactory)
+  }
+
+  def hyperRelationsAs[
+  START <: Node,
+  STARTRELATION <: Relation[START, HYPERRELATION],
+  HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
+  ENDRELATION <: Relation[HYPERRELATION, END],
+  END <: Node]
+  (hyperRelationFactory: HyperRelationFactory[START, STARTRELATION, HYPERRELATION, ENDRELATION, END]) = {
+    filterHyperRelations(graph.nodes.toSet, graph.relations.toSet, hyperRelationFactory)
+  }
+
+  def add(schemaItems: Item*) {
+    schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
         graph.nodes += hyperRelation.node
         graph.relations += hyperRelation.startRelation.relation
@@ -25,26 +45,6 @@ trait Graph extends NodeFilter {
         graph.nodes += schemaNode.node
     }
   }
-
-  def nodesAs[T <: Node](nodeFactory: NodeFactory[T]) = {
-    filterNodes(graph.nodes.toSet, nodeFactory)
-  }
-
-  def relationsAs[RELATION <: Relation[STARTNODE, ENDNODE], STARTNODE <: Node, ENDNODE <: Node]
-  (relationFactory: RelationFactory[STARTNODE, RELATION, ENDNODE]) = {
-    filterRelations(graph.relations.toSet, relationFactory)
-  }
-
-  def hyperRelationsAs[
-  STARTNODE <: Node,
-  STARTRELATION <: Relation[STARTNODE, HYPERRELATION],
-  HYPERRELATION <: HyperRelation[STARTNODE, STARTRELATION, HYPERRELATION, ENDRELATION, ENDNODE],
-  ENDRELATION <: Relation[HYPERRELATION, ENDNODE],
-  ENDNODE <: Node]
-  (hyperRelationFactory: HyperRelationFactory[STARTNODE, STARTRELATION, HYPERRELATION, ENDRELATION, ENDNODE]) = {
-    filterHyperRelations(graph.nodes.toSet, graph.relations.toSet, hyperRelationFactory)
-  }
-
 }
 
 

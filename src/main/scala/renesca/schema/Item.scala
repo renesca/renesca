@@ -7,7 +7,8 @@ import renesca.{graph => raw}
 import renesca.parameter.StringPropertyValue
 import renesca.parameter.implicits._
 
-sealed trait Item
+//TODO: sealed trait Item and AbstractRelation?
+trait Item
 
 trait Node extends Item with NodeFilter {
   def label = node.labels.head
@@ -20,24 +21,24 @@ trait Node extends Item with NodeFilter {
   def getStringProperty(key: String) = node.properties(key).asInstanceOf[StringPropertyValue]
 }
 
-trait AbstractRelation[+STARTNODE <: Node, +ENDNODE <: Node] {
-  def startNode: STARTNODE
-  def endNode: ENDNODE
+trait AbstractRelation[+START <: Node, +END <: Node] extends Item {
+  def startNode: START
+  def endNode: END
 }
 
-trait Relation[+STARTNODE <: Node, +ENDNODE <: Node] extends Item with AbstractRelation[STARTNODE, ENDNODE] {
+trait Relation[+START <: Node, +END <: Node] extends AbstractRelation[START, END] {
   def relation: raw.Relation
   def relationType: raw.RelationType = relation.relationType
 }
 
 
 trait HyperRelation[
-+STARTNODE <: Node,
-STARTRELATION <: Relation[STARTNODE, HYPERRELATION],
-HYPERRELATION <: HyperRelation[STARTNODE, STARTRELATION, HYPERRELATION, ENDRELATION, ENDNODE],
-ENDRELATION <: Relation[HYPERRELATION, ENDNODE],
-+ENDNODE <: Node]
-  extends Item with AbstractRelation[STARTNODE, ENDNODE] with Node {
++START <: Node,
+STARTRELATION <: Relation[START, HYPERRELATION],
+HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
+ENDRELATION <: Relation[HYPERRELATION, END],
++END <: Node]
+  extends AbstractRelation[START, END] with Node {
   // wraps a node and two relations
   protected[schema] var _startRelation: STARTRELATION = _
   protected[schema] var _endRelation: ENDRELATION = _
@@ -47,3 +48,4 @@ ENDRELATION <: Relation[HYPERRELATION, ENDNODE],
   def startNode = startRelation.startNode
   def endNode = endRelation.endNode
 }
+

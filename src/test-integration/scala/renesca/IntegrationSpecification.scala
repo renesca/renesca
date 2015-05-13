@@ -26,7 +26,7 @@ object IntegrationTestSetup {
   testDb.restService = new RestService(// TODO: don't hardcode, configure in environment
     server = "http://localhost:7474",
     timeout = Timeout(10.seconds), // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
-    credentials = Some(BasicHttpCredentials("neo4j", "neo4j"))
+    credentials = Some(BasicHttpCredentials("neo4j", "testingpw"))
   )
 
   def dbState = {

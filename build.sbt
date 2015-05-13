@@ -17,8 +17,8 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "io.spray" %% "spray-client" % "1.3.3",
-  "io.spray" %% "spray-json" % "1.3.1",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.8",
+  "io.spray" %% "spray-json" % "1.3.2",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.11",
   "org.specs2" %% "specs2" % "2.4.17" % "test,test-integration",
   "com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
   "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "test,test-integration")
@@ -38,33 +38,33 @@ organization := "com.github.renesca"
 
 pomExtra := {
   <url>https://github.com/renesca/renesca</url>
-  <licenses>
-    <license>
-      <name>Apache 2</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-  <scm>
-    <url>https://github.com/renesca/renesca</url>
-    <connection>scm:git:git@github.com:renesca/renesca.git</connection>
-  </scm>
-  <developers>
-    <developer>
-      <id>fdietze</id>
-      <name>Felix Dietze</name>
-      <url>https://github.com/fdietze</url>
-    </developer>
-    <developer>
-      <id>snordquist</id>
-      <name>Sascha Nordquist</name>
-      <url>https://github.com/snordquist</url>
-    </developer>
-    <developer>
-      <id>jkaroff</id>
-      <name>Johannes Karoff</name>
-      <url>https://github.com/cornerman</url>
-    </developer>
-  </developers>
+    <licenses>
+      <license>
+        <name>Apache 2</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      </license>
+    </licenses>
+    <scm>
+      <url>https://github.com/renesca/renesca</url>
+      <connection>scm:git:git@github.com:renesca/renesca.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>fdietze</id>
+        <name>Felix Dietze</name>
+        <url>https://github.com/fdietze</url>
+      </developer>
+      <developer>
+        <id>snordquist</id>
+        <name>Sascha Nordquist</name>
+        <url>https://github.com/snordquist</url>
+      </developer>
+      <developer>
+        <id>jkaroff</id>
+        <name>Johannes Karoff</name>
+        <url>https://github.com/cornerman</url>
+      </developer>
+    </developers>
 }
 
 scalacOptions ++= Seq(

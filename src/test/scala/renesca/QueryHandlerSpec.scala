@@ -28,6 +28,16 @@ class QueryHandlerSpec extends Specification with Mockito {
     }
   }
 
+  //TODO: RestServiceSpec: Throw Exception on authorization Error
+  /*
+  {
+    "errors" : [ {
+      "message" : "No authorization header supplied.",
+      "code" : "Neo.ClientError.Security.AuthorizationFailed"
+    } ]
+  }
+  */
+
   "QueryHandler" should {
     "clear changes after persisting" in {
       val queryHandler = new QueryHandler() {

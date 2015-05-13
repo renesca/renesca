@@ -1,5 +1,7 @@
 package renesca
 
+import spray.http.BasicHttpCredentials
+
 import scala.concurrent.duration._
 import akka.util.Timeout
 import org.specs2.execute.{AsResult, Result, ResultExecution, Skipped}
@@ -23,7 +25,8 @@ object IntegrationTestSetup {
   val testDb = new DbService
   testDb.restService = new RestService(// TODO: don't hardcode, configure in environment
     server = "http://localhost:7474",
-    timeout = Timeout(10.seconds) // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
+    timeout = Timeout(10.seconds), // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
+    credentials = Some(BasicHttpCredentials("neo4j", "neo4j"))
   )
 
   def dbState = {

@@ -11,7 +11,7 @@ import renesca.parameter.implicits._
 
 
 //TODO: implicits from Graph to raw.Graph
-trait Graph extends NodeFilter {
+trait Graph extends Filter {
   def nodesAs[T <: Node](nodeFactory: NodeFactory[T]) = {
     filterNodes(graph.nodes.toSet, nodeFactory)
   }

@@ -4,7 +4,7 @@ import renesca.{graph => raw}
 import renesca.parameter.StringPropertyValue
 import renesca.parameter.implicits._
 
-trait NodeFilter {
+trait Filter {
   def graph: raw.Graph
 
   def filterNodes[T <: Node](nodes: Set[raw.Node], nodeFactory: NodeFactory[T]): Set[T] = {

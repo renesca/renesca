@@ -23,11 +23,11 @@ case class TransactionId(id: String) {
 class RestService(val server: String, credentials: Option[BasicHttpCredentials] = None, implicit val timeout: Timeout = Timeout(10.seconds)) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
-  implicit val system: ActorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   // dispatcher provides execution context
 
-  import system.dispatcher
+  import actorSystem.dispatcher
 
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 

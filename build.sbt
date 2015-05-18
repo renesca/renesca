@@ -4,7 +4,7 @@ import SonatypeKeys._
 name := "renesca"
 
 
-version := "0.2.1"
+version := "0.2.2"
 
 scalaVersion := "2.11.6"
 

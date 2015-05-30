@@ -57,6 +57,6 @@ class Node private[graph](
 
   override def hashCode: Int = id.hashCode
 
-  override def toString = s"Node($id)"
+  override def toString = s"(${ id }${labels.map(":" + _.name).mkString})"
 }
 

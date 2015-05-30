@@ -71,8 +71,12 @@ class RelationSpec extends Specification with Mockito {
     }
 
     "produce string representation" in {
-      val relation = Relation(10, Node(5), Node(7), "r")
-      relation.toString mustEqual "Relation(10: 5 -> 7)"
+      val relation = Relation(10, Node(5), Node(7), "R")
+      relation.toString mustEqual "(5)-[10:R]->(7)"
+    }
+    "produce string representation with node labels" in {
+      val relation = Relation(10, Node(5, List("A", "B")), Node(7, List("C")), "R")
+      relation.toString mustEqual "(5:A:B)-[10:R]->(7:C)"
     }
   }
 }

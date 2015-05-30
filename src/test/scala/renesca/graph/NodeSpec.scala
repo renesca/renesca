@@ -97,7 +97,11 @@ class NodeSpec extends Specification with Mockito {
 
     "produce a string representation" in {
       val node = Node(15)
-      node.toString mustEqual "Node(15)"
+      node.toString mustEqual "(15)"
+    }
+    "produce a string representation with labels" in {
+      val node = Node(15, List("A","B"))
+      node.toString mustEqual "(15:A:B)"
     }
   }
 }

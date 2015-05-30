@@ -143,7 +143,7 @@ class GraphSpec extends Specification with Mockito {
       val nodes = List(Node(1), Node(2), Node(3))
       val relations = List(Relation(11, Node(1), Node(2), "r"), Relation(12, Node(2), Node(3), "r"))
       val graph = Graph(nodes, relations)
-      graph.toString mustEqual "Graph(nodes:(1, 2, 3), relations:(11:1->2, 12:2->3))"
+      graph.toString mustEqual "Graph(nodes:((1), (2), (3)), relations:((1)-[11:r]->(2), (2)-[12:r]->(3)))"
     }
 
     "be equal to another empty graph" in {

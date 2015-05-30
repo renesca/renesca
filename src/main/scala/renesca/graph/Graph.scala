@@ -127,7 +127,7 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   def isEmpty = nodes.isEmpty
   def nonEmpty = nodes.nonEmpty
 
-  override def toString = s"Graph(nodes:(${ nodes.toSeq.map(_.id).mkString(", ") }), relations:(${ relations.toSeq.map(r => s"${ r.id }:${ r.startNode.id }->${ r.endNode.id }").mkString(", ") }))"
+  override def toString = s"Graph(nodes:(${ nodes.mkString(", ") }), relations:(${ relations.mkString(", ") }))"
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
 

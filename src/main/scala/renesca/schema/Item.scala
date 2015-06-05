@@ -23,10 +23,10 @@ trait Node extends Item with Filter {
     filterNodes(node.inRelations.filter(_.relationType == relationFactory.relationType).map(_.startNode), nodeFactory)
   }
   def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: HyperRelationFactory[_, _, _, _, RELNODE]) = {
-    filterNodes(node.outRelations.map(_.endNode).filter(_.labels.head == relationFactory.label).flatMap(_.outRelations.map(_.endNode)), nodeFactory)
+    filterNodes(node.outRelations.filter(_.relationType == relationFactory.startRelationType).map(_.endNode).filter(_.labels.head == relationFactory.label).flatMap(_.outRelations.filter(_.relationType == relationFactory.endRelationType).map(_.endNode)), nodeFactory)
   }
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
-    filterNodes(node.inRelations.map(_.startNode).filter(_.labels.head == relationFactory.label).flatMap(_.inRelations.map(_.startNode)), nodeFactory)
+    filterNodes(node.inRelations.filter(_.relationType == relationFactory.endRelationType).map(_.startNode).filter(_.labels.head == relationFactory.label).flatMap(_.inRelations.filter(_.relationType == relationFactory.startRelationType).map(_.startNode)), nodeFactory)
   }
   def getStringProperty(key: String) = node.properties(key).asInstanceOf[StringPropertyValue]
 }

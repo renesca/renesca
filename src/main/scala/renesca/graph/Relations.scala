@@ -8,9 +8,8 @@ class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutab
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(relation: Relation) = {
-    localChanges += RelationAdd(relation.id, relation.startNode.id, relation.endNode.id, relation.relationType)
+    localChanges += RelationAdd(relation)
     self += relation
-    relation.properties.localChanges.foreach(_.updateTimestamp())
     this
   }
 

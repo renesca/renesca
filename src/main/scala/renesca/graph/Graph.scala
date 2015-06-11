@@ -29,6 +29,8 @@ case class Id(private var _id: Long) {
     _id = id
   }
 
+  def isLocal = value < 0
+
   override def equals(other: Any): Boolean = other match {
     case that: Id   => _id == that._id
     case that: Long => _id == that
@@ -85,13 +87,11 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   def changes: Seq[GraphChange] = {
-    val unsortedChanges = localChanges ++
-      nodes.localChanges ++
-      relations.localChanges ++
-      nodes.toSeq.flatMap(_.changes) ++
-      relations.toSeq.flatMap(_.changes)
-
-    unsortedChanges.sortBy(_.timestamp)
+    localChanges ++
+    nodes.localChanges ++
+    relations.localChanges ++
+    nodes.toSeq.flatMap(_.changes) ++
+    relations.toSeq.flatMap(_.changes)
   }
 
   def clearChanges() {

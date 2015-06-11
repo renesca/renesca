@@ -56,12 +56,12 @@ class GraphChangeSpec extends Specification with Mockito {
 
     "emit change when adding node to nodes" in {
       val graph = Graph.empty
+      val node = Node.local
 
-      graph.nodes += Node.local
+      graph.nodes += node
 
-      val nodeId = graph.nodes.head.id
       graph.nodes.localChanges must contain(exactly(
-        NodeAdd(nodeId).asInstanceOf[GraphChange]
+        NodeAdd(node).asInstanceOf[GraphChange]
       ))
     }
 
@@ -115,9 +115,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.nodes += node
 
       graph.changes must contain(allOf(
-        NodeAdd(node.id).asInstanceOf[GraphChange],
-        NodeSetProperty(node.id, "ciao", "mit V").asInstanceOf[GraphChange],
-        NodeSetLabel(node.id, "boom").asInstanceOf[GraphChange]
+        NodeAdd(node).asInstanceOf[GraphChange]
       )).inOrder
     }
 
@@ -130,9 +128,7 @@ class GraphChangeSpec extends Specification with Mockito {
       node.labels += "boom"
 
       graph.changes must contain(allOf(
-        NodeAdd(node.id).asInstanceOf[GraphChange],
-        NodeSetProperty(node.id, "ciao", "mit V").asInstanceOf[GraphChange],
-        NodeSetLabel(node.id, "boom").asInstanceOf[GraphChange]
+        NodeAdd(node).asInstanceOf[GraphChange]
       )).inOrder
     }
 
@@ -146,8 +142,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.relations += relation
 
       graph.changes must contain(allOf(
-        RelationAdd(relation.id, relation.startNode.id, relation.endNode.id, relation.relationType).asInstanceOf[GraphChange],
-        RelationSetProperty(relation.id, "ciao", "mit V").asInstanceOf[GraphChange]
+        RelationAdd(relation).asInstanceOf[GraphChange]
       )).inOrder
     }
 
@@ -161,8 +156,7 @@ class GraphChangeSpec extends Specification with Mockito {
       relation.properties("ciao") = "mit V"
 
       graph.changes must contain(allOf(
-        RelationAdd(relation.id, relation.startNode.id, relation.endNode.id, relation.relationType).asInstanceOf[GraphChange],
-        RelationSetProperty(relation.id, "ciao", "mit V").asInstanceOf[GraphChange]
+        RelationAdd(relation).asInstanceOf[GraphChange]
       )).inOrder
     }
   }

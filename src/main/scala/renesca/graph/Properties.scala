@@ -9,20 +9,19 @@ class Properties(val id: Id,
                  setPropertyChange: (Id, PropertyKey, PropertyValue) => GraphChange,
                  removePropertyChange: (Id, PropertyKey) => GraphChange,
                  self: MutablePropertyMap = mutable.HashMap.empty)
-
-  extends MutablePropertyMap with mutable.MapLike[PropertyKey, PropertyValue, Properties] {
+  extends MutablePropertyMap with mutable.MapLike[PropertyKey, PropertyValue, Properties] with ChangeableMember {
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(keyValue: (PropertyKey, PropertyValue)) = {
     self += keyValue
-    localChanges += setPropertyChange(id, keyValue._1, keyValue._2)
+    addChange(setPropertyChange(id, keyValue._1, keyValue._2))
     this
   }
 
   override def -=(key: PropertyKey) = {
     self -= key
-    localChanges += removePropertyChange(id, key)
+    addChange(removePropertyChange(id, key))
     this
   }
 

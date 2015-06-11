@@ -10,10 +10,8 @@ class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(node: Node) = {
-    localChanges += NodeAdd(node.id)
+    localChanges += NodeAdd(node)
     self += node
-    node.properties.localChanges.foreach(_.updateTimestamp())
-    node.labels.localChanges.foreach(_.updateTimestamp())
     this
   }
 

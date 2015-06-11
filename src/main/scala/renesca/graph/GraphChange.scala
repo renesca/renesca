@@ -3,35 +3,33 @@ package renesca.graph
 import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
 
 
-sealed trait GraphChange {
-  private var _timestamp: Long = System.nanoTime
-  def timestamp = _timestamp
+sealed trait GraphChange
 
-  private[graph] def updateTimestamp() { _timestamp = System.nanoTime }
+trait GraphContentChange extends GraphChange {
+  val id: Id
 }
 
-trait GraphContentChange extends GraphChange
+trait GraphNodeChange extends GraphChange
+trait GraphRelationChange extends GraphChange
 
-case class NodeSetProperty(nodeId: Id, key: PropertyKey, value: PropertyValue) extends GraphContentChange
+case class NodeSetProperty(id: Id, key: PropertyKey, value: PropertyValue) extends GraphContentChange with GraphNodeChange
 
-case class NodeRemoveProperty(nodeId: Id, key: PropertyKey) extends GraphContentChange
+case class NodeRemoveProperty(id: Id, key: PropertyKey) extends GraphContentChange with GraphNodeChange
 
-case class NodeSetLabel(nodeId: Id, label: Label) extends GraphContentChange
+case class NodeSetLabel(id: Id, label: Label) extends GraphContentChange with GraphNodeChange
 
-case class NodeRemoveLabel(nodeId: Id, label: Label) extends GraphContentChange
+case class NodeRemoveLabel(id: Id, label: Label) extends GraphContentChange with GraphNodeChange
 
-case class NodeDelete(nodeId: Id) extends GraphContentChange
+case class NodeDelete(id: Id) extends GraphContentChange with GraphNodeChange
 
-case class RelationSetProperty(relationId: Id, key: PropertyKey, value: PropertyValue) extends GraphContentChange
+case class RelationSetProperty(id: Id, key: PropertyKey, value: PropertyValue) extends GraphContentChange with GraphRelationChange
 
-case class RelationRemoveProperty(relationId: Id, key: PropertyKey) extends GraphContentChange
+case class RelationRemoveProperty(id: Id, key: PropertyKey) extends GraphContentChange with GraphRelationChange
 
-case class RelationDelete(relationId: Id) extends GraphContentChange
+case class RelationDelete(id: Id) extends GraphContentChange with GraphRelationChange
 
 trait GraphStructureChange extends GraphChange
 
-case class NodeAdd(localNodeId: Id) extends GraphStructureChange
+case class NodeAdd(node: Node) extends GraphStructureChange with GraphNodeChange
 
-case class RelationAdd(relationId: Id, start: Id, end: Id, relationType: RelationType) extends GraphStructureChange
-
-
+case class RelationAdd(relation: Relation) extends GraphStructureChange with GraphRelationChange

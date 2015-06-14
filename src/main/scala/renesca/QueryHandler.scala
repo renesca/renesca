@@ -11,7 +11,7 @@ package renesca
 //  persist     - save a modified graph to the database
 
 import renesca.graph._
-import renesca.parameter.{ParameterValue, ParameterMap}
+import renesca.parameter.{PropertyKey, ParameterValue, ParameterMap}
 import renesca.parameter.implicits._
 import renesca.table.Table
 
@@ -43,16 +43,33 @@ object QueryHandler {
     case RelationDelete(relationId)                  => Query("match ()-[r]->() where id(r) = {id} delete r", Map("id" -> relationId))
   }
 
+  private def createAndMergeProperties(properties: Properties, uniqueProperties: Seq[PropertyKey]) = {
+    val createProperties = properties.filterKeys(!uniqueProperties.contains(_))
+    val mergeProperties = properties.filterKeys(uniqueProperties.contains(_))
+    val parameterMap = mergeProperties.toMap.map{ case (k,v) => (PropertyKey(s"_$k"), v)} ++ Map("createProperties" -> createProperties.toMap)
+    val mergePropertiesMatcher = mergeProperties.map{ case (k,v) => s"$k: {_$k}" }.mkString(",")
+    (mergePropertiesMatcher, parameterMap)
+  }
   private val graphStructureChangeToEffect: GraphStructureChange => QueryHandler => Graph => Unit = {
     case NodeAdd(node) => db => graph =>
       val labels = node.labels.map(label => s":`$label`").mkString
-      val dbNode = db.queryGraph(Query(s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap))).nodes.head
+      val (queryStr, parameters) = node.properties.unique.map{properties =>
+        val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(node.properties, properties)
+        (s"merge (n $labels {$mergePropertiesMatcher}) on create set n += {createProperties} return n", parameterMap)
+      }.getOrElse((s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap)))
+
+      val dbNode = db.queryGraph(Query(queryStr, parameters)).nodes.head
+      node.properties ++= dbNode.properties
       node.id.value = dbNode.id.value
 
     case RelationAdd(relation) => db => graph =>
-      val dbRelation = db.queryGraph(Query(
-        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`${relation.relationType}` {properties}]->(end) return r",
-        Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id, "properties" -> relation.properties.toMap))).relations.head
+      val (creatorStr, parameters) = relation.properties.unique.map{properties =>
+        val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(relation.properties, properties)
+        (s"merge (start)-[r :`${relation.relationType}` {$mergePropertiesMatcher}]->(end) on create set r += {createProperties} return r", parameterMap)
+      }.getOrElse((s"create (start)-[r :`${relation.relationType}` {properties}]->(end) return r", Map("properties" -> relation.properties.toMap)))
+
+      val dbRelation = db.queryGraph(Query(s"match (start),(end) where id(start) = {startId} and id(end) = {endId} $creatorStr", parameters ++ Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id))).relations.head
+      relation.properties ++= dbRelation.properties
       relation.id.value = dbRelation.id.value
   }
 }

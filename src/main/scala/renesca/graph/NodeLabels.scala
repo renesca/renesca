@@ -6,18 +6,22 @@ class NodeLabels(
                   val id: Id,
                   self: mutable.Set[Label] = mutable.HashSet.empty[Label]
                   )
-  extends mutable.Set[Label] with mutable.SetLike[Label, NodeLabels] with ChangeableMember {
+  extends mutable.Set[Label] with mutable.SetLike[Label, NodeLabels] {
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(label: Label) = {
-    addChange(NodeSetLabel(id, label))
+    if (!id.isLocal)
+      localChanges += NodeSetLabel(id, label)
+
     self += label
     this
   }
 
   override def -=(label: Label) = {
-    addChange(NodeRemoveLabel(id, label))
+    if (!id.isLocal)
+      localChanges += NodeRemoveLabel(id, label)
+
     self -= label
     this
   }

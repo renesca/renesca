@@ -220,6 +220,29 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.properties must beEmpty
     }
 
+    "add unique node" in {
+      def createNode(): (Graph, Node) = {
+        val graph = Graph.empty
+        val node = Node.local
+        node.properties += ("me" -> "be")
+        node.labels += "unique"
+        graph.nodes += node
+        (graph,node)
+      }
+
+      val (graph, node) = createNode()
+      node.properties += ("you" -> "not")
+      node.properties.unique = Seq("me")
+      db.persistChanges(graph)
+      node.id.value must beGreaterThan(0L)
+
+      val (graph2, node2) = createNode()
+      node2.properties.unique = Seq("me")
+      db.persistChanges(graph2)
+      node2.id.value must beEqualTo(node.id.value)
+      node2.properties("you") must beEqualTo(node.properties("you"))
+    }
+
     "add properties and labels after NodeAdd" in {
       val graph = Graph.empty
       val node = Node.local
@@ -258,6 +281,32 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.startNode mustEqual start
       resultRelation.endNode mustEqual end
       resultRelation.relationType mustEqual RelationType("can haz")
+    }
+
+    "add unique relation" in {
+      val (nodeA, nodeB) = (Node.local, Node.local)
+
+      def createRelation(): (Graph, Relation) = {
+        val graph = Graph.empty
+        val relation = Relation.local(nodeA, "unique", nodeB)
+        relation.properties += ("me" -> "be")
+        graph.nodes += nodeA
+        graph.nodes += nodeB
+        graph.relations += relation
+        (graph,relation)
+      }
+
+      val (graph, relation) = createRelation
+      relation.properties += ("you" -> "not")
+      relation.properties.unique = Seq("me")
+      db.persistChanges(graph)
+      relation.id.value must beGreaterThan(0L)
+
+      val (graph2, relation2) = createRelation
+      relation2.properties.unique = Seq("me")
+      db.persistChanges(graph2)
+      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.properties("you") must beEqualTo(relation.properties("you"))
     }
 
     "add properties after RelationAdd" in {

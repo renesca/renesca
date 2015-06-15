@@ -9,10 +9,6 @@ class Properties(val item: Item,
                  self: MutablePropertyMap = mutable.HashMap.empty)
   extends MutablePropertyMap with mutable.MapLike[PropertyKey, PropertyValue, Properties] {
 
-  private var _unique: Option[Seq[PropertyKey]] = None
-  def unique = _unique
-  def unique_=(values: Seq[PropertyKey]) = _unique = Some(values)
-
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(keyValue: (PropertyKey, PropertyValue)) = {

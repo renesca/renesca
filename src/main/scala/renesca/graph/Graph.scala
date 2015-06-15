@@ -23,6 +23,7 @@ object Id {
   }
 }
 
+// positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
 case class Id(private var _id: Long) {
   def value = _id
   private[renesca] def value_=(id: Long) {

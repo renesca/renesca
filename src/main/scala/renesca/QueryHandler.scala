@@ -35,45 +35,69 @@ trait QueryInterface {
 }
 
 object QueryHandler {
-  private def createAndMergeProperties(properties: Properties, uniqueProperties: Seq[PropertyKey]) = {
-    val createProperties = properties.filterKeys(!uniqueProperties.contains(_))
-    val mergeProperties = properties.filterKeys(uniqueProperties.contains(_))
-    val parameterMap = mergeProperties.toMap.map { case (k, v) => (PropertyKey(s"_$k"), v) } ++ Map("createProperties" -> createProperties.toMap)
-    val mergePropertiesMatcher = mergeProperties.map { case (k, v) => s"$k: {_$k}" }.mkString(",")
-    (mergePropertiesMatcher, parameterMap)
+  private def selectLiteralMap(properties: Properties, selection: Set[PropertyKey]) = {
+    val remainingProperties = properties.filterKeys(!selection.contains(_))
+    val selectedProperties = properties.filterKeys(selection.contains(_))
+    val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"_$k"), v) }
+    val literalMap = selectedProperties.map { case (k, v) => s"$k: {_$k}" }
+    val literalMapMatcher = if (literalMap.isEmpty) "" else literalMap.mkString("{", ",", "}")
+    (literalMapMatcher, remainingProperties, parameterMap)
   }
 
   private def addNodesToQueries(addNodes: Seq[Node]) = {
-    addNodes.map( node => {
-        val labels = node.labels.map(label => s":`$label`").mkString
-        val (queryStr, parameters) = node.properties.unique.map { properties =>
-          val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(node.properties, properties)
-          (s"merge (n $labels {$mergePropertiesMatcher}) on create set n += {createProperties} return n", parameterMap)
-        }.getOrElse((s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap)))
+    addNodes.map(node => {
+      val labels = node.labels.map(label => s":`$label`").mkString
+      val (queryStr, parameters) = node.origin match {
+        case Create()          =>
+          (s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap))
+        case Merge(merge, onMatch) =>
+          val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(node.properties, merge.toSet)
+          val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
+          (s"merge (n $labels $mergeLiteralMap) on create set n += {createProperties} on match set n += {onMatchProperties} return n",
+            parameterMap ++ Map("createProperties" -> remainingProperties.toMap, "onMatchProperties" -> onMatchProperties.toMap))
+        case Match()           =>
+          val (matchLiteralMap, _, parameterMap) = selectLiteralMap(node.properties, node.properties.keySet.toSet)
+          (s"match (n $labels $matchLiteralMap) return n", parameterMap)
+      }
 
-        (Query(queryStr, parameters), (graph: Graph) => {
-          val dbNode = graph.nodes.head
+      (Query(queryStr, parameters), (graph: Graph) => {
+        val dbNodeOpt = graph.nodes.headOption
+        //TODO: what if node does not exist? remove from graph?
+        dbNodeOpt.foreach(dbNode => {
           node.properties ++= dbNode.properties
           node.labels ++= dbNode.labels
           node.id.value = dbNode.id.value
         })
+      })
     })
   }
 
   private def addRelationsToQueries(addRelations: Seq[Relation]) = {
-   addRelations.map(relation => {
-        val (creatorStr, parameters) = relation.properties.unique.map { properties =>
-          val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(relation.properties, properties)
-          (s"merge (start)-[r :`${ relation.relationType }` {$mergePropertiesMatcher}]->(end) on create set r += {createProperties} return r", parameterMap)
-        }.getOrElse((s"create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r", Map("properties" -> relation.properties.toMap)))
+    addRelations.map(relation => {
+      val (creatorStr, parameters) = relation.origin match {
+        case Create()          =>
+          (s"create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r", Map("properties" -> relation.properties.toMap))
+        case Merge(merge, onMatch) =>
+          val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(relation.properties, merge.toSet)
+          val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
+          (s"merge (start)-[r :`${ relation.relationType }` $mergeLiteralMap]->(end) on create set r += {createProperties} on match set r += {onMatchProperties} return r",
+            parameterMap ++ Map("createProperties" -> remainingProperties.toMap, "onMatchProperties" -> onMatchProperties.toMap))
+        case Match()           =>
+          val (matchLiteralMap, _, parameterMap) = selectLiteralMap(relation.properties, relation.properties.keySet.toSet)
+          (s"match (start)-[r :`${ relation.relationType }` $matchLiteralMap]->(end) return r", parameterMap)
+      }
 
-        val queryStr = s"match (start),(end) where id(start) = {startId} and id(end) = {endId} $creatorStr"
+      val queryStr = s"match (start),(end) where id(start) = {startId} and id(end) = {endId} $creatorStr"
+      val parameterMap = parameters ++ Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id)
 
-        (Query(queryStr, parameters ++ Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id)), (graph: Graph) => {
-          val dbRelation = graph.relations.head
+      (Query(queryStr, parameterMap), (graph: Graph) => {
+        val dbRelationOpt = graph.relations.headOption
+        //TODO: what if relation does not exist? remove from graph?
+        dbRelationOpt.foreach(dbRelation =>{
           relation.properties ++= dbRelation.properties
           relation.id.value = dbRelation.id.value
         })
+      })
     })
   }
 
@@ -136,7 +160,7 @@ object QueryHandler {
   private def applyQueries(queriesWithCallbacks: Seq[(Query, (Graph) => Unit)], queryHandler: QueryHandler): Unit = {
     val queries = queriesWithCallbacks.map(_._1)
     val callbacks = queriesWithCallbacks.map(_._2)
-    queryHandler.queryGraphs(queries: _*).zip(callbacks).foreach { case (g,f) => f(g)}
+    queryHandler.queryGraphs(queries: _*).zip(callbacks).foreach { case (g, f) => f(g) }
   }
 
 }

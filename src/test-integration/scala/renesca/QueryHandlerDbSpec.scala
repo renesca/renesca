@@ -3,7 +3,7 @@ package renesca
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.graph._
-import renesca.parameter.{NullPropertyValue, ArrayParameterValue, ParameterValue, PropertyValue}
+import renesca.parameter._
 import renesca.parameter.implicits._
 import renesca.table.Table
 
@@ -220,27 +220,68 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.properties must beEmpty
     }
 
-    "add unique node" in {
-      def createNode(): (Graph, Node) = {
+    "add merge node" in {
+      def createNode: (Graph, Node) = {
         val graph = Graph.empty
-        val node = Node.create
-        node.properties += ("me" -> "be")
-        node.labels += "unique"
+        val node = Node.merge(Seq("merge"), Map("me" -> "be"), Set("me"))
         graph.nodes += node
         (graph,node)
       }
 
-      val (graph, node) = createNode()
+      val (graph, node) = createNode
       node.properties += ("you" -> "not")
-      node.properties.unique = Seq("me")
       db.persistChanges(graph)
       node.id.value must beGreaterThan(0L)
 
-      val (graph2, node2) = createNode()
-      node2.properties.unique = Seq("me")
+      val (graph2, node2) = createNode
       db.persistChanges(graph2)
+
       node2.id.value must beEqualTo(node.id.value)
       node2.properties("you") must beEqualTo(node.properties("you"))
+    }
+
+    "add merge node with onMatch setter" in {
+      val graph = Graph.empty
+      val node = Node.create(Seq("merge"))
+      graph.nodes += node
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val node2 = Node.merge(Seq("merge"), Map("new" -> "yes"), onMatch = Set("new"))
+      graph2.nodes += node2
+      db.persistChanges(graph2)
+
+      node2.id.value must beEqualTo(node.id.value)
+      node2.properties("new") must beEqualTo(StringPropertyValue("yes"))
+    }
+
+    "add match node" in {
+      val graph = Graph.empty
+      val node = Node.create(Seq("matsch"), Map("me" -> "be", "you" -> "not"))
+      graph.nodes += node
+      val labelDistraction = Node.create(Seq("matsch"))
+      val propertyDistraction = Node.create(properties = Map("me" -> "be"))
+      graph.nodes += labelDistraction
+      graph.nodes += propertyDistraction
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val node2 = Node.find(Seq("matsch"), Map("me" -> "be"))
+      graph2.nodes += node2
+      db.persistChanges(graph2)
+
+      graph2.nodes.size must beEqualTo(1)
+      node2.id.value must beEqualTo(node.id.value)
+      node2.properties("you") must beEqualTo(node.properties("you"))
+    }
+
+    "add missing match node" in {
+      val graph = Graph.empty
+      val node = Node.find(Seq("matsch"), Map("me" -> "be"))
+      graph.nodes += node
+      db.persistChanges(graph)
+
+      node.id.isLocal must beTrue
     }
 
     "add properties and labels after NodeAdd" in {
@@ -283,13 +324,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.relationType mustEqual RelationType("can haz")
     }
 
-    "add unique relation" in {
+    "add merge relation" in {
       val (nodeA, nodeB) = (Node.create, Node.create)
 
-      def createRelation(): (Graph, Relation) = {
+      def createRelation: (Graph, Relation) = {
         val graph = Graph.empty
-        val relation = Relation.create(nodeA, "unique", nodeB)
-        relation.properties += ("me" -> "be")
+        val relation = Relation.merge(nodeA, "merge", nodeB, Map("me" -> "be"), Set("me"))
         graph.nodes += nodeA
         graph.nodes += nodeB
         graph.relations += relation
@@ -298,15 +338,74 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
       val (graph, relation) = createRelation
       relation.properties += ("you" -> "not")
-      relation.properties.unique = Seq("me")
       db.persistChanges(graph)
       relation.id.value must beGreaterThan(0L)
 
       val (graph2, relation2) = createRelation
-      relation2.properties.unique = Seq("me")
       db.persistChanges(graph2)
+
       relation2.id.value must beEqualTo(relation.id.value)
       relation2.properties("you") must beEqualTo(relation.properties("you"))
+    }
+
+    "add merge relation with onMatch setter" in {
+      val (nodeA, nodeB) = (Node.create, Node.create)
+
+      def createRelation(graph: Graph, relation: Relation) {
+        graph.nodes += nodeA
+        graph.nodes += nodeB
+        graph.relations += relation
+      }
+
+      val graph = Graph.empty
+      val relation = Relation.create(nodeA, "merge", nodeB)
+      createRelation(graph, relation)
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val relation2 = Relation.merge(nodeA, "merge", nodeB, Map("new" -> "yes"), onMatch = Set("new"))
+      createRelation(graph2, relation2)
+      db.persistChanges(graph2)
+
+      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.properties("new") must beEqualTo(StringPropertyValue("yes"))
+    }
+
+    "add match relation" in {
+      val graph = Graph.empty
+      val (nodeA, nodeB) = (Node.create, Node.create)
+      val relation = Relation.create(nodeA, "matsch", nodeB, Map("me" -> "be", "you" -> "not"))
+      graph.nodes += nodeA
+      graph.nodes += nodeB
+      graph.relations += relation
+      val labelDistraction = Relation.create(nodeA, "matsch", nodeB)
+      val propertyDistraction = Relation.create(nodeA, "sand", nodeB, Map("me" -> "be"))
+      graph.relations += labelDistraction
+      graph.relations += propertyDistraction
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val relation2 = Relation.find(nodeA, "matsch", nodeB, Map("me" -> "be"))
+      graph2.nodes += nodeA
+      graph2.nodes += nodeB
+      graph2.relations += relation2
+      db.persistChanges(graph2)
+
+      graph2.relations.size must beEqualTo(1)
+      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.properties("you") must beEqualTo(relation.properties("you"))
+    }
+
+    "add missing match relation" in {
+      val graph = Graph.empty
+      val (nodeA, nodeB) = (Node.create, Node.create)
+      val relation = Relation.find(nodeA, "matsch", nodeB, Map("me" -> "be"))
+      graph.nodes += nodeA
+      graph.nodes += nodeB
+      graph.relations += relation
+      db.persistChanges(graph)
+
+      relation.id.isLocal must beTrue
     }
 
     "add properties after RelationAdd" in {

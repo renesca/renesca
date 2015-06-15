@@ -13,23 +13,29 @@ case class Label(name: String) extends NonBacktickName
 
 object Node {
   private[renesca] def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
-    new Node(id, labels, properties)
+    new Node(id, Create(), labels, properties)
   }
 
   def create: Node = create()
   def create(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
-    val node = apply(Id.nextId())
-    node.labels ++= labels
-    node.properties ++= properties
+    apply(Id.nextId(), labels, properties)
+  }
 
-    node
+  def merge: Node = merge()
+  def merge(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Node = {
+    new Node(Id.nextId(), Merge(merge, onMatch), labels, properties)
+  }
+
+  def find: Node = find()
+  def find(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
+    new Node(Id.nextId(), Match(), labels, properties)
   }
 }
 
-class Node private[graph](
-                           val id: Id, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
-                           initialLabels: Traversable[Label] = Nil,
-                           initialProperties: PropertyMap = Map.empty
+class Node private[graph](val id: Id,
+                          val origin: ItemOrigin,
+                          initialLabels: Traversable[Label] = Nil,
+                          initialProperties: PropertyMap = Map.empty
                            ) extends Item {
 
   val labels = new NodeLabels(this, mutable.HashSet(initialLabels.toSeq: _*))

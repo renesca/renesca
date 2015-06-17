@@ -11,7 +11,7 @@ class NodeLabels(
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(label: Label) = {
-    if (!node.id.isLocal)
+    if (!node.origin.isLocal)
       localChanges += SetLabel(node, label)
 
     self += label
@@ -19,7 +19,7 @@ class NodeLabels(
   }
 
   override def -=(label: Label) = {
-    if (!node.id.isLocal)
+    if (!node.origin.isLocal)
       localChanges += RemoveLabel(node, label)
 
     self -= label

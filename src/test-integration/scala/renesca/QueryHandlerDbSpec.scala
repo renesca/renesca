@@ -147,9 +147,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.relations ++= List(rel1, rel2)
       db.persistChanges(graph)
 
+      db.queryWholeGraph.nodes must haveSize(3)
+
       val reducedGraph = db.queryGraph(Query(
         "match (m)-[r:INTERNAL]->(n) where id(m) = {mid} and id(n) = {nid} return n,r,m",
-        Map("mid" -> m.id, "nid" -> n.id)))
+        Map("mid" -> m.origin.asInstanceOf[Id].id, "nid" -> n.origin.asInstanceOf[Id].id)))
 
       reducedGraph.nodes must haveSize(2) // m, n
       reducedGraph.relations must haveSize(1) // r
@@ -211,11 +213,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
-      node.id.value must beLessThan(0L)
+      node.origin.kind mustEqual Create.kind
       db.persistChanges(graph)
-      node.id.value must beGreaterThan(0L)
+      node.origin.kind mustEqual Id.kind
 
-      resultNode.id mustEqual node.id
+      resultNode.origin mustEqual node.origin
       resultNode.labels must beEmpty
       resultNode.properties must beEmpty
     }
@@ -225,18 +227,19 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
         val graph = Graph.empty
         val node = Node.merge(Seq("merge"), Map("me" -> "be"), Set("me"))
         graph.nodes += node
-        (graph,node)
+        (graph, node)
       }
 
       val (graph, node) = createNode
       node.properties += ("you" -> "not")
       db.persistChanges(graph)
-      node.id.value must beGreaterThan(0L)
 
       val (graph2, node2) = createNode
+      node2.origin.kind mustEqual Merge.kind
       db.persistChanges(graph2)
+      node2.origin.kind mustEqual Id.kind
 
-      node2.id.value must beEqualTo(node.id.value)
+      node2.origin must beEqualTo(node.origin)
       node2.properties("you") must beEqualTo(node.properties("you"))
     }
 
@@ -251,7 +254,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph2.nodes += node2
       db.persistChanges(graph2)
 
-      node2.id.value must beEqualTo(node.id.value)
+      node2.origin must beEqualTo(node.origin)
       node2.properties("new") must beEqualTo(StringPropertyValue("yes"))
     }
 
@@ -266,22 +269,24 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph)
 
       val graph2 = Graph.empty
-      val node2 = Node.find(Seq("matsch"), Map("me" -> "be"))
+      val node2 = Node.matches(Seq("matsch"), Map("me" -> "be"))
       graph2.nodes += node2
+      node2.origin.kind mustEqual Match.kind
       db.persistChanges(graph2)
+      node2.origin.kind mustEqual Id.kind
 
       graph2.nodes.size must beEqualTo(1)
-      node2.id.value must beEqualTo(node.id.value)
+      node2.origin must beEqualTo(node.origin)
       node2.properties("you") must beEqualTo(node.properties("you"))
     }
 
     "add missing match node" in {
       val graph = Graph.empty
-      val node = Node.find(Seq("matsch"), Map("me" -> "be"))
+      val node = Node.matches(Seq("matsch"), Map("me" -> "be"))
       graph.nodes += node
-      db.persistChanges(graph)
+      val failure = db.persistChanges(graph)
 
-      node.id.isLocal must beTrue
+      failure mustEqual Some("Failed to apply queries")
     }
 
     "add properties and labels after NodeAdd" in {
@@ -314,9 +319,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += end
       val relation = Relation.create(start, "can haz", end)
       graph.relations += relation
-      relation.id.value must beLessThan(0L)
+      relation.origin.kind mustEqual Create.kind
       db.persistChanges(graph)
-      relation.id.value must beGreaterThan(0L)
+      relation.origin.kind mustEqual Id.kind
 
       resultRelation mustEqual relation
       resultRelation.startNode mustEqual start
@@ -333,18 +338,19 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
         graph.nodes += nodeA
         graph.nodes += nodeB
         graph.relations += relation
-        (graph,relation)
+        (graph, relation)
       }
 
       val (graph, relation) = createRelation
       relation.properties += ("you" -> "not")
       db.persistChanges(graph)
-      relation.id.value must beGreaterThan(0L)
 
       val (graph2, relation2) = createRelation
+      relation2.origin.kind mustEqual Merge.kind
       db.persistChanges(graph2)
+      relation2.origin.kind mustEqual Id.kind
 
-      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.origin must beEqualTo(relation.origin)
       relation2.properties("you") must beEqualTo(relation.properties("you"))
     }
 
@@ -367,7 +373,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       createRelation(graph2, relation2)
       db.persistChanges(graph2)
 
-      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.origin must beEqualTo(relation.origin)
       relation2.properties("new") must beEqualTo(StringPropertyValue("yes"))
     }
 
@@ -385,27 +391,29 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph)
 
       val graph2 = Graph.empty
-      val relation2 = Relation.find(nodeA, "matsch", nodeB, Map("me" -> "be"))
+      val relation2 = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"))
       graph2.nodes += nodeA
       graph2.nodes += nodeB
       graph2.relations += relation2
+      relation2.origin.kind mustEqual Match.kind
       db.persistChanges(graph2)
+      relation2.origin.kind mustEqual Id.kind
 
       graph2.relations.size must beEqualTo(1)
-      relation2.id.value must beEqualTo(relation.id.value)
+      relation2.origin must beEqualTo(relation.origin)
       relation2.properties("you") must beEqualTo(relation.properties("you"))
     }
 
     "add missing match relation" in {
       val graph = Graph.empty
       val (nodeA, nodeB) = (Node.create, Node.create)
-      val relation = Relation.find(nodeA, "matsch", nodeB, Map("me" -> "be"))
+      val relation = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"))
       graph.nodes += nodeA
       graph.nodes += nodeB
       graph.relations += relation
-      db.persistChanges(graph)
+      val failure = db.persistChanges(graph)
 
-      relation.id.isLocal must beTrue
+      failure mustEqual Some("Failed to apply queries")
     }
 
     "add properties after RelationAdd" in {
@@ -435,19 +443,142 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
 
-    "add match Path to Graph" in {
+    "add merge Path" in {
       val graph = Graph.empty
-      val start = Node.create
-      val end = Node.create
-      val relation = Relation.merge(start, "can haz", end)
-      val Right(path) = Path.merge(relation)
+      val start = Node.merge(Seq("START"))
+      val middle = Node.merge(Seq("MIDDLE"))
+      val end = Node.merge(Seq("END"))
+      val r1 = Relation.merge(start, "r1", middle)
+      val r2 = Relation.merge(middle, "r2", end)
+      val Right(path) = Path(r1,r2)
       graph += path
       db.persistChanges(graph)
 
-      graph.nodes.size mustEqual 2
-      graph.relations.size mustEqual 1
+      val graph2 = Graph.empty
+      val start2 = Node.merge(Seq("START"))
+      val middle2 = Node.merge(Seq("MIDDLE"))
+      val end2 = Node.merge(Seq("END"))
+      val r12 = Relation.merge(start2, "r1", middle2)
+      val r22 = Relation.merge(middle2, "r2", end2)
+      val Right(path2) = Path(r12,r22)
+      graph2 += path2
+      db.persistChanges(graph2)
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      start mustEqual start2
+      middle mustEqual middle2
+      end mustEqual end2
+      r1 mustEqual r12
+      r2 mustEqual r22
+    }
+
+    "add match Path" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val middle = Node.create(Seq("MIDDLE"))
+      val end = Node.create(Seq("END"))
+      val r1 = Relation.create(start, "r1", middle)
+      val r2 = Relation.create(middle, "r2", end)
+      val Right(path) = Path(r1,r2)
+      graph += path
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val start2 = Node.matches(Seq("START"))
+      val middle2 = Node.matches(Seq("MIDDLE"))
+      val end2 = Node.matches(Seq("END"))
+      val r12 = Relation.matches(start2, "r1", middle2)
+      val r22 = Relation.matches(middle2, "r2", end2)
+      val Right(path2) = Path(r12,r22)
+      graph2 += path2
+      db.persistChanges(graph2)
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      start mustEqual start2
+      middle mustEqual middle2
+      end mustEqual end2
+      r1 mustEqual r12
+      r2 mustEqual r22
+    }
+
+    "add merge Path with matched middle node" in {
+      val graph = Graph.empty
+      val middle = Node.create(Seq("MIDDLE"))
+      graph.nodes += middle
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val start2 = Node.merge(Seq("START"))
+      val middle2 = Node.matches(Seq("MIDDLE"))
+      val end2 = Node.merge(Seq("END"))
+      val r12 = Relation.merge(start2, "r1", middle2)
+      val r22 = Relation.merge(middle2, "r2", end2)
+      val Right(path2) = Path(r12,r22)
+      graph2 += path2
+      db.persistChanges(graph2)
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      middle mustEqual middle2
+    }
+
+    "add merge Path with matched start and end node" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val end = Node.create(Seq("END"))
+      graph.nodes ++= Seq(start, end)
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val start2 = Node.matches(Seq("START"))
+      val middle2 = Node.merge(Seq("MIDDLE"))
+      val end2 = Node.matches(Seq("END"))
+      val r12 = Relation.merge(start2, "r1", middle2)
+      val r22 = Relation.merge(middle2, "r2", end2)
+      val Right(path2) = Path(r12,r22)
+      graph2 += path2
+      db.persistChanges(graph2)
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      start mustEqual start2
+      end mustEqual end2
+    }
+
+    "add merge Path with matched start and end node" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val end = Node.create(Seq("END"))
+      graph.nodes ++= Seq(start, end)
+      db.persistChanges(graph)
+
+      val graph2 = Graph.empty
+      val start2 = Node.matches(Seq("START"))
+      val middle2 = Node.merge(Seq("MIDDLE"))
+      val end2 = Node.matches(Seq("END"))
+      val r12 = Relation.merge(start2, "r1", middle2)
+      val r22 = Relation.merge(middle2, "r2", end2)
+      val Right(path2) = Path(r12,r22)
+      graph2 += path2
+      db.persistChanges(graph2)
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      start mustEqual start2
+      end mustEqual end2
     }
   }
-
 }
 

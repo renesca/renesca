@@ -54,7 +54,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = Graph(jsonGraph)
       val node = graph.nodes.head
 
-      node.id mustEqual 1744
+      node.origin mustEqual Id(1744)
       node.labels mustEqual Nil
       node.properties mustEqual Map.empty
     }
@@ -89,10 +89,10 @@ class GraphFactorySpec extends Specification with Mockito {
       graph.relations must have size 1
 
       val relation = graph.relations.head
-      relation.id mustEqual 42
-      relation.relationType mustEqual RelationType("wurst") // !!!
-      relation.startNode mustEqual graph.nodes.find(_.id == 1744).get
-      relation.endNode mustEqual graph.nodes.find(_.id == 1516).get
+      relation.origin mustEqual Id(42)
+      relation.relationType mustEqual RelationType("wurst") // wichtige wurst
+      relation.startNode mustEqual graph.nodes.find(_.origin == Id(1744)).get
+      relation.endNode mustEqual graph.nodes.find(_.origin == Id(1516)).get
     }
 
     "create graph with relation with properties" in {

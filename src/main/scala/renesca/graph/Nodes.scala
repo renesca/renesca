@@ -10,8 +10,7 @@ class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(node: Node) = {
-    // TODO: what happens if someone first deletes and then re-adds a node?
-    if (node.id.isLocal)
+    if (node.origin.isLocal)
       localChanges += AddItem(node)
 
     self += node

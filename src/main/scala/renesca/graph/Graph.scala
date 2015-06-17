@@ -1,47 +1,9 @@
 package renesca.graph
 
 import renesca.json
-import renesca.parameter.{PropertyMap, PropertyValue}
+import renesca.parameter.PropertyKey
 
 import scala.collection.mutable
-
-object Id {
-
-  import renesca.parameter.implicits._
-
-  implicit def IdToPropertyValue(id: Id): PropertyValue = id.value
-  implicit def IdToLong(id: Id): Long = id.value
-  implicit def LongToId(id: Long): Id = Id(id)
-  implicit def IntToId(id: Int): Id = Id(id)
-
-  private var currentLocalId: Long = -1
-
-  private[graph] def nextId() = {
-    val newId = currentLocalId
-    currentLocalId -= 1
-    Id(newId)
-  }
-}
-
-// positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
-case class Id(private var _id: Long) {
-  def value = _id
-  private[renesca] def value_=(id: Long) {
-    _id = id
-  }
-
-  def isLocal = value < 0
-
-  override def equals(other: Any): Boolean = other match {
-    case that: Id   => _id == that._id
-    case that: Long => _id == that
-    case that: Int  => _id == that
-    case _          => false
-  }
-  override def hashCode = _id.hashCode
-
-  override def toString = _id.toString
-}
 
 object Graph {
   def apply(nodes: Traversable[Node], relations: Traversable[Relation] = Nil): Graph = {
@@ -53,14 +15,17 @@ object Graph {
 
   def apply(jsonGraph: json.Graph): Graph = {
     val nodes: List[Node] = jsonGraph.nodes.map { case json.Node(id, labels, properties) =>
-      Node(id.toLong, labels.map(Label.apply), properties)
+      Node(Id(id.toLong), labels.map(Label.apply), properties)
     }
 
-    val idToNode: Map[String, Node] = nodes.map { case node => node.id.toString -> node }.toMap
+    val idToNode: Map[String, Node] = nodes.flatMap (node => node.origin match {
+      case Id(id) => Map(id.toString -> node)
+      case _      => Map.empty[String, Node]
+    }).toMap
 
     val relations: List[Relation] = jsonGraph.relationships.map {
       case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
-        Relation(id.toLong,
+        Relation(Id(id.toLong),
           idToNode(startNode),
           idToNode(endNode),
           RelationType(relationshipType),
@@ -86,20 +51,20 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   })
   // TODO: test
 
+  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
+
   def +=(path: Path): Unit = {
     localChanges += AddPath(path)
-    nodes ++= path.nodes
+    nodes ++= path.allNodes
     relations ++= path.relations
   }
 
-  private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
-
   def changes: Seq[GraphChange] = {
     localChanges ++
-    nodes.localChanges ++
-    relations.localChanges ++
-    nodes.toSeq.flatMap(_.changes) ++
-    relations.toSeq.flatMap(_.changes)
+      nodes.localChanges ++
+      relations.localChanges ++
+      nodes.toSeq.flatMap(_.changes) ++
+      relations.toSeq.flatMap(_.changes)
   }
 
   def clearChanges() {

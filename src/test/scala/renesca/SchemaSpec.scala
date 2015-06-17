@@ -13,12 +13,16 @@ class SchemaSpec extends Specification with Mockito {
 
   class TheGraph(val graph: raw.Graph = raw.Graph.empty) extends Graph
 
-  class TheNode(val node: raw.Node) extends Node
+  class TheNode(val node: raw.Node) extends Node {
+    val label = TheNode.label
+    val labels = TheNode.labels
+  }
 
   class TheRelation(val startNode: TheNode, val relation: raw.Relation, val endNode: TheNode) extends Relation[TheNode, TheNode]
 
   object TheNode extends NodeFactory[TheNode] {
-    override def label: Label = "heinz"
+    val label: Label = "TheNode"
+    val labels: Set[Label] = Set("TheNode")
     override def wrap(node: raw.Node): TheNode = new TheNode(node)
     def apply() = wrap(raw.Node.create(Set(label)))
   }

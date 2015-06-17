@@ -38,7 +38,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
       val List(first, second) = graph.nodes.toList
-      transaction.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.id)))
+      transaction.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.origin.asInstanceOf[Id].id)))
       transaction.commit()
 
       val result = db.queryGraph("match n return n")
@@ -53,7 +53,7 @@ class TransactionDbSpec extends IntegrationSpecification {
         val graph = tx.queryGraph("match (n) return n")
         first = graph.nodes.head
         second = graph.nodes.last
-        tx.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.id)))
+        tx.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.origin.asInstanceOf[Id].id)))
       }
 
       val result = db.queryGraph("match n return n")

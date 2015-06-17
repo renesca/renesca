@@ -1,32 +1,34 @@
 package renesca.graph
 
 object Path {
-  private def apply(relations: Seq[Relation], origin: ItemOrigin): Either[String,Path] = {
+  def apply(relations: Relation*): Either[String,Path] = {
+    if (relations.isEmpty)
+      return Left("Path cannot be empty")
+
     val nodes = relations.flatMap(r => Seq(r.startNode, r.endNode))
-    val distinctNodes = nodes.distinct
     val isPath = nodes.drop(1).dropRight(1).grouped(2).map(l => l.head == l.last).forall(_ == true)
-    val sameOrigin = relations.map(_.origin).exists(_ == origin)
+    val origin = relations.head.origin
+    val sameOrigin = origin.isInstanceOf[LocalOrigin] && relations.map(_.origin).forall(_.kind == origin.kind)
     // TODO: should be able to handle interrupted paths and mixed directions
     if (!isPath)
-      return Left("Given relations do not form a path")
-    // TODO: this should be checked in the typesystem
+      return Left("Relations do not form a path")
+    // TODO: type system?
     if (!sameOrigin)
-      return Left(s"Relation has unsuitable origin (== $origin)")
+      return Left("Relations have inconsistent origin")
 
-    Right(new Path(distinctNodes, relations, origin))
-  }
+    val distinctNodes = nodes.distinct
+    // TODO: match nodes could be allowed in any path?
+    val pathNodes = distinctNodes.filter(_.origin.kind == origin.kind)
 
-  def merge(relations: Relation*): Either[String,Path] = {
-    apply(relations, Merge())
-  }
-
-  def find(relations: Relation*): Either[String,Path] = {
-    apply(relations, Match())
+    Right(new Path(distinctNodes, pathNodes, relations, origin.asInstanceOf[LocalOrigin]))
   }
 }
 
-class Path private[graph](val nodes: Seq[Node],
+class Path private[graph](val allNodes: Seq[Node],
+                          val nodes: Seq[Node],
                           val relations: Seq[Relation],
-                          val origin: ItemOrigin
+                          val origin: LocalOrigin
                            ) extends SubGraph {
+
+  override def toString = s""""Path(${relations.mkString(",")})"""
 }

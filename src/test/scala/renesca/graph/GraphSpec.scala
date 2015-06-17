@@ -190,24 +190,6 @@ class GraphSpec extends Specification with Mockito {
       graph1.hashCode mustNotEqual graph2.hashCode
     }
 
-    "have Ids which behave like Long: equals" in {
-      Id(1) mustEqual Id(1)
-      Id(1) mustNotEqual Id(2)
-      Id(1) mustEqual 1L
-      Id(1) mustNotEqual 2L
-      Id(1) mustEqual 1
-      Id(1) mustNotEqual 2
-    }
-
-    "have Ids which behave like Long: hashCode" in {
-      Id(1).hashCode mustEqual Id(1).hashCode
-      Id(1).hashCode mustNotEqual Id(2).hashCode
-      Id(1).hashCode mustEqual 1L.hashCode
-      Id(1).hashCode mustNotEqual 2L.hashCode
-      Id(1).hashCode mustEqual 1.hashCode
-      Id(1).hashCode mustNotEqual 2.hashCode
-    }
-
     "have Ids which behave like Long: toString" in {
       Id(1).toString mustEqual "1"
     }

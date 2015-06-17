@@ -86,6 +86,12 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   })
   // TODO: test
 
+  def +=(path: Path): Unit = {
+    localChanges += AddPath(path)
+    nodes ++= path.nodes
+    relations ++= path.relations
+  }
+
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   def changes: Seq[GraphChange] = {

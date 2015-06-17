@@ -434,6 +434,19 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
+
+    "add match Path to Graph" in {
+      val graph = Graph.empty
+      val start = Node.create
+      val end = Node.create
+      val relation = Relation.merge(start, "can haz", end)
+      val Right(path) = Path.merge(relation)
+      graph += path
+      db.persistChanges(graph)
+
+      graph.nodes.size mustEqual 2
+      graph.relations.size mustEqual 1
+    }
   }
 
 }

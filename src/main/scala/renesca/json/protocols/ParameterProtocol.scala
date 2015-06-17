@@ -69,7 +69,7 @@ object ParameterProtocol extends DefaultJsonProtocol {
     }
 
     override def read(value: JsValue) = value match {
-      case JsArray(elements) => ArrayParameterValue(elements map (_.convertTo[ParameterValue]))
+      case JsArray(elements) => ArrayParameterValue(elements.toArray map (_.convertTo[ParameterValue]))
       case json              => deserializationError(s"Can not deserialize ArrayParameterValue from: $json")
     }
   }

@@ -11,7 +11,7 @@ package renesca
 //  persist     - save a modified graph to the database
 
 import renesca.graph._
-import renesca.parameter.{PropertyValue, PropertyKey, ParameterValue, ParameterMap}
+import renesca.parameter._
 import renesca.parameter.implicits._
 import renesca.table.Table
 
@@ -29,38 +29,79 @@ trait QueryInterface {
   def queryTable(query: Query): Table
   def queryGraphs(queries: Query*): Seq[Graph]
   def queryTables(queries: Query*): Seq[Table]
+  def queryGraphsAndTables(queries: Query*): Seq[(Graph,Table)]
   def query(queries: Query*): Unit
   def persistChanges(graph: Graph): Unit
   def persistChanges(schemaGraph: schema.Graph): Unit = persistChanges(schemaGraph.graph)
 }
 
-object QueryHandler {
-  private def selectLiteralMap(properties: Properties, selection: Set[PropertyKey]) = {
+private object QueryHandler {
+  def selectLiteralMap(properties: Properties, selection: Set[PropertyKey]) = {
+    val variable = randomVariable
     val remainingProperties = properties.filterKeys(!selection.contains(_))
     val selectedProperties = properties.filterKeys(selection.contains(_))
-    val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"_$k"), v) }
-    val literalMap = selectedProperties.map { case (k, v) => s"$k: {_$k}" }
+    val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"$k$variable"), v) }
+    val literalMap = selectedProperties.map { case (k, v) => s"$k: {$k$variable}" }
     val literalMapMatcher = if (literalMap.isEmpty) "" else literalMap.mkString("{", ",", "}")
     (literalMapMatcher, remainingProperties, parameterMap)
   }
 
-  private def addNodesToQueries(addNodes: Seq[Node]) = {
-    addNodes.map(node => {
-      val labels = node.labels.map(label => s":`$label`").mkString
-      val (queryStr, parameters) = node.origin match {
-        case Create()          =>
-          (s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap))
-        case Merge(merge, onMatch) =>
-          val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(node.properties, merge.toSet)
-          val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
-          (s"merge (n $labels $mergeLiteralMap) on create set n += {createProperties} on match set n += {onMatchProperties} return n",
-            parameterMap ++ Map("createProperties" -> remainingProperties.toMap, "onMatchProperties" -> onMatchProperties.toMap))
-        case Match()           =>
-          val (matchLiteralMap, _, parameterMap) = selectLiteralMap(node.properties, node.properties.keySet.toSet)
-          (s"match (n $labels $matchLiteralMap) return n", parameterMap)
-      }
+  def randomVariable = "V" + java.util.UUID.randomUUID().toString.replace("-", "")
 
-      (Query(queryStr, parameters), (graph: Graph) => {
+  def queryNonLocalNode(node: Node): (String, ParameterMap, String) = {
+    val variable = randomVariable
+    (s"match ($variable) where id($variable) = {nodeId}", Map("nodeId" -> node.id), variable)
+  }
+
+  def queryLocalNode(node: Node): (String, ParameterMap, String) = {
+    val labels = node.labels.map(label => s":`$label`").mkString
+    val variable = randomVariable
+    node.origin match {
+      case Create()          =>
+        (s"create ($variable $labels {properties$variable})", Map(s"properties$variable" -> node.properties.toMap), variable)
+      case Merge(merge, onMatch) =>
+        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(node.properties, merge.toSet)
+        val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
+        (s"merge ($variable $labels $mergeLiteralMap) on create set $variable += {createProperties$variable} on match set $variable += {onMatchProperties$variable}",
+          parameterMap ++ Map(s"createProperties$variable" -> remainingProperties.toMap, s"onMatchProperties$variable" -> onMatchProperties.toMap),
+          variable)
+      case Match()           =>
+        val (matchLiteralMap, _, parameterMap) = selectLiteralMap(node.properties, node.properties.keySet.toSet)
+        (s"match ($variable $labels $matchLiteralMap)", parameterMap, variable)
+    }
+  }
+
+  def queryLocalRelation(relation: Relation): (String, ParameterMap, String) = {
+    val variable = randomVariable
+    val (creatorStr, parameters) = relation.origin match {
+      case Create()          =>
+        (s"create (start$variable)-[$variable :`${ relation.relationType }` {properties$variable}]->(end$variable)", Map(s"properties$variable" -> relation.properties.toMap))
+      case Merge(merge, onMatch) =>
+        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(relation.properties, merge.toSet)
+        val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
+        (s"merge (start$variable)-[$variable :`${ relation.relationType }` $mergeLiteralMap]->(end$variable) on create set $variable += {createProperties$variable} on match set $variable += {onMatchProperties$variable}",
+          parameterMap ++ Map(s"createProperties$variable" -> remainingProperties.toMap, s"onMatchProperties$variable" -> onMatchProperties.toMap))
+      case Match()           =>
+        val (matchLiteralMap, _, parameterMap) = selectLiteralMap(relation.properties, relation.properties.keySet.toSet)
+        (s"match (start$variable)-[$variable :`${ relation.relationType }` $matchLiteralMap]->(end$variable)", parameterMap)
+    }
+
+    val queryStr = s"match (start$variable),(end$variable) where id(start$variable) = {startId$variable} and id(end$variable) = {endId$variable} $creatorStr"
+    val parameterMap = parameters ++ Map(s"startId$variable" -> relation.startNode.id, s"endId$variable" -> relation.endNode.id)
+    (queryStr, parameterMap, variable)
+  }
+
+  def makeQueryWithReturn(queryStr: String, parameters: ParameterMap, variable: String): Query = {
+    Query(s"$queryStr return $variable", parameters)
+  }
+
+  def makeQueryWithReturn(tuple: (String, ParameterMap, String)): Query = makeQueryWithReturn(tuple._1, tuple._2, tuple._3)
+
+  def addNodesToQueries(addNodes: Seq[Node]) = {
+    addNodes.map(node => {
+      val query = makeQueryWithReturn(queryLocalNode(node))
+
+      (query, (graph: Graph, table: Table) => {
         val dbNodeOpt = graph.nodes.headOption
         //TODO: what if node does not exist? remove from graph?
         dbNodeOpt.foreach(dbNode => {
@@ -72,25 +113,11 @@ object QueryHandler {
     })
   }
 
-  private def addRelationsToQueries(addRelations: Seq[Relation]) = {
+  def addRelationsToQueries(addRelations: Seq[Relation]) = {
     addRelations.map(relation => {
-      val (creatorStr, parameters) = relation.origin match {
-        case Create()          =>
-          (s"create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r", Map("properties" -> relation.properties.toMap))
-        case Merge(merge, onMatch) =>
-          val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(relation.properties, merge.toSet)
-          val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
-          (s"merge (start)-[r :`${ relation.relationType }` $mergeLiteralMap]->(end) on create set r += {createProperties} on match set r += {onMatchProperties} return r",
-            parameterMap ++ Map("createProperties" -> remainingProperties.toMap, "onMatchProperties" -> onMatchProperties.toMap))
-        case Match()           =>
-          val (matchLiteralMap, _, parameterMap) = selectLiteralMap(relation.properties, relation.properties.keySet.toSet)
-          (s"match (start)-[r :`${ relation.relationType }` $matchLiteralMap]->(end) return r", parameterMap)
-      }
+      val query = makeQueryWithReturn(queryLocalRelation(relation))
 
-      val queryStr = s"match (start),(end) where id(start) = {startId} and id(end) = {endId} $creatorStr"
-      val parameterMap = parameters ++ Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id)
-
-      (Query(queryStr, parameterMap), (graph: Graph) => {
+      (query, (graph: Graph, table: Table) => {
         val dbRelationOpt = graph.relations.headOption
         //TODO: what if relation does not exist? remove from graph?
         dbRelationOpt.foreach(dbRelation =>{
@@ -101,7 +128,79 @@ object QueryHandler {
     })
   }
 
-  private def contentChangesToQueries(contentChanges: Seq[GraphContentChange]) = {
+  def nodePattern(node: Node) = {
+    val variable = randomVariable
+    val labels = node.labels.map(label => s":`$label`").mkString
+    val (literalMap, _, parameterMap) = selectLiteralMap(node.properties, node.properties.keySet.toSet)
+    (s"($variable $labels $literalMap)", parameterMap, variable)
+  }
+
+  def relationPattern(relation: Relation) = {
+    val variable = randomVariable
+    val (literalMap, _, parameterMap) = selectLiteralMap(relation.properties, relation.properties.keySet.toSet)
+    (s"[$variable : `${relation.relationType}` $literalMap]", parameterMap, variable)
+  }
+
+  def addPathsToQueries(addPaths: Seq[Path]) = {
+    addPaths.map(path => {
+      val existingNodes = path.nodes.filterNot(_.id.isLocal)
+      val localNodes = path.nodes.filter(_.id.isLocal)
+      val boundNodes = localNodes.filterNot(_.origin == path.origin)
+
+      val (preQueries, preParameterMaps, preVariables) = (existingNodes.map(queryNonLocalNode(_)) ++ boundNodes.map(queryLocalNode(_))).unzip3
+      val preVariableMap = ((existingNodes ++ boundNodes) zip preVariables).toMap
+      val preQuery = preQueries.mkString(" ")
+
+      val (pathQueries, parameterMaps, variableMaps) = path.relations.map(relation => {
+        val (startQuery, startParameters, startVariable) = preVariableMap.get(relation.startNode).map(variable => (s"($variable)", Map.empty, variable)).getOrElse(nodePattern(relation.startNode))
+        val (endQuery, endParameters, endVariable) = preVariableMap.get(relation.endNode).map(variable => (s"($variable)", Map.empty, variable)).getOrElse(nodePattern(relation.endNode))
+        val (relQuery, relParameters, relVariable) = relationPattern(relation)
+        (s"$startQuery-$relQuery->$endQuery", startParameters ++ endParameters ++ relParameters, Map(
+          relation.startNode -> startVariable, relation.endNode -> endVariable, relation -> relVariable
+        ))
+      }).unzip3
+
+      val parameterMap = (preParameterMaps ++ parameterMaps).flatten.toMap
+      val variableMap = preVariableMap ++ (variableMaps.flatten.toMap)
+      val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }
+      val pathPattern = pathQueries.mkString(" ")
+      val pathQuery = path.origin match {
+        case Match() => s"match $pathPattern"
+        case Merge(merge, onMatch) => s"merge $pathPattern"
+      }
+
+      val returnClause = "return " + variableMap.map {
+        case (k,variable) => k match {
+          case _: Node => s"{id: id($variable), properties: $variable, labels: labels($variable)}"
+          case _: Relation => s"{id: id($variable), properties: $variable}"
+        }
+      }.mkString(",")
+
+      val queryStr = s"$preQuery $pathQuery $returnClause"
+
+      (Query(queryStr, parameterMap), (graph: Graph, table: Table) => {
+        table.columns.foreach(col => {
+          table.rows.headOption.foreach(row => {
+            val map = row(col).asInstanceOf[MapParameterValue].value
+            reverseVariableMap(col) match {
+              case n: Node =>
+                n.properties.clear
+                n.labels.clear
+                n.properties ++= map("properties").asInstanceOf[PropertyMap]
+                n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[Label]]
+                n.id.value = map("id").asInstanceOf[Long]
+              case r: Relation =>
+                r.properties.clear()
+                r.properties ++= map("properties").asInstanceOf[PropertyMap]
+                r.id.value = map("id").asInstanceOf[Long]
+            }
+          })
+        })
+      })
+    })
+  }
+
+  def contentChangesToQueries(contentChanges: Seq[GraphContentChange]) = {
     contentChanges.groupBy(_.item).map {
       case (item, changes) =>
         val propertyAdditions: mutable.Map[PropertyKey, ParameterValue] = mutable.Map.empty
@@ -153,14 +252,14 @@ object QueryHandler {
         (Query(
           s"$matcher where id($variable) = {itemId} $setters",
           Map("itemId" -> item.id, "propertyAdditions" -> propertyAdditions.toMap)
-        ), (graph: Graph) => {})
+        ), (graph: Graph, table: Table) => {})
     }.toSeq
   }
 
-  private def applyQueries(queriesWithCallbacks: Seq[(Query, (Graph) => Unit)], queryHandler: QueryHandler): Unit = {
+  def applyQueries(queriesWithCallbacks: Seq[(Query, (Graph, Table) => Unit)], queryHandler: QueryHandler): Unit = {
     val queries = queriesWithCallbacks.map(_._1)
     val callbacks = queriesWithCallbacks.map(_._2)
-    queryHandler.queryGraphs(queries: _*).zip(callbacks).foreach { case (g, f) => f(g) }
+    queryHandler.queryGraphsAndTables(queries: _*).zip(callbacks).foreach { case ((g, t), f) => f(g, t) }
   }
 
 }
@@ -183,18 +282,30 @@ trait QueryHandler extends QueryInterface {
     extractTables(results)
   }
 
+  override def queryGraphsAndTables(queries: Query*): Seq[(Graph,Table)] = {
+    val results = executeQueries(queries, List("row", "graph"))
+    extractGraphs(results) zip extractTables(results)
+  }
+
   def query(queries: Query*) { executeQueries(queries, Nil) }
 
   def persistChanges(graph: Graph) {
     val changes = graph.changes
+    val contentChanges = changes.collect { case c: GraphContentChange => c}
+    val addPaths = changes.collect { case AddPath(p) => p}
 
-    val contentQueries = contentChangesToQueries(changes.collect { case c: GraphContentChange => c })
+    // all addItem changes that are already included in paths need to be ignored,
+    // as they are handled when adding the path itself
+    val pathItems = addPaths.flatMap(path => path.nodes ++ path.relations)
+    val addItemChanges = changes.collect { case c: AddItem => c}.filterNot(pathItems contains _.item)
 
-    val addNodeQueries = addNodesToQueries(changes.collect { case AddItem(n: Node) => n })
-    applyQueries(contentQueries ++ addNodeQueries, this)
+    val contentQueries = contentChangesToQueries(contentChanges)
+    val addNodeQueries = addNodesToQueries(addItemChanges.collect { case AddItem(n: Node) => n })
+    val addPathQueries = addPathsToQueries(addPaths)
+    applyQueries(contentQueries ++ addNodeQueries /*++ addPathQueries*/, this)
 
     //TODO: merge relation queries into previous request by referring to variables instead of ids
-    val addRelationQueries = addRelationsToQueries(changes.collect { case AddItem(r: Relation) => r })
+    val addRelationQueries = addRelationsToQueries(addItemChanges.collect { case AddItem(r: Relation) => r })
     applyQueries(addRelationQueries, this)
 
     graph.clearChanges()

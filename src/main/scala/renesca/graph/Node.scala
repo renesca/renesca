@@ -26,6 +26,7 @@ object Node {
     new Node(Id.nextId(), Merge(merge, onMatch), labels, properties)
   }
 
+  //TODO: matched/merged/created?
   def find: Node = find()
   def find(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     new Node(Id.nextId(), Match(), labels, properties)

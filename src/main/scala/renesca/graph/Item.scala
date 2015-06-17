@@ -2,7 +2,11 @@ package renesca.graph
 
 import renesca.parameter.PropertyKey
 
-trait Item {
+trait SubGraph {
+  val origin: ItemOrigin
+}
+
+trait Item extends SubGraph {
   val id: Id
   val properties: Properties
 }

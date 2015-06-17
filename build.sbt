@@ -83,3 +83,16 @@ unmanagedSourceDirectories in Compile <+= (sourceDirectory in Compile, scalaBina
   (s, v) => s / ("scala_" + v)
 }
 
+initialCommands in console := """
+import renesca.graph._
+import renesca.parameter._
+import renesca.parameter.implicits._
+import renesca._
+import spray.http.BasicHttpCredentials
+
+val credentials = BasicHttpCredentials("neo4j", "neo4j")
+val restService = new RestService("http://localhost:7474", Some(credentials))
+
+val db = new DbService
+db.restService = restService
+"""

@@ -10,7 +10,7 @@ trait Filter {
   def filterNodes[T <: Node](nodes: Set[raw.Node], nodeFactory: NodeFactory[T]): Set[T] = {
     nodes.filter(_.labels.contains(nodeFactory.label)).map { node =>
       val schemaNode = nodeFactory.wrap(node)
-      schemaNode.graph = graph
+      schemaNode.graphPromise.success(graph)
       schemaNode
     }
   }

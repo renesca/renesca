@@ -7,6 +7,9 @@ import renesca.{graph => raw}
 import renesca.parameter.StringPropertyValue
 import renesca.parameter.implicits._
 
+import scala.concurrent.Promise
+import scala.util.Success
+
 //TODO: sealed trait Item and AbstractRelation?
 trait Item
 
@@ -14,7 +17,9 @@ trait Node extends Item with Filter {
   val label: raw.Label
   val labels: Set[raw.Label]
   def node: raw.Node
-  implicit var graph: raw.Graph = null
+  private[schema] val graphPromise = Promise[raw.Graph]
+
+  implicit def graph: raw.Graph = graphPromise.future.value.getOrElse(Success(raw.Graph.empty)).get
 
   def neighboursAs[T <: Node](nodeFactory: NodeFactory[T]) = filterNodes(node.neighbours, nodeFactory)
   def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: RelationFactory[_, _, RELNODE]) = {

@@ -37,17 +37,14 @@ trait Graph extends Filter {
         graph.nodes += hyperRelation.node
         graph.relations += hyperRelation.startRelation.relation
         graph.relations += hyperRelation.endRelation.relation
-        hyperRelation.graph = graph // TODO: correct place?
+        hyperRelation.graphPromise.success(graph)
 
       case relation: Relation[_, _] =>
         graph.relations += relation.relation
 
       case schemaNode: Node =>
         graph.nodes += schemaNode.node
-        // if the node is not retrieved through an accessor, the graph would not be set.
-        // TODO: what happens with nodes added to two graphs?
-        // maybe better to store relations in nodes?
-        schemaNode.graph = graph
+        schemaNode.graphPromise.success(graph)
     }
   }
 }

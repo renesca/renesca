@@ -35,7 +35,10 @@ package object parameter {
 
   sealed trait PrimitivePropertyValue extends PropertyValue
 
-  sealed trait ArrayPropertyValue extends PropertyValue {def elements: Seq[PrimitivePropertyValue] }
+  sealed trait ArrayPropertyValue extends PropertyValue {
+    def elements: Seq[PrimitivePropertyValue]
+    override def toString = elements.map(_.toString).toString
+  }
 
   case class LongPropertyValue(value: Long) extends PrimitivePropertyValue {
     override def equals(other: Any): Boolean = other match {
@@ -45,6 +48,7 @@ package object parameter {
       case _                       => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.toString
   }
 
   case class DoublePropertyValue(value: Double) extends PrimitivePropertyValue {
@@ -54,6 +58,7 @@ package object parameter {
       case _                         => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.toString
   }
 
   case class StringPropertyValue(value: String) extends PrimitivePropertyValue {
@@ -63,6 +68,7 @@ package object parameter {
       case _                         => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.toString
   }
 
   case class BooleanPropertyValue(value: Boolean) extends PrimitivePropertyValue {
@@ -72,10 +78,12 @@ package object parameter {
       case _                          => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.toString
   }
 
   case object NullPropertyValue extends PrimitivePropertyValue {
     //TODO: equals/hashCode/implicits?
+    override def toString = "null"
   }
 
   case class LongArrayPropertyValue(elements: LongPropertyValue*) extends ArrayPropertyValue {
@@ -129,6 +137,7 @@ package object parameter {
       case _                               => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.map(_.toString).toString
   }
 
   case class MapParameterValue(value: ParameterMap) extends SoleParameterValue {
@@ -138,6 +147,7 @@ package object parameter {
       case _                       => false
     }
     override def hashCode = value.hashCode
+    override def toString = value.toString
   }
 
 }

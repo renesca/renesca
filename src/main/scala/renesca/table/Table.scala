@@ -27,4 +27,11 @@ case class Table private[table](columns: Seq[String], rows: IndexedSeq[Row]) {
   def apply(index: Int): Row = rows(index)
   def isEmpty = rows.isEmpty
   def nonEmpty = rows.nonEmpty
+
+  override def toString = {
+    s"""
+      |${columns.mkString("\t")}
+      |${rows.map(r => r.cells.mkString("\t")).mkString("\n")}
+    """.stripMargin
+  }
 }

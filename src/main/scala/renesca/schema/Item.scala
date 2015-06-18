@@ -11,7 +11,8 @@ import renesca.parameter.implicits._
 trait Item
 
 trait Node extends Item with Filter {
-  def label = node.labels.head
+  val label: raw.Label
+  val labels: Set[raw.Label]
   def node: raw.Node
   implicit var graph: raw.Graph = null
 
@@ -22,11 +23,11 @@ trait Node extends Item with Filter {
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: RelationFactory[RELNODE, _, _]) = {
     filterNodes(node.inRelations.filter(_.relationType == relationFactory.relationType).map(_.startNode), nodeFactory)
   }
-  def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: HyperRelationFactory[_, _, _, _, RELNODE]) = {
-    filterNodes(node.outRelations.filter(_.relationType == relationFactory.startRelationType).map(_.endNode).filter(_.labels.head == relationFactory.label).flatMap(_.outRelations.filter(_.relationType == relationFactory.endRelationType).map(_.endNode)), nodeFactory)
+  def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[_, _, _, _, RELNODE]) = {
+    filterNodes(node.outRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.endNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.outRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.endNode)), nodeFactory)
   }
-  def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
-    filterNodes(node.inRelations.filter(_.relationType == relationFactory.endRelationType).map(_.startNode).filter(_.labels.head == relationFactory.label).flatMap(_.inRelations.filter(_.relationType == relationFactory.startRelationType).map(_.startNode)), nodeFactory)
+  def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
+    filterNodes(node.inRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.startNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.inRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.startNode)), nodeFactory)
   }
   def getStringProperty(key: String) = node.properties(key).asInstanceOf[StringPropertyValue]
 }

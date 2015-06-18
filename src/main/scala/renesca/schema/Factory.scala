@@ -8,6 +8,7 @@ import renesca.parameter.implicits._
 
 trait NodeFactory[+T <: Node] {
   def label: raw.Label
+  def labels: Set[raw.Label]
   def wrap(node: raw.Node): T
 }
 

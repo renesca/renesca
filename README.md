@@ -27,7 +27,7 @@ package renesca.example
 import renesca.graph.{Node, Relation}
 import renesca.parameter._
 import renesca.parameter.implicits._
-import renesca.{DbService, RestService, Transaction}
+import renesca.{DbService, RestService, Transaction, Query}
 import spray.http.BasicHttpCredentials
 
 object Main extends App {
@@ -45,7 +45,7 @@ object Main extends App {
   // only proceed if database is available and empty
   val wholeGraph = db.queryGraph("MATCH (n) RETURN n LIMIT 1")
   if(wholeGraph.nonEmpty) {
-    restService.system.shutdown()
+    restService.actorSystem.shutdown()
     sys.error("Database is not empty.")
   }
 
@@ -53,10 +53,7 @@ object Main extends App {
   // create example graph:  snake -eats-> dog
   db.query("CREATE (:ANIMAL {name:'snake'})-[:EATS]->(:ANIMAL {name:'dog'})")
 
-  val tx = new Transaction
-  // dependency injection
-  tx.restService = restService
-
+  val tx = db.newTransaction
 
   // query a subgraph from the database
   implicit val graph = tx.queryGraph("MATCH (n:ANIMAL)-[r]->() RETURN n,r")
@@ -74,21 +71,37 @@ object Main extends App {
   snake.properties("hungry") = true
 
   // creating a local Node (a Node the database does not know about yet)
-  val hippo = Node.local
+  val hippo = Node.create
 
-  // changes to local Nodes are also tracked
+  // changes to locally created Nodes are also tracked
   hippo.labels += "ANIMAL"
   hippo.properties("name") = "hippo"
 
-  // add the local node to the Node Set
+  // add the created node to the Node Set
   graph.nodes += hippo
 
-  // create a new local relation between a local and existing Node
-  graph.relations += Relation.local(snake, "EATS", hippo)
+  // create a new local relation from a locally created Node to an existing Node
+  graph.relations += Relation.create(snake, "EATS", hippo)
 
   // persist all tracked changes to the database and commit the transaction
   tx.commit.persistChanges(graph)
 
+  // different transaction syntax
+  db.transaction { tx =>
+    val hippo = tx.queryGraph(
+      Query( """MATCH (n:ANIMAL {name: {name}}) return n""",
+        Map("name" -> "hippo")) // Cypher query parameters
+    ).nodes.head
+    hippo.properties("nose") = true
+  }
+
+  db.transaction { tx =>
+    // delete hippo
+    tx.query( """MATCH (n:ANIMAL {name: "hippo"}) OPTIONAL MATCH (n)-[r]-() DELETE n,r""")
+
+    // roll back deletion
+    tx.rollback()
+  }
 
   // interpret query result as a table
   val animals = db.queryTable("MATCH (n:ANIMAL) OPTIONAL MATCH (n)-[r:EATS]->() RETURN n.name as name, COUNT(r) as eatcount")
@@ -114,6 +127,6 @@ object Main extends App {
   db.query("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
 
   // shut down actor system
-  restService.system.shutdown()
+  restService.actorSystem.shutdown()
 }
 ```

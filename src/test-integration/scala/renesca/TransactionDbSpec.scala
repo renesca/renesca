@@ -8,11 +8,11 @@ import renesca.parameter.implicits._
 @RunWith(classOf[JUnitRunner])
 class TransactionDbSpec extends IntegrationSpecification {
   "Transactions" should {
-    def newTransaction = {
-      val transaction = new Transaction
-      transaction.restService = db.restService // TODO injection
-      transaction
+    "be created by dbService" in {
+      val tx = db.newTransaction()
+      tx.restService must not beNull
     }
+
     "singleRequest rollback on errors" in {
       db.query("create (n)", "blabla illegal query") must throwA[RuntimeException]
 
@@ -21,7 +21,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "openTransaction rollback on errors" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query(
         "create (n)",
@@ -33,7 +33,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "Manual transaction success" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
@@ -46,8 +46,23 @@ class TransactionDbSpec extends IntegrationSpecification {
       result.nodes must contain(second)
     }
 
+    "work with enclosing syntax" in {
+      var first, second: Node = null
+      db.transaction { tx =>
+        tx.query("create (n),(m)")
+        val graph = tx.queryGraph("match (n) return n")
+        first = graph.nodes.head
+        second = graph.nodes.last
+        tx.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.id)))
+      }
+
+      val result = db.queryGraph("match n return n")
+      result.nodes must not contain (first)
+      result.nodes must contain(second)
+    }
+
     "Persist graph changes in transaction" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
@@ -62,7 +77,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "Persist and commit graph changes in transaction (delete node)" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
@@ -76,7 +91,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "Persist and commit graph changes in transaction - add node" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
@@ -89,7 +104,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "Persist and commit graph changes in transaction - add relation" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
@@ -105,7 +120,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "Submit last query on commit" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create (n) return n")
       transaction.commit.queryGraphs("create (y) return y")
@@ -115,7 +130,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "only commit with a query" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.commit.queryGraphs("create n return n")
 
@@ -124,7 +139,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "error on openTransaction is thrown by Transaction" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("boom") must throwA[RuntimeException]
 
@@ -134,7 +149,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "error on resumeTransaction is thrown by Transaction" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create n return n")
       transaction.query("boom") must throwA[RuntimeException]
@@ -144,8 +159,16 @@ class TransactionDbSpec extends IntegrationSpecification {
       result.nodes must haveSize(0)
     }
 
+    "throw error exception on transaction commit" in {
+      db.queryGraph( """create (n:N)-[r:R]->m""")
+
+      val transaction = db.newTransaction()
+      transaction.query( """MATCH (n:N) DELETE n""") // invalid delete, because (n) has a relation
+      transaction.commit() must throwA[RuntimeException]
+    }
+
     "do a manual rollback" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create n return n")
       transaction.rollback()
@@ -156,7 +179,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "be isolated" in {
-      val transaction = newTransaction
+      val transaction = db.newTransaction()
 
       transaction.query("create n return n")
       val graph = db.queryGraph("match n return n")

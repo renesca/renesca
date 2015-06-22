@@ -29,7 +29,7 @@ trait QueryInterface {
   def queryTables(queries: Query*): Seq[Table]
   def query(queries: Query*): Unit
   def persistChanges(graph: Graph): Unit
-  def persistChanges(schemaGraph: schema.Graph):Unit = persistChanges(schemaGraph.graph)
+  def persistChanges(schemaGraph: schema.Graph): Unit = persistChanges(schemaGraph.graph)
 }
 
 object QueryHandler {
@@ -52,7 +52,7 @@ object QueryHandler {
 
     case RelationAdd(relation) => db => graph =>
       val dbRelation = db.queryGraph(Query(
-        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`${relation.relationType}` {properties}]->(end) return r",
+        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r",
         Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id, "properties" -> relation.properties.toMap))).relations.head
       relation.id.value = dbRelation.id.value
   }
@@ -187,8 +187,10 @@ class Transaction extends QueryHandler {thisTransaction =>
 
     def apply() {
       throwIfNotValid()
-      for(transactionId <- id)
-        restService.commitTransaction(transactionId)
+      for(transactionId <- id) {
+        val jsonResponse = restService.commitTransaction(transactionId)
+        handleError(exceptionFromErrors(jsonResponse))
+      }
 
       invalidate()
     }
@@ -228,6 +230,20 @@ class DbService extends QueryHandler {
 
   override protected def queryService(jsonRequest: json.Request): json.Response = {
     restService.singleRequest(jsonRequest)
+  }
+
+  def newTransaction() = {
+    val tx = new Transaction
+    tx.restService = restService
+    tx
+  }
+
+  def transaction(code: Transaction => Any): Unit = {
+    val tx = newTransaction
+    code(tx)
+
+    // if there was a request and transacion is not done yet
+    if(tx.id.isDefined && tx.isValid) tx.commit()
   }
 }
 

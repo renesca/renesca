@@ -30,6 +30,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.restService.openTransaction(jsonRequestWithoutResult) returns transactionResponse
     tx.restService.resumeTransaction(TransactionId("1"), jsonRequest) returns jsonResponse
     tx.restService.resumeTransaction(TransactionId("1"), jsonRequestWithoutResult) returns jsonResponse
+    tx.restService.commitTransaction(any, any) returns json.Response()
 
     tx
   }
@@ -105,5 +106,17 @@ class TransactionSpec extends Specification with Mockito {
     tx.isValid mustEqual false
     there was one(tx.restService).rollbackTransaction(TransactionId("1"))
   }
+
+  "don't commit when doing nothing in transaction" in {
+    val tx = newTransaction
+    tx.commit()
+
+    there was no(tx.restService).singleRequest(any)
+    there was no(tx.restService).openTransaction(any)
+    there was no(tx.restService).commitTransaction(any, any)
+    there was no(tx.restService).resumeTransaction(any, any)
+    there was no(tx.restService).rollbackTransaction(any)
+  }
+
 }
 

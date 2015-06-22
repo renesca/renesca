@@ -5,11 +5,19 @@ import collection.mutable
 class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation])
   extends mutable.Set[Relation] with mutable.SetLike[Relation, Relations] {
 
+  private[graph] var graph: Graph = null
+
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(relation: Relation) = {
     if (relation.id.isLocal)
       localChanges += RelationAdd(relation)
+
+    if(graph != null && !(graph.nodes contains relation.startNode))
+      graph.nodes += relation.startNode
+    if(graph != null && !(graph.nodes contains relation.endNode))
+      graph.nodes += relation.endNode
+
     self += relation
     this
   }

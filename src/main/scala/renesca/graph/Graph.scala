@@ -76,6 +76,7 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   // private constructor to force usage of Factory
 
   nodes.graph = this // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
+  relations.graph = this // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
 
   // graph must be consistent
   require(relations.forall { relation =>

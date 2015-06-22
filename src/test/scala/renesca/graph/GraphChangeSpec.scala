@@ -65,6 +65,23 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
+    "emit changes for nonexistent nodes when adding relation" in {
+      val graph = Graph.empty
+      val start = Node.local
+      val end = Node.local
+      val relation = Relation.local(start, "r", end)
+
+      graph.relations += relation
+
+      graph.nodes.localChanges must contain(exactly(
+        NodeAdd(start).asInstanceOf[GraphChange],
+        NodeAdd(end).asInstanceOf[GraphChange]
+      ))
+      graph.relations.localChanges must contain(exactly(
+        RelationAdd(relation).asInstanceOf[GraphChange]
+      ))
+    }
+
     "emit change when deleting node from nodes" in {
       val A = Node(1)
       val graph = Graph(List(A), Nil)
@@ -114,7 +131,7 @@ class GraphChangeSpec extends Specification with Mockito {
       node.labels += "boom"
       graph.nodes += node
 
-      graph.changes must contain(allOf(
+      graph.changes must contain(exactly(
         NodeAdd(node).asInstanceOf[GraphChange]
       )).inOrder
     }
@@ -127,7 +144,7 @@ class GraphChangeSpec extends Specification with Mockito {
       node.properties("ciao") = "mit V"
       node.labels += "boom"
 
-      graph.changes must contain(allOf(
+      graph.changes must contain(exactly(
         NodeAdd(node).asInstanceOf[GraphChange]
       )).inOrder
     }
@@ -141,7 +158,7 @@ class GraphChangeSpec extends Specification with Mockito {
       relation.properties("ciao") = "mit V"
       graph.relations += relation
 
-      graph.changes must contain(allOf(
+      graph.changes must contain(exactly(
         RelationAdd(relation).asInstanceOf[GraphChange]
       )).inOrder
     }
@@ -155,7 +172,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.relations += relation
       relation.properties("ciao") = "mit V"
 
-      graph.changes must contain(allOf(
+      graph.changes must contain(exactly(
         RelationAdd(relation).asInstanceOf[GraphChange]
       )).inOrder
     }

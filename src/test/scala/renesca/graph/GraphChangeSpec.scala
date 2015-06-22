@@ -56,7 +56,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
     "emit change when adding node to nodes" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
 
       graph.nodes += node
 
@@ -67,9 +67,9 @@ class GraphChangeSpec extends Specification with Mockito {
 
     "emit changes for nonexistent nodes when adding relation" in {
       val graph = Graph.empty
-      val start = Node.created
-      val end = Node.created
-      val relation = Relation.created(start, "r", end)
+      val start = Node.create
+      val end = Node.create
+      val relation = Relation.create(start, "r", end)
 
       graph.relations += relation
 
@@ -125,7 +125,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
     "emit change when adding local node with properties/labels" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
 
       node.properties("ciao") = "mit V"
       node.labels += "boom"
@@ -138,7 +138,7 @@ class GraphChangeSpec extends Specification with Mockito {
 
     "emit change when adding local node and then properties/labels" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
 
       graph.nodes += node
       node.properties("ciao") = "mit V"
@@ -153,7 +153,7 @@ class GraphChangeSpec extends Specification with Mockito {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
-      val relation = Relation.created(node1, "nagut", node2)
+      val relation = Relation.create(node1, "nagut", node2)
 
       relation.properties("ciao") = "mit V"
       graph.relations += relation
@@ -167,7 +167,7 @@ class GraphChangeSpec extends Specification with Mockito {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
-      val relation = Relation.created(node1, "nagut", node2)
+      val relation = Relation.create(node1, "nagut", node2)
 
       graph.relations += relation
       relation.properties("ciao") = "mit V"

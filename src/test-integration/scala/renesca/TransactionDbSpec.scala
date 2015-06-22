@@ -95,7 +95,7 @@ class TransactionDbSpec extends IntegrationSpecification {
 
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
-      val node = Node.created
+      val node = Node.create
       graph.nodes += node
       transaction.commit.persistChanges(graph)
 
@@ -109,7 +109,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       transaction.query("create (n),(m)")
       val graph = transaction.queryGraph("match (n) return n")
       val List(first, second) = graph.nodes.toList
-      val relation = Relation.created(first, "likes", second)
+      val relation = Relation.create(first, "likes", second)
       graph.relations += relation
       transaction.commit.persistChanges(graph)
 

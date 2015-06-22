@@ -18,8 +18,8 @@ object Node {
     new Node(id, nodeLabels, nodeProperties)
   }
 
-  def created: Node = created()
-  def created(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
+  def create: Node = create()
+  def create(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     val node = apply(Id.nextId())
     node.labels ++= labels
     node.properties ++= properties
@@ -57,6 +57,6 @@ class Node private[graph](
 
   override def hashCode: Int = id.hashCode
 
-  override def toString = s"(${ id }${labels.map(":" + _.name).mkString})"
+  override def toString = s"(${ id }${ labels.map(":" + _.name).mkString })"
 }
 

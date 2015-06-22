@@ -22,7 +22,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
   def testNodeSetProperty(data: PropertyValue) = {
     val graph = Graph.empty
-    val node = Node.created
+    val node = Node.create
 
     graph.nodes += node
 
@@ -34,11 +34,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
   def testRelationSetProperty(data: PropertyValue) = {
     val graph = Graph.empty
-    val start = Node.created
-    val end = Node.created
+    val start = Node.create
+    val end = Node.create
     graph.nodes += start
     graph.nodes += end
-    val relation = Relation.created(start, "EATS", end)
+    val relation = Relation.create(start, "EATS", end)
     graph.relations += relation
 
     relation.properties("key") = data
@@ -84,7 +84,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "remove property from node" in {
       val graph = Graph.empty
-      val node = Node.created(properties = Map("yes" -> 0))
+      val node = Node.create(properties = Map("yes" -> 0))
       graph.nodes += node
       db.persistChanges(graph)
 
@@ -96,7 +96,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set label on node" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
       graph.nodes += node
       db.persistChanges(graph)
 
@@ -108,7 +108,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "remove label from node" in {
       val graph = Graph.empty
-      val node = Node.created(Set("WINE"))
+      val node = Node.create(Set("WINE"))
       graph.nodes += node
       db.persistChanges(graph)
 
@@ -120,7 +120,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "delete node" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
       graph.nodes += node
       db.persistChanges(graph)
 
@@ -138,12 +138,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       // 4. whole graph should be (m) and (q)
 
       val graph = Graph.empty
-      val m = Node.created
-      val n = Node.created
-      val o = Node.created
+      val m = Node.create
+      val n = Node.create
+      val o = Node.create
       graph.nodes ++= List(m, n, o)
-      val rel1 = Relation.created(m, "INTERNAL", n)
-      val rel2 = Relation.created(n, "EXTERNAL", o)
+      val rel1 = Relation.create(m, "INTERNAL", n)
+      val rel2 = Relation.create(n, "EXTERNAL", o)
       graph.relations ++= List(rel1, rel2)
       db.persistChanges(graph)
 
@@ -175,11 +175,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "remove property from relation" in {
       val graph = Graph.empty
-      val start = Node.created
-      val end = Node.created
+      val start = Node.create
+      val end = Node.create
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.created(start, "EATS", end, Map("yes" -> 100))
+      val relation = Relation.create(start, "EATS", end, Map("yes" -> 100))
       graph.relations += relation
       db.persistChanges(graph)
 
@@ -191,11 +191,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "delete relation" in {
       val graph = Graph.empty
-      val start = Node.created
-      val end = Node.created
+      val start = Node.create
+      val end = Node.create
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.created(start, "EATS", end)
+      val relation = Relation.create(start, "EATS", end)
       graph.relations += relation
       db.persistChanges(graph)
 
@@ -209,7 +209,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add node" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
       graph.nodes += node
       node.id.value must beLessThan(0L)
       db.persistChanges(graph)
@@ -222,7 +222,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add properties and labels after NodeAdd" in {
       val graph = Graph.empty
-      val node = Node.created
+      val node = Node.create
       graph.nodes += node
       node.properties += ("test" -> 5)
       node.labels ++= Set("foo", "bar")
@@ -234,7 +234,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set properties and labels in NodeAdd" in {
       val graph = Graph.empty
-      val node = Node.created(Set("foo", "bar"), Map("test" -> 5))
+      val node = Node.create(Set("foo", "bar"), Map("test" -> 5))
       graph.nodes += node
       db.persistChanges(graph)
 
@@ -244,11 +244,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add relation" in {
       val graph = Graph.empty
-      val start = Node.created(Set("I"))
-      val end = Node.created(Set("cheezburger"))
+      val start = Node.create(Set("I"))
+      val end = Node.create(Set("cheezburger"))
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.created(start, "can haz", end)
+      val relation = Relation.create(start, "can haz", end)
       graph.relations += relation
       relation.id.value must beLessThan(0L)
       db.persistChanges(graph)
@@ -262,11 +262,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "add properties after RelationAdd" in {
       val graph = Graph.empty
-      val start = Node.created(Set("I"))
-      val end = Node.created(Set("cheezburger"))
+      val start = Node.create(Set("I"))
+      val end = Node.create(Set("cheezburger"))
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.created(start, "can haz", end)
+      val relation = Relation.create(start, "can haz", end)
       graph.relations += relation
       relation.properties += ("one" -> "yes")
       db.persistChanges(graph)
@@ -276,11 +276,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "set properties in RelationAdd" in {
       val graph = Graph.empty
-      val start = Node.created
-      val end = Node.created
+      val start = Node.create
+      val end = Node.create
       graph.nodes += start
       graph.nodes += end
-      val relation = Relation.created(start, "can haz", end, Map("one" -> "yes"))
+      val relation = Relation.create(start, "can haz", end, Map("one" -> "yes"))
       graph.relations += relation
       db.persistChanges(graph)
 

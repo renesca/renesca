@@ -18,8 +18,8 @@ object Node {
     new Node(id, nodeLabels, nodeProperties)
   }
 
-  def local: Node = local()
-  def local(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
+  def created: Node = created()
+  def created(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     val node = apply(Id.nextId())
     node.labels ++= labels
     node.properties ++= properties

@@ -13,9 +13,7 @@ case class Label(name: String) extends NonBacktickName
 
 object Node {
   private[renesca] def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
-    val nodeLabels = new NodeLabels(id, mutable.HashSet.empty[Label] ++ labels)
-    val nodeProperties = new Properties(id, NodeSetProperty, NodeRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
-    new Node(id, nodeLabels, nodeProperties)
+    new Node(id, labels, properties)
   }
 
   def create: Node = create()
@@ -30,9 +28,12 @@ object Node {
 
 class Node private[graph](
                            val id: Id, // positive: Neo4j id, negative: local temporary id for nodes not existing in database yet
-                           val labels: NodeLabels,
-                           val properties: Properties
-                           ) {
+                           initialLabels: Traversable[Label] = Nil,
+                           initialProperties: PropertyMap = Map.empty
+                           ) extends Item {
+
+  val labels = new NodeLabels(this, mutable.HashSet(initialLabels.toSeq: _*))
+  val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))
 
   def changes: Seq[GraphChange] = labels.localChanges ++ properties.localChanges
 

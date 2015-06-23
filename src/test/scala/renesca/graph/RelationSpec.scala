@@ -12,10 +12,9 @@ class RelationSpec extends Specification with Mockito {
 
   "Relation" should {
     "pass on relation id to properties-Map" in {
-      val relationId = 5
-      val relation = Relation(relationId, mock[Node], mock[Node], "r")
+      val relation = Relation(5, mock[Node], mock[Node], "r")
 
-      relation.properties.id mustEqual Id(relationId)
+      relation.properties.item mustEqual relation
     }
 
     trait ExampleGraph extends Scope {

@@ -21,12 +21,11 @@ class NodeSpec extends Specification with Mockito {
       A.properties must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
     }
 
-    "pass on node id to labels-Set and properties-Map" in {
-      val nodeId = 5
-      val node = Node(nodeId)
+    "pass on node to labels-Set and properties-Map" in {
+      val node = Node(5)
 
-      node.labels.id mustEqual nodeId
-      node.properties.id mustEqual nodeId
+      node.labels.node mustEqual node
+      node.properties.item mustEqual node
     }
 
     "be equal to other nodes with same id" in {

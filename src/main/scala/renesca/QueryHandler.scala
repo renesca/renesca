@@ -11,9 +11,11 @@ package renesca
 //  persist     - save a modified graph to the database
 
 import renesca.graph._
-import renesca.parameter.{ParameterValue, ParameterMap}
+import renesca.parameter.{PropertyValue, PropertyKey, ParameterValue, ParameterMap}
 import renesca.parameter.implicits._
 import renesca.table.Table
+
+import scala.collection.mutable
 
 object Query {
   implicit def stringToQuery(statement: String): Query = Query(statement)
@@ -33,27 +35,33 @@ trait QueryInterface {
 }
 
 object QueryHandler {
-  private val graphContentChangeToQuery: GraphContentChange => Query = {
-    case NodeSetProperty(nodeId, key, value)         => Query("match (n) where id(n) = {id} set n += {keyValue}", Map("id" -> nodeId, "keyValue" -> Map(key -> value)))
-    case NodeRemoveProperty(nodeId, key)             => Query(s"match (n) where id(n) = {id} remove n.`$key`", Map("id" -> nodeId))
-    case NodeSetLabel(nodeId, label)                 => Query(s"match (n) where id(n) = {id} set n:`$label`", Map("id" -> nodeId))
-    case NodeRemoveLabel(nodeId, label)              => Query(s"match (n) where id(n) = {id} remove n:`$label`", Map("id" -> nodeId))
-    case NodeDelete(nodeId)                          => Query("match (n) where id(n) = {id} optional match (n)-[r]-() delete r,n", Map("id" -> nodeId))
-    case RelationSetProperty(relationId, key, value) => Query("match ()-[r]->() where id(r) = {id} set r += {keyValue}", Map("id" -> relationId, "keyValue" -> Map(key -> value)))
-    case RelationRemoveProperty(relationId, key)     => Query(s"match ()-[r]->() where id(r) = {id} remove r.`$key`", Map("id" -> relationId))
-    case RelationDelete(relationId)                  => Query("match ()-[r]->() where id(r) = {id} delete r", Map("id" -> relationId))
+  private def createAndMergeProperties(properties: Properties, uniqueProperties: Seq[PropertyKey]) = {
+    val createProperties = properties.filterKeys(!uniqueProperties.contains(_))
+    val mergeProperties = properties.filterKeys(uniqueProperties.contains(_))
+    val parameterMap = mergeProperties.toMap.map { case (k, v) => (PropertyKey(s"_$k"), v) } ++ Map("createProperties" -> createProperties.toMap)
+    val mergePropertiesMatcher = mergeProperties.map { case (k, v) => s"$k: {_$k}" }.mkString(",")
+    (mergePropertiesMatcher, parameterMap)
   }
-
   private val graphStructureChangeToEffect: GraphStructureChange => QueryHandler => Graph => Unit = {
-    case NodeAdd(node) => db => graph =>
+    case AddItem(node: Node) => db => graph =>
       val labels = node.labels.map(label => s":`$label`").mkString
-      val dbNode = db.queryGraph(Query(s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap))).nodes.head
+      val (queryStr, parameters) = node.properties.unique.map { properties =>
+        val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(node.properties, properties)
+        (s"merge (n $labels {$mergePropertiesMatcher}) on create set n += {createProperties} return n", parameterMap)
+      }.getOrElse((s"create (n $labels {properties}) return n", Map("properties" -> node.properties.toMap)))
+
+      val dbNode = db.queryGraph(Query(queryStr, parameters)).nodes.head
+      node.properties ++= dbNode.properties
       node.id.value = dbNode.id.value
 
-    case RelationAdd(relation) => db => graph =>
-      val dbRelation = db.queryGraph(Query(
-        s"match start,end where id(start) = {startId} and id(end) = {endId} create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r",
-        Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id, "properties" -> relation.properties.toMap))).relations.head
+    case AddItem(relation: Relation) => db => graph =>
+      val (creatorStr, parameters) = relation.properties.unique.map { properties =>
+        val (mergePropertiesMatcher, parameterMap) = createAndMergeProperties(relation.properties, properties)
+        (s"merge (start)-[r :`${ relation.relationType }` {$mergePropertiesMatcher}]->(end) on create set r += {createProperties} return r", parameterMap)
+      }.getOrElse((s"create (start)-[r :`${ relation.relationType }` {properties}]->(end) return r", Map("properties" -> relation.properties.toMap)))
+
+      val dbRelation = db.queryGraph(Query(s"match (start),(end) where id(start) = {startId} and id(end) = {endId} $creatorStr", parameters ++ Map("startId" -> relation.startNode.id, "endId" -> relation.endNode.id))).relations.head
+      relation.properties ++= dbRelation.properties
       relation.id.value = dbRelation.id.value
   }
 }
@@ -78,6 +86,7 @@ trait QueryHandler extends QueryInterface {
 
   def query(queries: Query*) { executeQueries(queries, Nil) }
 
+  private def randomVariable = "V" + java.util.UUID.randomUUID.toString.replace("-", "")
 
   def persistChanges(graph: Graph) {
     //TODO: optimizations
@@ -90,10 +99,64 @@ trait QueryHandler extends QueryInterface {
     }
 
     for(changeSet <- changeSets) {
-      // fire one query for all content changes (properties/labels)
+      // fire queries for all content changes (properties/labels)
       val contentChanges = changeSet collect { case c: GraphContentChange => c }
-      val contentChangeQueries: Seq[Query] = contentChanges.map(graphContentChangeToQuery)
-      query(contentChangeQueries: _*)
+      val queries = contentChanges.groupBy(_.item).map {
+        case (item, changes) =>
+          val propertyAdditions: mutable.Map[PropertyKey, ParameterValue] = mutable.Map.empty
+          val propertyRemovals: mutable.Set[PropertyKey] = mutable.Set.empty
+          val labelAdditions: mutable.Set[Label] = mutable.Set.empty
+          val labelRemovals: mutable.Set[Label] = mutable.Set.empty
+          val deleteOpt = changes.find {
+            case SetProperty(_, key, value) =>
+              propertyRemovals -= key
+              propertyAdditions += key -> value
+              false
+            case RemoveProperty(_, key)     =>
+              propertyRemovals += key
+              propertyAdditions -= key
+              false
+            case SetLabel(_, label)         =>
+              labelRemovals -= label
+              labelAdditions += label
+              false
+            case RemoveLabel(_, label)      =>
+              labelRemovals += label
+              labelAdditions -= label
+              false
+            case DeleteItem(_)              =>
+              true
+          }
+
+          val isRelation = item match {
+            case _: Node     => false
+            case _: Relation => true
+          }
+
+          val variable = randomVariable
+          val matcher = if (isRelation) s"match ()-[$variable]->()" else s"match ($variable)"
+          val setters = deleteOpt.map { _ =>
+            if(isRelation) {
+              s"delete $variable"
+            } else {
+              val optionalVariable = randomVariable
+              s"optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable"
+            }
+          }.getOrElse {
+            val propertyRemove = propertyRemovals.map(r => s"remove $variable .`$r`").mkString(" ")
+            val labelAdd = labelAdditions.map(a => s"set $variable :`$a`").mkString(" ")
+            val labelRemove = labelRemovals.map(r => s"remove $variable :`$r`").mkString(" ")
+            s"set $variable += {propertyAdditions} $propertyRemove $labelAdd $labelRemove"
+          }
+          println(s"$matcher $setters")
+
+          Query(
+            s"$matcher where id($variable) = {itemId} $setters",
+            Map("itemId" -> item.id, "propertyAdditions" -> propertyAdditions.toMap)
+          )
+      }
+
+      queryGraphs(queries.toSeq: _*)
 
       // fire queries for each structural change (add nodes/relations, ...)
       val structuralChanges = changeSet collect { case c: GraphStructureChange => c }
@@ -129,7 +192,9 @@ trait QueryHandler extends QueryInterface {
     jsonResponse.errors match {
       case Nil    => None
       case errors =>
-        val message = errors.map { case json.Error(code, msg) => s"$code\n$msg" }.mkString("\n", "\n\n", "\n")
+        val message = errors.map {
+          case json.Error(code, msg) => s"$code\n$msg"
+        }.mkString("\n", "\n\n", "\n")
         Some(new RuntimeException(message))
     }
   }

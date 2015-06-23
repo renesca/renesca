@@ -11,7 +11,7 @@ class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutab
 
   override def +=(relation: Relation) = {
     if (relation.id.isLocal)
-      localChanges += RelationAdd(relation)
+      localChanges += AddItem(relation)
 
     if(graph != null && !(graph.nodes contains relation.startNode))
       graph.nodes += relation.startNode
@@ -23,7 +23,7 @@ class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutab
   }
 
   override def -=(relation: Relation) = {
-    localChanges += RelationDelete(relation.id)
+    localChanges += DeleteItem(relation)
     self -= relation
     this
   }

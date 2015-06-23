@@ -14,8 +14,7 @@ case class RelationType(name: String) extends NonBacktickName
 
 object Relation {
   private[renesca] def apply(id: Id, start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
-    val relationProperties = new Properties(id, RelationSetProperty, RelationRemoveProperty, mutable.HashMap.empty[PropertyKey, PropertyValue] ++ properties)
-    new Relation(id, start, end, relationType, relationProperties)
+    new Relation(id, start, end, relationType, properties)
   }
   def create(start: Node, relationType: RelationType, end: Node, properties: PropertyMap = Map.empty) = {
     val relation = apply(Id.nextId(), start, end, relationType)
@@ -29,9 +28,11 @@ class Relation private[Relation](
                                   val startNode: Node,
                                   val endNode: Node,
                                   val relationType: RelationType,
-                                  val properties: Properties
-                                  ) {
+                                  initialProperties: PropertyMap = Map.empty
+                                  ) extends Item {
   // private constructor to force usage of factory
+
+  val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))
 
   def changes: Seq[GraphChange] = properties.localChanges
 

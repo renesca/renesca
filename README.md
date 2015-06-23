@@ -8,7 +8,7 @@ Also have a look at [renesca-magic](https://github.com/renesca/renesca-magic), w
 
 ## Concepts
 ### Work with graphs, not lists
-We found that many libraries try to interact with graph databases as if they were relational databases. This means working with lists of query results. As Neo4J gives us full blown graphs as query results, we take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.
+Earlier we tried to interact with graph databases as if they were relational databases. This meant working with lists of query results. As Neo4J gives us full blown graphs as query results, we now take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.
 
 ### Track changes, persist later
 When modifying, creating and deleting nodes and connecting them with relationships it would be very expensive to submit a REST request for each change. In renesca we track changes and apply all of them at once when persisting the whole graph. This takes fewer REST requests and leaves room for optimization.
@@ -30,7 +30,7 @@ libraryDependencies += "com.github.renesca" %% "renesca" % "0.3.0"
 ```
 
 ## Feedback
-Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, Feature Requests. If you are stuck with renesca for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together.
+Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, Feature Requests, Criticism, ... . If you are stuck with renesca for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together.
 
 ## Usage Example
 This example is also available as sbt project: [renesca/renesca-example](https://github.com/renesca/renesca-example)
@@ -146,6 +146,6 @@ object Main extends App {
 ```
 
 ## License
-Licensed under the [Apache License, Version 2.0][Apache]
+renesca is free software released under the [Apache License, Version 2.0][Apache]
 
 [Apache]: http://www.apache.org/licenses/LICENSE-2.0

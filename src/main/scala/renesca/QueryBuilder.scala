@@ -240,6 +240,7 @@ class QueryBuilder {
 
       QueryConfig(relation, query, (graph: Graph, table: Table) => {
         graph.relations.headOption.exists(dbRelation => {
+          relation.properties.clear()
           relation.properties ++= dbRelation.properties
           relation.origin = dbRelation.origin
           true
@@ -254,6 +255,8 @@ class QueryBuilder {
 
       QueryConfig(node, query, (graph: Graph, table: Table) => {
         graph.nodes.headOption.exists(dbNode => {
+          node.properties.clear()
+          node.labels.clear()
           node.properties ++= dbNode.properties
           node.labels ++= dbNode.labels
           node.origin = dbNode.origin
@@ -337,9 +340,13 @@ class QueryBuilder {
     val contentChanges = changes.collect { case c: GraphContentChange => c }
 
     // gather path changes
-    // TODO: try to split paths when they overlap
     val addPaths = changes.collect { case AddPath(p) => p }
-    val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
+    val (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths) = {
+      val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
+      val (addLocalProducePaths, addLocalRelationPaths) = addLocalPaths.partition(p => p.nodes.nonEmpty)
+
+      (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths)
+    }
 
     // all add-relation and add-node changes that are already included in paths need to be ignored,
     // as they are handled when adding the paths itself
@@ -347,7 +354,7 @@ class QueryBuilder {
     val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
     val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
 
-    checkChanges(deleteItems, addPaths, addLocalPaths, addRelations) match {
+    checkChanges(deleteItems, addPaths, addLocalProducePaths, addRelations) match {
       case Some(err) => return Left(err)
       case None           =>
     }
@@ -367,13 +374,20 @@ class QueryBuilder {
         addNonLocalRelationQueries()
     }
 
-    val addLocalPathQueries = addPathsToQueries(addLocalPaths) _
-    val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
+    val producePathChanges = addPathsToQueries(addLocalProducePaths) _
+
+    val relationChanges = {
+      val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
+      val addLocalRelationPathQueries = addPathsToQueries(addLocalRelationPaths) _
+
+      () => addLocalRelationQueries() ++
+        addLocalRelationPathQueries()
+    }
 
     Right(Seq(
       independentChanges,
-      addLocalPathQueries,
-      addLocalRelationQueries
+      producePathChanges,
+      relationChanges
     ))
   }
 

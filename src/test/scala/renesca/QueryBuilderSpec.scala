@@ -31,14 +31,19 @@ class QueryBuilderSpec extends Specification with Mockito {
 
   def exq(response: Either[String, Seq[() => Seq[QueryConfig]]]): Seq[Seq[Query]] = {
     var counter = 0
+    def newId = {
+      counter += 1
+      Id(counter)
+    }
     response.right.get.map(getter => {
       val configs = getter()
       configs.map(config => {
         config.item match {
           case i: Item =>
-            counter += 1
-            i.origin = Id(counter)
-          case _       =>
+            i.origin = newId
+          case p: Path =>
+            p.nodes.foreach(_.origin = newId)
+            p.relations.foreach(_.origin = newId)
         }
         q(config.query.statement, config.query.parameters)
       })
@@ -546,16 +551,18 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Paths cannot resolve the same relations")
       }
 
-      "fail on overlapping paths" in {
+      "fail on overlapping produce paths" in {
         val a = Node.matches
         val b = Node.create
         val c = Node.merge
         val r1 = Relation.create(a, "kicks", b)
         val r2 = Relation.create(b, "from", c)
         val Right(p1) = Path(r1, r2)
-        val d = Node.matches
+        val d = Node.create
+        val e = Node.create
         val r3 = Relation.create(b, "kicks", d)
-        val Right(p2) = Path(r3)
+        val r4 = Relation.create(d, "from", e)
+        val Right(p2) = Path(r3, r4)
 
         val changes = Seq(
           AddPath(p1),
@@ -565,6 +572,49 @@ class QueryBuilderSpec extends Specification with Mockito {
         val result = builder.generateQueries(changes)
 
         result mustEqual Left("Overlapping paths with local nodes are currently not supported")
+      }
+
+      "overlapping produce and relation paths" in {
+        val a = Node.matches
+        val b = Node.create
+        val c = Node.create
+        val r1 = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "from", c)
+        val Right(p1) = Path(r1, r2)
+        val d = Node.create
+        val r3 = Relation.create(b, "kicks", c)
+        val Right(p2) = Path(r3)
+
+        val changes = Seq(
+          AddItem(a),
+          AddItem(b),
+          AddItem(c),
+          AddItem(r1),
+          AddItem(r2),
+          AddItem(d),
+          AddItem(r3),
+          AddPath(p1),
+          AddPath(p2)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+          Seq(
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
+            q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties")),
+            q("create (V2 {V2_properties}) return V2", parameterMap("V2_properties"))
+          ),
+          Seq(
+            q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} create (V3)-[V6 :`kicks` {V6_properties}]->(V5 {V5_properties}) -[V7 :`from` {V7_properties}]->(V4) return {id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5, labels: labels(V5)} as V5,{id: id(V6), properties: V6} as V6,{id: id(V7), properties: V7} as V7",
+              Map("V6_properties" -> parameterMap, "V4_nodeId" -> 2, "V5_properties" -> parameterMap, "V7_properties" -> parameterMap, "V3_nodeId" -> 1))
+          ),
+          Seq(
+            q("match (V8) where id(V8) = {V8_nodeId} match (V9) where id(V9) = {V9_nodeId} create (V8)-[V10 :`kicks` {V10_properties}]->(V9) return {id: id(V8), properties: V8, labels: labels(V8)} as V8,{id: id(V9), properties: V9, labels: labels(V9)} as V9,{id: id(V10), properties: V10} as V10",
+              Map("V8_nodeId" -> 4, "V9_nodeId" -> 2, "V10_properties" -> parameterMap)
+            )
+          )
+        )
       }
 
       "allow same start/end for paths" in {
@@ -600,7 +650,9 @@ class QueryBuilderSpec extends Specification with Mockito {
           ),
           Seq(
             q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} create (V3)-[V6 :`kicks` {V6_properties}]->(V5 {V5_properties}) -[V7 :`from` {V7_properties}]->(V4) return {id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5, labels: labels(V5)} as V5,{id: id(V6), properties: V6} as V6,{id: id(V7), properties: V7} as V7",
-              Map("V6_properties" -> parameterMap, "V4_nodeId" -> 2, "V5_properties" -> parameterMap, "V7_properties" -> parameterMap, "V3_nodeId" -> 1)),
+              Map("V6_properties" -> parameterMap, "V4_nodeId" -> 2, "V5_properties" -> parameterMap, "V7_properties" -> parameterMap, "V3_nodeId" -> 1))
+          ),
+          Seq(
             q("match (V8) where id(V8) = {V8_nodeId} match (V9) where id(V9) = {V9_nodeId} create (V8)-[V10 :`kicks` {V10_properties}]->(V9) return {id: id(V8), properties: V8, labels: labels(V8)} as V8,{id: id(V9), properties: V9, labels: labels(V9)} as V9,{id: id(V10), properties: V10} as V10",
               Map("V8_nodeId" -> 1, "V9_nodeId" -> 2, "V10_properties" -> parameterMap)
             )

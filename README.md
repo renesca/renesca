@@ -26,7 +26,7 @@ There is no further database traversing from a subgraph because there is no need
 To use renesca in your sbt project, add this dependency to your ```build.sbt```:
 
 ```scala
-libraryDependencies += "com.github.renesca" %% "renesca" % "0.2.2"
+libraryDependencies += "com.github.renesca" %% "renesca" % "0.3.0"
 ```
 
 ## Usage Example

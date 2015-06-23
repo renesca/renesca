@@ -212,7 +212,13 @@ class DbService extends QueryHandler {
 
   def transaction(code: Transaction => Any): Unit = {
     val tx = newTransaction
-    code(tx)
+    try {
+      code(tx)
+    } catch {
+      case e: Exception =>
+        tx.rollback()
+        throw e
+    }
 
     // if there was a request and transacion is not done yet
     if(tx.id.isDefined && tx.isValid) tx.commit()

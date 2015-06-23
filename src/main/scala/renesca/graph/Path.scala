@@ -16,11 +16,11 @@ object Path {
     if (!sameOrigin)
       return Left("Relations have inconsistent origin")
 
-    val distinctNodes = nodes.distinct
     // TODO: match nodes could be allowed in any path?
-    val pathNodes = distinctNodes.filter(_.origin.kind == origin.kind)
+    // in general: match nodes could be handled like non-local nodes...
+    val pathNodes = nodes.drop(1).dropRight(1).distinct.filter(_.origin.kind == origin.kind)
 
-    Right(new Path(distinctNodes, pathNodes, relations, origin.asInstanceOf[LocalOrigin]))
+    Right(new Path(nodes.distinct, pathNodes, relations, origin.asInstanceOf[LocalOrigin]))
   }
 }
 

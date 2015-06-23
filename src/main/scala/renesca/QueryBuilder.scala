@@ -293,6 +293,38 @@ class QueryBuilder {
     }.reverse
   }
 
+  private def checkChanges(deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
+    // TODO: more efficient!
+    // check whether paths overlap
+    val pathNodes = addPaths.flatMap(_.nodes)
+    if(pathNodes.distinct.size != pathNodes.size) {
+      return Some("Paths cannot resolve the same nodes")
+    }
+
+    val pathRelations = addPaths.flatMap(_.relations)
+    if(pathRelations.distinct.size != pathRelations.size) {
+      return Some("Paths cannot resolve the same relations")
+    }
+
+    // check whether local paths depend on each other
+    // currenlty paths cannot contain nodes which are created by another path
+    val dependentPath = addLocalPaths.find(p => p.allNodes.diff(p.nodes).intersect(pathNodes).nonEmpty)
+    val dependentPathNodes = addLocalPaths.flatMap(p => p.allNodes.filter(_.origin.isLocal))
+    if(dependentPath.isDefined) {
+      return Some("Overlapping paths with local nodes are currently not supported")
+    }
+
+    // check whether nodes in a new relation or items in a new path should also be deleted, this is not possible!
+    if(deleteItems.intersect(addPaths.flatMap(p => p.relations ++ p.allNodes)).nonEmpty) {
+      return Some("Cannot delete item which is contained in a path: " + deleteItems.mkString(","))
+    }
+    if(deleteItems.intersect(addRelations.flatMap(r => Seq(r.startNode, r.endNode))).nonEmpty) {
+      return Some("Cannot delete start- or endnode of a new relation: " + deleteItems.mkString(","))
+    }
+
+    None
+  }
+
   def generateQueries(graphChanges: Seq[GraphChange]): Either[String, Seq[() => Seq[QueryConfig]]] = {
     // filter graph changes
     val changes = filterGraphChanges(graphChanges)
@@ -305,13 +337,9 @@ class QueryBuilder {
     val contentChanges = changes.collect { case c: GraphContentChange => c }
 
     // gather path changes
+    // TODO: try to split paths when they overlap
     val addPaths = changes.collect { case AddPath(p) => p }
-    val (addLocalPaths, addNonLocalPaths) = addPaths.partition(_.nodes.exists(_.origin.isLocal))
-    val addLocalPathChunks = Seq(addLocalPaths)
-    val allLocalPathNodes = addLocalPaths.flatMap(_.allNodes)
-    if(allLocalPathNodes.distinct.size != allLocalPathNodes.size) {
-      return Left("Overlapping paths with local nodes are currently not supported")
-    }
+    val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
 
     // all add-relation and add-node changes that are already included in paths need to be ignored,
     // as they are handled when adding the paths itself
@@ -319,12 +347,9 @@ class QueryBuilder {
     val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
     val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
 
-    // check whether nodes in a new relation or items in a new path should also be deleted, this is not possible!
-    if(deleteItems.intersect(addPaths.flatMap(p => p.relations ++ p.allNodes)).nonEmpty) {
-      return Left("Cannot delete item which is contained in a path: " + deleteItems.mkString(","))
-    }
-    if(deleteItems.intersect(addRelations.flatMap(r => Seq(r.startNode, r.endNode))).nonEmpty) {
-      return Left("Cannot delete start- or endnode of a new relation: " + deleteItems.mkString(","))
+    checkChanges(deleteItems, addPaths, addLocalPaths, addRelations) match {
+      case Some(err) => return Left(err)
+      case None           =>
     }
 
     // generate queries
@@ -342,14 +367,14 @@ class QueryBuilder {
         addNonLocalRelationQueries()
     }
 
-    val addLocalPathQueries = addLocalPathChunks.map(addPathsToQueries(_) _)
+    val addLocalPathQueries = addPathsToQueries(addLocalPaths) _
     val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
 
-    Right(
-      Seq(independentChanges) ++
-      addLocalPathQueries ++
-      Seq(addLocalRelationQueries)
-    )
+    Right(Seq(
+      independentChanges,
+      addLocalPathQueries,
+      addLocalRelationQueries
+    ))
   }
 
   def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Boolean = {

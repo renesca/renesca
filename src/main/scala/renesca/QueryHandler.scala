@@ -29,6 +29,7 @@ trait QueryInterface {
   def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
   def query(queries: Query*): Unit
   def persistChanges(graph: Graph): Option[String]
+  def persistChanges(schemaGraph: schema.Graph): Option[String] = persistChanges(schemaGraph.graph)
 }
 
 trait QueryHandler extends QueryInterface {

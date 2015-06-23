@@ -11,10 +11,10 @@ Also have a look at [renesca-magic](https://github.com/renesca/renesca-magic), w
 We found that many libraries try to interact with graph databases as if they were relational databases. This means working with lists of query results. As Neo4J gives us full blown graphs as query results, we take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.
 
 ### Track changes, persist later
-when modifying, creating and deleting nodes and connecting them with relationships it would be very expensive to submit a REST request on every change. In renesca we track changes and apply all of them at once when persisting the whole graph. This takes fewer REST requests and leaves room for optimization.
+When modifying, creating and deleting nodes and connecting them with relationships it would be very expensive to submit a REST request for each change. In renesca we track changes and apply all of them at once when persisting the whole graph. This takes fewer REST requests and leaves room for optimization.
 
 ### No lazy loading
-There is no further database traversing from a subgraph because there is no need to do so. When working with subgraphs retrieved from a query, you know which data you need in the future and can fetch that with the query. This approach saves a lot of unnecessary requests.
+There is no further database traversing from a subgraph because there is no need to do so. When working with subgraphs retrieved from a query, you know which data you need in the future and can fetch that with the query before traversing. This approach saves a lot of unnecessary requests.
 
 ## Feature summary
 - Interpret query results as graphs or tables

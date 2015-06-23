@@ -351,6 +351,28 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
+      "create with non local nodes" in {
+        val a = Node(1)
+        val b = Node(2)
+        val c = Node.create
+        val r = Relation.create(a, "kicks", b, Map("a" -> 1))
+
+        val changes = Seq(
+          AddItem(c),
+          AddItem(r)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+          Seq(
+            q("create (V0 {V0_properties}) return V0", parameterMap("V0_properties")),
+            q("match (V1) where id(V1) = {V1_nodeId} match (V2) where id(V2) = {V2_nodeId} create (V1)-[V3 :`kicks` {V3_properties}]->(V2) return V3",
+              Map("V1_nodeId" -> 1, "V3_properties" -> Map("a" -> 1), "V2_nodeId" -> 2))
+          )
+        )
+      }
+
       "merge" in {
         val a = Node.matches
         val b = Node.merge
@@ -509,7 +531,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         val result = builder.generateQueries(changes)
 
-        result mustEqual Left("Overlapping paths are currently not supported")
+        result mustEqual Left("Overlapping paths with local nodes are currently not supported")
       }
 
       "fail on node deletion after path" in {
@@ -658,6 +680,33 @@ class QueryBuilderSpec extends Specification with Mockito {
           Seq(
             q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} create (V2)-[V5 :`kicks` {V5_properties}]->(V4 {V4_properties}) -[V6 :`from` {V6_properties}]->(V3) return {id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5} as V5,{id: id(V6), properties: V6} as V6",
               Map("V6_properties" -> parameterMap, "V5_properties" -> parameterMap, "V3_nodeId" -> 2, "V2_nodeId" -> 1, "V4_properties" -> parameterMap))
+          )
+        )
+      }
+
+      "create with non local nodes" in {
+        val a = Node(1)
+        val b = Node(2)
+        val c = Node(3)
+        val d = Node.create
+        val r1 = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "from", c)
+        val Right(p) = Path(r1, r2)
+
+        val changes = Seq(
+          AddItem(d),
+          AddItem(r1),
+          AddItem(r2),
+          AddPath(p)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+          Seq(
+            q("create (V0 {V0_properties}) return V0", parameterMap("V0_properties")),
+            q("match (V1) where id(V1) = {V1_nodeId} match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} create (V1)-[V4 :`kicks` {V4_properties}]->(V2) -[V5 :`from` {V5_properties}]->(V3) return {id: id(V1), properties: V1, labels: labels(V1)} as V1,{id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4} as V4,{id: id(V5), properties: V5} as V5",
+              Map("V5_properties" -> parameterMap, "V4_properties" -> parameterMap, "V1_nodeId" -> 1, "V2_nodeId" -> 2, "V3_nodeId" -> 3))
           )
         )
       }

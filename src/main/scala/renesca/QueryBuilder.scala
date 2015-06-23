@@ -306,14 +306,17 @@ class QueryBuilder {
 
     // gather path changes
     val addPaths = changes.collect { case AddPath(p) => p }
-    val allPathNodes = addPaths.flatMap(_.allNodes)
-    if(allPathNodes.distinct.size != allPathNodes.size) {
-      return Left("Overlapping paths are currently not supported")
+    val (addLocalPaths, addNonLocalPaths) = addPaths.partition(_.nodes.exists(_.origin.isLocal))
+    val addLocalPathChunks = Seq(addLocalPaths)
+    val allLocalPathNodes = addLocalPaths.flatMap(_.allNodes)
+    if(allLocalPathNodes.distinct.size != allLocalPathNodes.size) {
+      return Left("Overlapping paths with local nodes are currently not supported")
     }
 
     // all add-relation and add-node changes that are already included in paths need to be ignored,
     // as they are handled when adding the paths itself
     val addRelations = changes.collect { case AddItem(r: Relation) => r }.filterNot(addPaths.flatMap(_.relations).toSet)
+    val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
     val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
 
     // check whether nodes in a new relation or items in a new path should also be deleted, this is not possible!
@@ -325,17 +328,28 @@ class QueryBuilder {
     }
 
     // generate queries
-    val contentChangeQueries = contentChangesToQueries(contentChanges) _
-    val deleteQueries = deletionToQueries(nonLocalDeleteItems) _
-    val addNodeQueries = addNodesToQueries(addNodes) _
-    val addPathQueries = addPathsToQueries(addPaths) _
-    val addRelationQueries = addRelationsToQueries(addRelations) _
+    val independentChanges = {
+      val contentChangeQueries = contentChangesToQueries(contentChanges) _
+      val deleteQueries = deletionToQueries(nonLocalDeleteItems) _
+      val addNodeQueries = addNodesToQueries(addNodes) _
+      val addNonLocalPathQueries = addPathsToQueries(addNonLocalPaths) _
+      val addNonLocalRelationQueries = addRelationsToQueries(addNonLocalRelations) _
 
-    Right(Seq(
-      () => contentChangeQueries() ++ deleteQueries() ++ addNodeQueries(),
-      addPathQueries,
-      addRelationQueries
-    ))
+      () => contentChangeQueries() ++
+        deleteQueries() ++
+        addNodeQueries() ++
+        addNonLocalPathQueries() ++
+        addNonLocalRelationQueries()
+    }
+
+    val addLocalPathQueries = addLocalPathChunks.map(addPathsToQueries(_) _)
+    val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
+
+    Right(
+      Seq(independentChanges) ++
+      addLocalPathQueries ++
+      Seq(addLocalRelationQueries)
+    )
   }
 
   def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Boolean = {

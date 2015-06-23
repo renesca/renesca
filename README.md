@@ -1,11 +1,22 @@
 # renesca
-
-Query and modify subgraphs from a Neo4j REST Database with Scala.
-
 [![Build Status](https://travis-ci.org/renesca/renesca.svg?branch=master)](https://travis-ci.org/renesca/renesca)
 [![Coverage Status](https://coveralls.io/repos/renesca/renesca/badge.svg?branch=master)](https://coveralls.io/r/renesca/renesca?branch=master)
 
-## Features
+Query and modify subgraphs from a Neo4j REST database with Scala.
+
+Also have a look at [renesca-magic](https://github.com/renesca/renesca-magic), which generates code for typesafe graph database schemas based on renesca.
+
+## Concepts
+### Work with graphs, not lists
+We found that many libraries try to interact with graph databases as if they were relational databases. This means working with lists of query results. As Neo4J gives us full blown graphs as query results, we take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.
+
+### Track changes, persist later
+when modifying, creating and deleting nodes and connecting them with relationships it would be very expensive to submit a REST request on every change. In renesca we track changes and apply all of them at once when persisting the whole graph. This takes fewer REST requests and leaves room for optimization.
+
+### No lazy loading
+There is no further database traversing from a subgraph because there is no need to do so. When working with subgraphs retrieved from a query, you know which data you need in the future and can fetch that with the query. This approach saves a lot of unnecessary requests.
+
+## Feature summary
 - Interpret query results as graphs or tables
 - Modify result graphs and persist the changes back to the database
 - Transactions

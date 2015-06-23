@@ -23,6 +23,8 @@ class QueryBuilder {
     (literalMapMatcher, remainingProperties, parameterMap)
   }
 
+  //TODO should limit number of matches for merge and match to 1!
+  // match/merge ... with variable limit 1 ...
   private def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
@@ -37,9 +39,11 @@ class QueryBuilder {
         ("merge", s"($variable $labels $mergeLiteralMap)", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
           parameterMap ++ Map(s"${ variable }_onCreateProperties" -> remainingProperties.toMap, s"${ variable }_onMatchProperties" -> onMatchProperties.toMap),
           variable)
-      case Match()               =>
-        val (matchLiteralMap, _, parameterMap) = selectLiteralMap(variable, node.properties, node.properties.keySet.toSet)
-        ("match", s"($variable $labels $matchLiteralMap)", "", parameterMap, variable)
+      case Match(matches)        =>
+        val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, matches)
+        ("match", s"($variable $labels $matchLiteralMap)", s"set $variable += {${ variable }_properties}",
+          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+          variable)
     }
   }
 
@@ -51,14 +55,16 @@ class QueryBuilder {
       case Create()              =>
         ("create", s"[$variable :`${ relation.relationType }` {${ variable }_properties}]", "", Map(s"${ variable }_properties" -> relation.properties.toMap), variable)
       case Merge(merge, onMatch) =>
-        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, merge.toSet)
-        val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
+        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, merge)
+        val onMatchProperties = remainingProperties.filterKeys(onMatch)
         ("merge", s"[$variable :`${ relation.relationType }` $mergeLiteralMap]", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
           parameterMap ++ Map(s"${ variable }_onCreateProperties" -> remainingProperties.toMap, s"${ variable }_onMatchProperties" -> onMatchProperties.toMap),
           variable)
-      case Match()               =>
-        val (matchLiteralMap, _, parameterMap) = selectLiteralMap(variable, relation.properties, relation.properties.keySet.toSet)
-        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", "", parameterMap, variable)
+      case Match(matches)        =>
+        val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, matches)
+        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", s"set $variable += {${ variable }_properties}",
+          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+          variable)
     }
   }
 
@@ -114,10 +120,10 @@ class QueryBuilder {
       }.unzip3
 
       val parameters = pathParameters.flatten.toMap
-      val pathQuery = s"""${pathQueries.mkString(" ")} ${pathSetters.mkString(" ")}"""
+      val pathQuery = s"""${ pathQueries.mkString(" ") } ${ pathSetters.mkString(" ") }"""
       (path.origin match {
         case Create()    => s"create $pathQuery"
-        case Match()     => s"match $pathQuery"
+        case Match(_)    => s"match $pathQuery"
         case Merge(_, _) => s"merge $pathQuery"
       }, parameters)
     }
@@ -266,7 +272,7 @@ class QueryBuilder {
     val deletedItems = mutable.Set.empty[Item]
     val addedItems = mutable.Set.empty[Item]
     reversedDistinctChanges.filter {
-      case DeleteItem(item) =>
+      case DeleteItem(item)   =>
         if(addedItems.contains(item))
           false
         else {

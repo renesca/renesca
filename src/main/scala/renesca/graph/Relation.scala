@@ -24,8 +24,8 @@ object Relation {
     new Relation(Merge(merge, onMatch), start, end, relationType, properties)
   }
 
-  def matches(start: Node, relationType: RelationType, end: Node, properties: PropertyMap = Map.empty) = {
-    new Relation(Match(), start, end, relationType, properties)
+  def matches(start: Node, relationType: RelationType, end: Node, properties: PropertyMap = Map.empty, matches: Set[PropertyKey] = Set.empty) = {
+    new Relation(Match(matches), start, end, relationType, properties)
   }
 }
 

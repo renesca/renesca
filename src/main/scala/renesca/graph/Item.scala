@@ -42,9 +42,9 @@ class Merge(val properties: Set[PropertyKey], val onMatch: Set[PropertyKey]) ext
   override def toString = s"Merge($properties, $onMatch)"
 }
 
-class Match() extends LocalOrigin {
+class Match(val properties: Set[PropertyKey]) extends LocalOrigin {
   val kind = Match.kind
-  override def toString = "Match()"
+  override def toString = s"Match($properties)"
 }
 
 case class Id(id: Long) extends NonLocalOrigin {
@@ -68,8 +68,10 @@ object Merge {
 
 object Match {
   val kind = OriginKind.MATCH
-  def apply() = new Match
-  def unapply(origin: Origin) = origin.isInstanceOf[Match]
+  def apply(properties: Set[PropertyKey]) = new Match(properties)
+  def unapply(origin: Origin) = condOpt(origin) {
+    case m: Match => (m.properties)
+  }
 }
 
 object Id {

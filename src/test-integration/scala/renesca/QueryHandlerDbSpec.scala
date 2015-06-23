@@ -269,7 +269,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph)
 
       val graph2 = Graph.empty
-      val node2 = Node.matches(Seq("matsch"), Map("me" -> "be"))
+      val node2 = Node.matches(Seq("matsch"), Map("me" -> "be", "foo" -> "bar"), Set("me"))
       graph2.nodes += node2
       node2.origin.kind mustEqual Match.kind
       db.persistChanges(graph2)
@@ -278,6 +278,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph2.nodes.size must beEqualTo(1)
       node2.origin must beEqualTo(node.origin)
       node2.properties("you") must beEqualTo(node.properties("you"))
+      node2.properties("foo") must beEqualTo(StringPropertyValue("bar"))
     }
 
     "add missing match node" in {
@@ -391,7 +392,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph)
 
       val graph2 = Graph.empty
-      val relation2 = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"))
+      val relation2 = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"), Set("me"))
       graph2.nodes += nodeA
       graph2.nodes += nodeB
       graph2.relations += relation2

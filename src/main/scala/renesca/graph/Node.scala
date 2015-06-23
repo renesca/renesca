@@ -27,8 +27,8 @@ object Node {
   }
 
   def matches: Node = matches()
-  def matches(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
-    new Node(Match(), labels, properties)
+  def matches(labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty, matches: Set[PropertyKey] = Set.empty): Node = {
+    new Node(Match(matches), labels, properties)
   }
 }
 

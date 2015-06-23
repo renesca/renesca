@@ -140,15 +140,15 @@ class QueryBuilderSpec extends Specification with Mockito {
 
       "match" in {
         val changes = Seq(
-          AddItem(Node.matches(Seq("v", "f", "l"), Map("18" -> 48)))
+          AddItem(Node.matches(Seq("v", "f", "l"), Map("18" -> true, "48" -> true), Set("18")))
         )
 
         val queries = exq(builder.generateQueries(changes))
 
         queries mustEqual Seq(Seq(
           q(
-            "match (V0 :`v`:`f`:`l` {18: {V0_18}}) return V0",
-            Map("V0_18" -> 48))
+            "match (V0 :`v`:`f`:`l` {18: {V0_18}}) set V0 += {V0_properties} return V0",
+            Map("V0_18" -> true, "V0_properties" -> Map("48" -> true)))
         ))
       }
 
@@ -249,7 +249,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         val result = builder.generateQueries(changes)
 
-        result mustEqual Left("Cannot delete start- or endnode of a new relation: (Match())")
+        result mustEqual Left("Cannot delete start- or endnode of a new relation: (Match(Set()))")
       }
 
       "node deletion before relation" in {
@@ -268,7 +268,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties"))
           ),
           Seq(
@@ -294,7 +294,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties"))
           )
         )
@@ -316,7 +316,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties"))
           ),
           Seq(
@@ -341,7 +341,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties"))
           ),
           Seq(
@@ -366,7 +366,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("merge (V1) on create set V1 += {V1_onCreateProperties} on match set V1 += {V1_onMatchProperties} return V1",
               parameterMap("V1_onCreateProperties", "V1_onMatchProperties"))
           ),
@@ -380,7 +380,7 @@ class QueryBuilderSpec extends Specification with Mockito {
       "match" in {
         val a = Node.matches
         val b = Node.matches
-        val r = Relation.matches(a, "kicks", b, Map("a" -> 1))
+        val r = Relation.matches(a, "kicks", b, Map("a" -> 1), Set("a"))
 
         val changes = Seq(
           AddItem(a),
@@ -392,12 +392,12 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
-            q("match (V1) return V1", parameterMap)
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
+            q("match (V1) set V1 += {V1_properties} return V1", parameterMap("V1_properties"))
           ),
           Seq(
-            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V4 :`kicks` {a: {V4_a}}]->(V3) return V4",
-              Map("V2_nodeId" -> 1, "V4_a" -> 1, "V3_nodeId" -> 2))
+            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V4 :`kicks` {a: {V4_a}}]->(V3) set V4 += {V4_properties} return V4",
+              Map("V2_nodeId" -> 1, "V4_a" -> 1, "V4_properties" -> parameterMap, "V3_nodeId" -> 2))
           )
         )
       }
@@ -528,7 +528,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         val result = builder.generateQueries(changes)
 
-        result mustEqual Left("Cannot delete item which is contained in a path: (Match())")
+        result mustEqual Left("Cannot delete item which is contained in a path: (Match(Set()))")
       }
 
       "node deletion before path" in {
@@ -549,7 +549,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap)
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties"))
           ),
           Seq(
             q("match (V1) where id(V1) = {V1_nodeId} create (V1)-[V3 :`kicks` {V3_properties}]->(V2 {V2_properties}) return {id: id(V1), properties: V1, labels: labels(V1)} as V1,{id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3} as V3",
@@ -574,7 +574,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         val result = builder.generateQueries(changes)
 
-        result mustEqual Left("Cannot delete item which is contained in a path: (Match())-[Create():kicks]->(Create())")
+        result mustEqual Left("Cannot delete item which is contained in a path: (Match(Set()))-[Create():kicks]->(Create())")
       }
 
       "relation deletion before path" in {
@@ -595,7 +595,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap)
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties"))
           ),
           Seq(
             q("match (V1) where id(V1) = {V1_nodeId} create (V1)-[V3 :`kicks` {V3_properties}]->(V2 {V2_properties}) return {id: id(V1), properties: V1, labels: labels(V1)} as V1,{id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3} as V3",
@@ -621,7 +621,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap)
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties"))
           ),
           Seq(
             q("match (V1) where id(V1) = {V1_nodeId} create (V1)-[V3 :`kicks` {V3_properties}]->(V2 {V2_properties}) return {id: id(V1), properties: V1, labels: labels(V1)} as V1,{id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3} as V3",
@@ -651,7 +651,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("merge (V1) on create set V1 += {V1_onCreateProperties} on match set V1 += {V1_onMatchProperties} return V1",
               parameterMap("V1_onCreateProperties", "V1_onMatchProperties"))
           ),
@@ -683,7 +683,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) return V0", parameterMap),
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties"))
           ),
           Seq(
@@ -719,8 +719,8 @@ class QueryBuilderSpec extends Specification with Mockito {
               parameterMap("V1_onCreateProperties", "V1_onMatchProperties"))
           ),
           Seq(
-            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V4)-[V5 :`kicks`]->(V2) -[V6 :`from`]->(V3) return {id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5} as V5,{id: id(V6), properties: V6} as V6",
-              Map("V3_nodeId" -> 2, "V2_nodeId" -> 1))
+            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V4)-[V5 :`kicks`]->(V2) -[V6 :`from`]->(V3) set V4 += {V4_properties} set V5 += {V5_properties} set V6 += {V6_properties} return {id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5} as V5,{id: id(V6), properties: V6} as V6",
+              Map("V3_nodeId" -> 2, "V2_nodeId" -> 1, "V4_properties" -> parameterMap, "V5_properties" -> parameterMap, "V6_properties" -> parameterMap))
           )
         )
       }

@@ -29,6 +29,9 @@ To use renesca in your sbt project, add this dependency to your ```build.sbt```:
 libraryDependencies += "com.github.renesca" %% "renesca" % "0.3.0"
 ```
 
+## Feedback
+Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, Feature Requests. If you are stuck with renesca for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together.
+
 ## Usage Example
 This example is also available as sbt project: [renesca/renesca-example](https://github.com/renesca/renesca-example)
 

@@ -92,7 +92,7 @@ class QueryBuilder {
     // first match all non-path nodes
     val boundNodes = path.relations.flatMap(r => Seq(r.startNode, r.endNode)).distinct diff path.nodes
     if(boundNodes.exists(_.origin.isLocal))
-      throw new Exception("bound node on path is still local: " + path)
+      throw new Exception("Bound node on path is still local: " + path)
 
     val (nodeQueries, nodeParameters) = boundNodes.map(node => {
       val (keyword, query, postfix, parameters, variable) = nodePattern(node)

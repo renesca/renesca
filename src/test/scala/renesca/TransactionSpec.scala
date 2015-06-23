@@ -118,5 +118,24 @@ class TransactionSpec extends Specification with Mockito {
     there was no(tx.restService).rollbackTransaction(any)
   }
 
+  "rollback transaction on exception with enclosing syntax" in {
+    val dbService = new DbService
+
+    var trans: Transaction = null
+    var thrown: Exception = null
+    val ex = new Exception("test")
+    try {
+      dbService.transaction { tx =>
+        trans = tx
+        throw ex
+      }
+    } catch {
+      case e: Exception => thrown = e
+    }
+
+    // TODO: should whether it was commited or rollbacked
+    trans.isValid mustEqual false
+    thrown mustEqual ex
+  }
 }
 

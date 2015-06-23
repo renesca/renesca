@@ -485,12 +485,6 @@ class QueryBuilderSpec extends Specification with Mockito {
     }
 
     "Path" should {
-      "fail on empty path" in {
-        val p = Path()
-
-        p mustEqual Left("Path cannot be empty")
-      }
-
       "fail on inconsistent path origin" in {
         val a = Node.matches
         val b = Node.create

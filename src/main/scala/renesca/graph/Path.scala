@@ -1,10 +1,8 @@
 package renesca.graph
 
 object Path {
-  def apply(relations: Relation*): Either[String,Path] = {
-    if (relations.isEmpty)
-      return Left("Path cannot be empty")
-
+  def apply(head: Relation, tail: Relation*): Either[String,Path] = {
+    val relations = head :: tail.toList
     val nodes = relations.flatMap(r => Seq(r.startNode, r.endNode))
     val isPath = nodes.drop(1).dropRight(1).grouped(2).map(l => l.head == l.last).forall(_ == true)
     val origin = relations.head.origin

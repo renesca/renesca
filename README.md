@@ -73,11 +73,13 @@ object Main extends App {
   implicit val graph = tx.queryGraph("MATCH (n:ANIMAL)-[r]->() RETURN n,r")
 
   // access the graph like scala collections
-  val snake = graph.nodes.find(_.properties("name").asInstanceOf[StringPropertyValue] == "snake").get
+  val snake = graph.nodes.find(_.properties("name").
+    asInstanceOf[StringPropertyValue] == "snake").get
 
   // useful methods to access the graph (requires implicit val graph in scope)
   // e.g.: neighbours,  successors,  predecessors,  inDegree,  outDegree,  degree, ...
-  val name = snake.neighbours.head.properties("name").asInstanceOf[StringPropertyValue].value
+  val name = snake.neighbours.head.properties("name").
+    asInstanceOf[StringPropertyValue].value
   println("Name of one snake neighbour: " + name) // prints "dog"
 
   // changes to the graph are tracked
@@ -118,7 +120,8 @@ object Main extends App {
   }
 
   // interpret query result as a table
-  val animals = db.queryTable("MATCH (n:ANIMAL) OPTIONAL MATCH (n)-[r:EATS]->() RETURN n.name as name, COUNT(r) as eatcount")
+  val animals = db.queryTable("""MATCH (n:ANIMAL) OPTIONAL MATCH (n)-[r:EATS]->()
+    RETURN n.name as name, COUNT(r) as eatcount""")
 
   println("\n" + animals.columns.mkString("\t")) // prints "name eatcount"
   for(row <- animals.rows) {
@@ -132,7 +135,8 @@ object Main extends App {
   //  snake	2
   //  hippo	0
 
-  val hungriest = animals.rows.maxBy(_.apply("eatcount").asInstanceOf[LongPropertyValue].value).
+  val hungriest = animals.rows.maxBy(_.apply("eatcount").
+    asInstanceOf[LongPropertyValue].value).
     apply("name").asInstanceOf[StringPropertyValue].value
   println("hungriest: " + hungriest) // prints "snake"
 

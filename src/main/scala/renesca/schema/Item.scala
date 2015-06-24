@@ -9,12 +9,15 @@ import scala.concurrent.Promise
 import scala.util.Success
 
 //TODO: sealed trait Item and AbstractRelation?
-trait Item
+trait Item {
+  def item:raw.Item 
+}
 
 trait Node extends Item with Filter {
   val label: raw.Label
   val labels: Set[raw.Label]
   def node: raw.Node
+  def item = node
   private[schema] val graphPromise = Promise[raw.Graph]
 
   implicit def graph: raw.Graph = graphPromise.future.value.getOrElse(Success(raw.Graph.empty)).get
@@ -41,6 +44,7 @@ trait AbstractRelation[+START <: Node, +END <: Node] extends Item {
 
 trait Relation[+START <: Node, +END <: Node] extends AbstractRelation[START, END] {
   def relation: raw.Relation
+  def item = relation
   def relationType: raw.RelationType = relation.relationType
 }
 

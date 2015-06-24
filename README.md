@@ -17,9 +17,9 @@ When modifying, creating and deleting nodes and connecting them with relationshi
 There is no further database traversing from a subgraph because there is no need to do so. When working with subgraphs retrieved from a query, you know which data you need in the future and can fetch that with the query before traversing. This approach saves a lot of unnecessary requests.
 
 ## Feature summary
-- Interpret query results as graphs or tables
-- Modify result graphs and persist the changes back to the database
-- Transactions
+* Interpret query results as graphs or tables
+* Modify result graphs and persist the changes back to the database
+* Do everything with transactions
 
 ## Installation
 
@@ -30,7 +30,7 @@ libraryDependencies += "com.github.renesca" %% "renesca" % "0.3.0"
 ```
 
 ## Feedback
-Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, Feature Requests, Criticism, ... . If you are stuck with renesca for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together.
+Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . If you are stuck with renesca or renesca-magic for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together. And if there is something in this README that is unclear or you don't understand, please tell us, too.
 
 ## Usage Example
 This example is also available as sbt project: [renesca/renesca-example](https://github.com/renesca/renesca-example)

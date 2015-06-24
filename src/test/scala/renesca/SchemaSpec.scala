@@ -95,12 +95,17 @@ class SchemaSpec extends Specification with Mockito {
         middle
       }
 
-      def apply(startNode: TheNode, endNode: TheNode) = {
-        val middle = new TheHyperRelation(raw.Node.create(Set(label)))
+      def apply(): TheHyperRelation = {
+        new TheHyperRelation(raw.Node.create(Set(label)))
+      }
+
+      def apply(startNode: TheNode, endNode: TheNode): TheHyperRelation = {
+        val middle = apply()
         middle._startRelation = StartHyperRelation(startNode, middle)
         middle._endRelation = EndHyperRelation(middle, endNode)
         middle
       }
+
     }
   }
 
@@ -148,6 +153,7 @@ class SchemaSpec extends Specification with Mockito {
     val neighboursReverse = neighbours.head.neighboursAs(TheNode)
 
     nodes.size mustEqual 2
+    relation.relationType mustEqual RelationType("peter")
     relations.size mustEqual 1
     hyperRelations.size mustEqual 0
     neighbours.size mustEqual 1
@@ -194,6 +200,19 @@ class SchemaSpec extends Specification with Mockito {
     successors.head.node mustEqual node2.node
     predecessors.size mustEqual 1
     predecessors.head.node mustEqual node.node
+  }
+
+  "add hyperrelation without start- and endnode" >> {
+    val graph = new TheGraph
+    val relation = TheHyperRelation()
+    // graph.add(relation)
+    graph.graph.nodes += relation.node
+
+    val hyperRelations = graph.hyperRelationsAs(TheHyperRelation)
+
+    relation.startRelation mustEqual null
+    relation.endRelation mustEqual null
+    hyperRelations.head.node mustEqual relation.node
   }
 }
 

@@ -5,6 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
+import renesca.parameter.implicits._
 import renesca.graph.Id._
 
 @RunWith(classOf[JUnitRunner])
@@ -73,9 +74,25 @@ class RelationSpec extends Specification with Mockito {
       val relation = Relation(10, Node(5), Node(7), "R")
       relation.toString mustEqual "(5)-[10:R]->(7)"
     }
+
     "produce string representation with node labels" in {
       val relation = Relation(10, Node(5, List("A", "B")), Node(7, List("C")), "R")
       relation.toString mustEqual "(5:A:B)-[10:R]->(7:C)"
+    }
+
+    "produce string representation with create" in {
+      val relation = Relation.create(Node(5), "R", Node(7))
+      relation.toString mustEqual "(5)-[Create():R]->(7)"
+    }
+
+    "produce string representation with merge" in {
+      val relation = Relation.merge(Node(5), "R", Node(7), merge = Set("a"), onMatch = Set("b"))
+      relation.toString mustEqual "(5)-[Merge(Set(a), Set(b)):R]->(7)"
+    }
+
+    "produce string representation with matches" in {
+      val relation = Relation.matches(Node(5), "R", Node(7), matches = Set("a"))
+      relation.toString mustEqual "(5)-[Match(Set(a)):R]->(7)"
     }
   }
 }

@@ -98,9 +98,25 @@ class NodeSpec extends Specification with Mockito {
       val node = Node(15)
       node.toString mustEqual "(15)"
     }
+
     "produce a string representation with labels" in {
       val node = Node(15, List("A","B"))
       node.toString mustEqual "(15:A:B)"
+    }
+
+    "produce a string representation with create" in {
+      val node = Node.create
+      node.toString mustEqual "(Create())"
+    }
+
+    "produce a string representation with merge" in {
+      val node = Node.merge(merge = Set("a"), onMatch = Set("b"))
+      node.toString mustEqual "(Merge(Set(a), Set(b)))"
+    }
+
+    "produce a string representation with matches" in {
+      val node = Node.matches(matches = Set("a"))
+      node.toString mustEqual "(Match(Set(a)))"
     }
   }
 }

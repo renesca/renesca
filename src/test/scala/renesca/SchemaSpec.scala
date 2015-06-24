@@ -187,6 +187,8 @@ class SchemaSpec extends Specification with Mockito {
     val predecessors = node2.predecessorsAs(TheNode, TheHyperRelation)
 
     nodes.size mustEqual 2
+    relation.startNode.node mustEqual node.node
+    relation.endNode.node mustEqual node2.node
     startHyperRelations.size mustEqual 1
     endHyperRelations.size mustEqual 1
     hyperRelations.size mustEqual 1

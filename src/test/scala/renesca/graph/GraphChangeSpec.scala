@@ -208,6 +208,16 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
+    "emit change when setting property" in {
+      val node = Node.create
+      val properties = new Properties(node)
+
+      properties("key") = "value"
+      properties += ("key" -> "value")
+
+      properties.localChanges.size mustEqual 0
+    }
+
     "emit change when removing property" in {
       val node = Node(1)
       val properties = new Properties(node)
@@ -217,6 +227,15 @@ class GraphChangeSpec extends Specification with Mockito {
       properties.localChanges must contain(exactly(
         RemoveProperty(node, "key").asInstanceOf[GraphChange]
       ))
+    }
+
+    "not emit change when removing property on local node" in {
+      val node = Node.create
+      val properties = new Properties(node)
+
+      properties -= "key"
+
+      properties.localChanges.size mustEqual 0
     }
 
     "emit change when setting label" in {
@@ -231,6 +250,16 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
+    "not emit change when setting label on local node" in {
+      val node = Node.create
+      val labels = new NodeLabels(node)
+      val label = mock[Label]
+
+      labels += label
+
+      labels.localChanges.size mustEqual 0
+    }
+
     "emit change when removing label" in {
       val node = Node(1)
       val labels = new NodeLabels(node)
@@ -241,6 +270,16 @@ class GraphChangeSpec extends Specification with Mockito {
       labels.localChanges must contain(exactly(
         RemoveLabel(node, label).asInstanceOf[GraphChange]
       ))
+    }
+
+    "not emit change when removing label on local node" in {
+      val node = Node.create
+      val labels = new NodeLabels(node)
+      val label = mock[Label]
+
+      labels -= label
+
+      labels.localChanges.size mustEqual 0
     }
   }
 
@@ -255,6 +294,14 @@ class GraphChangeSpec extends Specification with Mockito {
       )
     }
 
+    "not emit change when setting property on local relation" in {
+      val relation = Relation.create(Node(2), "r", Node(3))
+      relation.properties += ("key" -> "value")
+      relation.properties -= "key"
+
+      relation.changes.size mustEqual 0
+    }
+
     "emit change when removing property" in {
       val relation = Relation(1, Node(2), Node(3), "r")
       relation.properties += ("key" -> "value")
@@ -264,6 +311,14 @@ class GraphChangeSpec extends Specification with Mockito {
         SetProperty(relation, "key", StringPropertyValue("value")).asInstanceOf[GraphChange],
         RemoveProperty(relation, "key").asInstanceOf[GraphChange]
       ).inOrder
+    }
+
+    "not emit change when removing property on local relation" in {
+      val relation = Relation.create(Node(2), "r", Node(3))
+      relation.properties += ("key" -> "value")
+      relation.properties -= "key"
+
+      relation.changes.size mustEqual 0
     }
   }
 }

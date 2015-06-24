@@ -56,6 +56,8 @@ ENDRELATION <: Relation[HYPERRELATION, END],
   protected[schema] var _startRelation: STARTRELATION = _
   protected[schema] var _endRelation: ENDRELATION = _
 
+  var path: Option[raw.Path] = None
+
   def startRelation = _startRelation
   def endRelation = _endRelation
   def startNode = startRelation.startNode

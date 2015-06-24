@@ -4,14 +4,15 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import renesca.{graph => raw}
-import renesca.graph.{RelationType, Label}
+import renesca.graph.{Label, RelationType}
 import renesca.schema._
+import renesca.{graph => raw}
 
 @RunWith(classOf[JUnitRunner])
 class SchemaSpec extends Specification with Mockito {
 
   object TheSchema {
+
     class TheGraph(val graph: raw.Graph = raw.Graph.empty) extends Graph
 
     class TheNode(val node: raw.Node) extends Node {
@@ -107,6 +108,7 @@ class SchemaSpec extends Specification with Mockito {
       }
 
     }
+
   }
 
   import TheSchema._

@@ -1,8 +1,6 @@
 package renesca.schema
 
 import renesca.{graph => raw}
-import renesca.parameter.StringPropertyValue
-import renesca.parameter.implicits._
 
 trait Filter {
   def graph: raw.Graph

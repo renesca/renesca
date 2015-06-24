@@ -1,6 +1,6 @@
 package renesca.graph
 
-import collection.mutable
+import scala.collection.mutable
 
 class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
   extends mutable.Set[Node] with mutable.SetLike[Node, Nodes] {
@@ -10,7 +10,7 @@ class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   override def +=(node: Node) = {
-    if (node.origin.isLocal)
+    if(node.origin.isLocal)
       localChanges += AddItem(node)
 
     self += node

@@ -2,7 +2,7 @@ package renesca.graph
 
 
 import renesca.NonBacktickName
-import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
+import renesca.parameter.{PropertyKey, PropertyMap}
 
 import scala.collection.mutable
 

@@ -59,9 +59,9 @@ trait QueryHandler extends QueryInterface {
   //TODO: persist changes should ONLY work on transactions!
   def persistChanges(graph: Graph): Option[String] = {
     builder.generateQueries(graph.changes) match {
-      case Left(msg) => Some(msg)
+      case Left(msg)      => Some(msg)
       case Right(queries) =>
-        if (builder.applyQueries(queries, queryGraphsAndTables)) {
+        if(builder.applyQueries(queries, queryGraphsAndTables)) {
           graph.clearChanges()
           None
         } else {

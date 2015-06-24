@@ -6,15 +6,14 @@ import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
 import spray.http.HttpHeaders.{Authorization, Location}
-import spray.http.MediaTypes._
+import spray.http.HttpMethods._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import spray.http.HttpMethods._
 
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import collection.mutable
 
 case class TransactionId(id: String) {
   override def toString = id

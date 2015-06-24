@@ -5,8 +5,8 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.json.protocols.ResponseJsonProtocol._
-import renesca.parameter.{NullPropertyValue, ArrayParameterValue}
 import renesca.parameter.implicits._
+import renesca.parameter.{ArrayParameterValue, NullPropertyValue}
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])

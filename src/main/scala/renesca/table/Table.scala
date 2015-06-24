@@ -1,7 +1,7 @@
 package renesca.table
 
-import renesca.parameter.ParameterValue
 import renesca.json
+import renesca.parameter.ParameterValue
 
 object Table {
   def apply(columns: Seq[String], data: Traversable[Traversable[ParameterValue]]): Table = {
@@ -30,8 +30,8 @@ case class Table private[table](columns: Seq[String], rows: IndexedSeq[Row]) {
 
   override def toString = {
     s"""
-      |${columns.mkString("\t")}
-      |${rows.map(r => r.cells.mkString("\t")).mkString("\n")}
+       |${ columns.mkString("\t") }
+        |${ rows.map(r => r.cells.mkString("\t")).mkString("\n") }
     """.stripMargin
   }
 }

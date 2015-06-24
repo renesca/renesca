@@ -4,10 +4,9 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import renesca.graph._
 import renesca.parameter._
 import renesca.parameter.implicits._
-import renesca.graph._
-import renesca.table.Table
 
 @RunWith(classOf[JUnitRunner])
 class QueryBuilderSpec extends Specification with Mockito {

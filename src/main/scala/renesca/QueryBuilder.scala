@@ -355,7 +355,7 @@ class QueryBuilder {
 
     checkChanges(deleteItems, addPaths, addLocalProducePaths, addRelations) match {
       case Some(err) => return Left(err)
-      case None           =>
+      case None      =>
     }
 
     // generate queries

@@ -1,7 +1,6 @@
 package renesca.graph
 
-import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
-import scala.collection.mutable
+import renesca.parameter.{PropertyKey, PropertyValue}
 
 sealed trait GraphChange
 

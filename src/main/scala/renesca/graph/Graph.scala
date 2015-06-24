@@ -1,7 +1,6 @@
 package renesca.graph
 
 import renesca.json
-import renesca.parameter.PropertyKey
 
 import scala.collection.mutable
 
@@ -18,7 +17,7 @@ object Graph {
       Node(Id(id.toLong), labels.map(Label.apply), properties)
     }
 
-    val idToNode: Map[String, Node] = nodes.flatMap (node => node.origin match {
+    val idToNode: Map[String, Node] = nodes.flatMap(node => node.origin match {
       case Id(id) => Map(id.toString -> node)
       case _      => Map.empty[String, Node]
     }).toMap

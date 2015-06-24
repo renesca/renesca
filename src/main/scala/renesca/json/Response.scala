@@ -1,6 +1,6 @@
 package renesca.json
 
-import renesca.parameter.{ArrayParameterValue, ParameterValue, PropertyMap}
+import renesca.parameter.{ArrayParameterValue, PropertyMap}
 
 
 case class Response(

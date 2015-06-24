@@ -3,8 +3,6 @@ package renesca
 package object schema {
 
   import renesca.{graph => raw}
-  import renesca.parameter.StringPropertyValue
-  import renesca.parameter.implicits._
 
   type AbstractRelationFactoryStartEnd[START <: Node, END <: Node] = AbstractRelationFactory[START, _ <: AbstractRelation[START, END], END]
   type AbstractRelationFactoryNode[NODE <: Node] = AbstractRelationFactory[_ <: NODE, _ <: AbstractRelation[_, _], _ <: NODE]

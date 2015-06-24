@@ -4,8 +4,6 @@ package renesca.schema
 // This allows to create a Relation between a Node and a HyperRelation.
 
 import renesca.{graph => raw}
-import renesca.parameter.StringPropertyValue
-import renesca.parameter.implicits._
 
 import scala.concurrent.Promise
 import scala.util.Success

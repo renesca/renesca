@@ -1,7 +1,8 @@
 package renesca.graph
 
 import renesca.parameter.PropertyKey
-import PartialFunction._
+
+import scala.PartialFunction._
 
 trait SubGraph {
   def origin: Origin
@@ -13,10 +14,11 @@ trait Item extends SubGraph {
 }
 
 object OriginKind extends Enumeration {
-   type OriginKind = Value
-   val MATCH, CREATE, MERGE, ID = Value
+  type OriginKind = Value
+  val MATCH, CREATE, MERGE, ID = Value
 }
-import OriginKind._
+
+import renesca.graph.OriginKind._
 
 sealed trait Origin {
   def isLocal: Boolean

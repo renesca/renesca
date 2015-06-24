@@ -13,14 +13,14 @@ class Properties(val item: Item,
 
   override def +=(keyValue: (PropertyKey, PropertyValue)) = {
     self += keyValue
-    if (!item.origin.isLocal)
+    if(!item.origin.isLocal)
       localChanges += SetProperty(item, keyValue._1, keyValue._2)
     this
   }
 
   override def -=(key: PropertyKey) = {
     self -= key
-    if (!item.origin.isLocal)
+    if(!item.origin.isLocal)
       localChanges += RemoveProperty(item, key)
     this
   }

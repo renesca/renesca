@@ -6,8 +6,6 @@ package renesca.schema
 // These additions are automatically tracked as GraphChanges by the underlying graph.
 
 import renesca.{graph => raw}
-import renesca.parameter.StringPropertyValue
-import renesca.parameter.implicits._
 
 
 //TODO: implicits from Graph to raw.Graph

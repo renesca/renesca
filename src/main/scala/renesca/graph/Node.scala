@@ -1,7 +1,7 @@
 package renesca.graph
 
 import renesca.NonBacktickName
-import renesca.parameter.{PropertyKey, PropertyMap, PropertyValue}
+import renesca.parameter.{PropertyKey, PropertyMap}
 
 import scala.collection.mutable
 
@@ -33,9 +33,9 @@ object Node {
 }
 
 class Node private[graph](
-                          var origin: Origin,
-                          initialLabels: Traversable[Label] = Nil,
-                          initialProperties: PropertyMap = Map.empty
+                           var origin: Origin,
+                           initialLabels: Traversable[Label] = Nil,
+                           initialProperties: PropertyMap = Map.empty
                            ) extends Item {
 
   val labels = new NodeLabels(this, mutable.HashSet(initialLabels.toSeq: _*))

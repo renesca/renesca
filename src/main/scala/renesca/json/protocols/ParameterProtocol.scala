@@ -2,7 +2,6 @@ package renesca.json.protocols
 
 import renesca.parameter._
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 object ParameterProtocol extends DefaultJsonProtocol {
 
@@ -62,8 +61,6 @@ object ParameterProtocol extends DefaultJsonProtocol {
 
   implicit object JsonArrayParameterValueFormat extends RootJsonFormat[ArrayParameterValue] {
 
-    import JsonParameterValueFormat._
-
     override def write(apv: ArrayParameterValue) = apv match {
       case ArrayParameterValue(elements) => JsArray(elements map (_.toJson): _*)
     }
@@ -75,8 +72,6 @@ object ParameterProtocol extends DefaultJsonProtocol {
   }
 
   implicit object JsonParameterValueFormat extends RootJsonFormat[ParameterValue] {
-
-    import JsonArrayParameterValueFormat._
 
     // Parameters can be arbitrarily nested maps and arrays
     // therefore we need to call write and read recursively

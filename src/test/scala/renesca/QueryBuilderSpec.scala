@@ -51,6 +51,14 @@ class QueryBuilderSpec extends Specification with Mockito {
   }
 
   "QueryBuilder" should {
+    "have non-constant variables" in {
+      val realBuilder = new QueryBuilder
+      val a = realBuilder.randomVariable
+      val b = realBuilder.randomVariable
+
+      a mustNotEqual b
+    }
+
     "work with empty list of changes" in {
       val queries = exq(builder.generateQueries(Seq.empty))
 

@@ -2,7 +2,9 @@ package renesca.graph
 
 import renesca.parameter.{PropertyKey, PropertyValue}
 
-sealed trait GraphChange
+sealed trait GraphChange {
+  def isValid: Boolean
+}
 
 sealed trait GraphItemChange extends GraphChange {
   val item: Item
@@ -13,7 +15,9 @@ sealed trait GraphPathChange extends GraphChange {
 }
 
 sealed trait GraphContentChange extends GraphItemChange {
-  require(!item.origin.isLocal, "GraphContentChanges can only be applied to non-local items")
+  require(isValid, "GraphContentChanges can only be applied to non-local items")
+
+  def isValid = !item.origin.isLocal
 }
 
 case class SetProperty(item: Item, key: PropertyKey, value: PropertyValue) extends GraphContentChange
@@ -24,12 +28,20 @@ case class SetLabel(item: Node, label: Label) extends GraphContentChange
 
 case class RemoveLabel(item: Node, label: Label) extends GraphContentChange
 
-case class DeleteItem(item: Item) extends GraphItemChange
+case class DeleteItem(item: Item) extends GraphItemChange {
+  def isValid = true
+}
 
 sealed trait GraphStructureChange extends GraphChange
 
 case class AddItem(item: Item) extends GraphStructureChange with GraphItemChange {
-  require(item.origin.isLocal, "GraphStructureChanges can only be applied to local items")
+  require(isValid, "AddItem changes can only be applied to local items")
+
+  def isValid = item.origin.isLocal
 }
 
-case class AddPath(path: Path) extends GraphStructureChange with GraphPathChange
+case class AddPath(path: Path) extends GraphStructureChange with GraphPathChange {
+  require(isValid, "AddPath changes can only be applied to local paths")
+
+  def isValid = path.relations.forall(_.origin.kind == path.origin.kind)
+}

@@ -11,17 +11,28 @@ import renesca.parameter.implicits._
 class GraphChangeSpec extends Specification with Mockito {
 
   "GraphChange" should {
-    "fail when emitting AddItem with non local item" in {
+    "fail when emitting AddItem/AddPath with non local item" in {
       val node = Node(1)
       AddItem(node) must throwA[IllegalArgumentException]
+      val relation = Relation.create(node, "r", node)
+      val Right(path) = Path(relation)
+      relation.origin = Id(1)
+      AddPath(path) must throwA[IllegalArgumentException]
     }
 
     "fail when emitting ContentChange with local item" in {
       val node = Node.create
+      DeleteItem(node).isValid mustEqual true
+      DeleteItem(Node(1)).isValid mustEqual true
       SetProperty(node, "a", 1) must throwA[IllegalArgumentException]
       RemoveProperty(node, "a") must throwA[IllegalArgumentException]
       SetLabel(node, "a") must throwA[IllegalArgumentException]
       RemoveLabel(node, "a") must throwA[IllegalArgumentException]
+    }
+
+    "allow emitting DeleteItem with local item" in {
+      DeleteItem(Node.create).isValid mustEqual true
+      DeleteItem(Node(1)).isValid mustEqual true
     }
   }
 

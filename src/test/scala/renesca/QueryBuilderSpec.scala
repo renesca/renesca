@@ -64,6 +64,20 @@ class QueryBuilderSpec extends Specification with Mockito {
       queries.size mustEqual 0
     }
 
+    "reject invalid changes" in {
+      val node = Node.create
+      val changes = Seq(
+        AddItem(node)
+      )
+
+      node.origin = Id(1)
+
+      val result = builder.generateQueries(changes)
+
+      result.left.toOption.isDefined mustEqual true
+      result.left.get startsWith "Found invalid graph change: "
+    }
+
     "node" should {
       "create only once" in {
         val n = Node.create

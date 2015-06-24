@@ -295,7 +295,11 @@ class QueryBuilder {
     }.reverse
   }
 
-  private def checkChanges(deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
+  private def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
+    val illegalChange = allChanges.find(!_.isValid)
+    if (illegalChange.isDefined)
+      return Some("Found invalid graph change: " + illegalChange.get)
+
     // TODO: more efficient!
     // check whether paths overlap
     val pathNodes = addPaths.flatMap(_.nodes)
@@ -353,7 +357,7 @@ class QueryBuilder {
     val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
     val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
 
-    checkChanges(deleteItems, addPaths, addLocalProducePaths, addRelations) match {
+    checkChanges(changes, deleteItems, addPaths, addLocalProducePaths, addRelations) match {
       case Some(err) => return Left(err)
       case None      =>
     }

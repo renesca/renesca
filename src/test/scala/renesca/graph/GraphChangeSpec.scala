@@ -10,6 +10,21 @@ import renesca.parameter.implicits._
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
 
+  "GraphChange" should {
+    "fail when emitting AddItem with non local item" in {
+      val node = Node(1)
+      AddItem(node) must throwA[IllegalArgumentException]
+    }
+
+    "fail when emitting ContentChange with local item" in {
+      val node = Node.create
+      SetProperty(node, "a", 1) must throwA[IllegalArgumentException]
+      RemoveProperty(node, "a") must throwA[IllegalArgumentException]
+      SetLabel(node, "a") must throwA[IllegalArgumentException]
+      RemoveLabel(node, "a") must throwA[IllegalArgumentException]
+    }
+  }
+
   "Graph" should {
     "collect all changes in one collection and clear it" in {
       val graphChange = mock[GraphChange]

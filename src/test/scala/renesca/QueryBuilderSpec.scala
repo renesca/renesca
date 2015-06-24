@@ -572,17 +572,16 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Paths cannot resolve the same relations")
       }
 
-      "fail on overlapping produce paths" in {
-        val a = Node.matches
-        val b = Node.create
-        val c = Node.merge
+      "fail on circular dependency between paths" in {
+        val a = Node.create(Set("a"))
+        val b = Node.create(Set("b"))
+        val c = Node.matches
         val r1 = Relation.create(a, "kicks", b)
         val r2 = Relation.create(b, "from", c)
         val Right(p1) = Path(r1, r2)
-        val d = Node.create
-        val e = Node.create
-        val r3 = Relation.create(b, "kicks", d)
-        val r4 = Relation.create(d, "from", e)
+        val d = Node.merge
+        val r3 = Relation.create(b, "kicks", a)
+        val r4 = Relation.create(a, "from", d)
         val Right(p2) = Path(r3, r4)
 
         val changes = Seq(
@@ -592,7 +591,62 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         val result = builder.generateQueries(changes)
 
-        result mustEqual Left("Overlapping paths with local nodes are currently not supported")
+        result.left.toOption.isDefined mustEqual true
+        result.left.get startsWith "Circular dependency between paths: "
+      }
+
+      "overlapping produce paths" in {
+        val a = Node.matches
+        val b = Node.create
+        val c = Node.merge
+        val r1 = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "from", c)
+        val Right(p1) = Path(r1, r2)
+        val d = Node.create
+        val e = Node.create
+        val r3 = Relation.create(b, "kicks", d)
+        val r4 = Relation.create(d, "to", e)
+        val Right(p2) = Path(r3, r4)
+        val r5 = Relation.matches(a, "fpp", b)
+
+        val changes = Seq(
+          AddItem(r1),
+          AddItem(r2),
+          AddItem(a),
+          AddItem(d),
+          AddPath(p2),
+          AddItem(b),
+          AddItem(e),
+          AddItem(r3),
+          AddItem(r5),
+          AddPath(p1),
+          AddItem(r4),
+          AddItem(c)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+
+        Seq(
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
+            q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties")),
+            q("merge (V2) on create set V2 += {V2_onCreateProperties} on match set V2 += {V2_onMatchProperties} return V2",
+              parameterMap("V2_onCreateProperties", "V2_onMatchProperties"))
+          ),
+          Seq(
+            q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} create (V3)-[V6 :`kicks` {V6_properties}]->(V5 {V5_properties}) -[V7 :`from` {V7_properties}]->(V4) return {id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5, labels: labels(V5)} as V5,{id: id(V6), properties: V6} as V6,{id: id(V7), properties: V7} as V7",
+              Map("V6_properties" -> parameterMap, "V4_nodeId" -> 3, "V5_properties" -> parameterMap, "V7_properties" -> parameterMap, "V3_nodeId" -> 1))
+          ),
+          Seq(
+            q("match (V8) where id(V8) = {V8_nodeId} match (V9) where id(V9) = {V9_nodeId} create (V8)-[V11 :`kicks` {V11_properties}]->(V10 {V10_properties}) -[V12 :`to` {V12_properties}]->(V9) return {id: id(V8), properties: V8, labels: labels(V8)} as V8,{id: id(V9), properties: V9, labels: labels(V9)} as V9,{id: id(V10), properties: V10, labels: labels(V10)} as V10,{id: id(V11), properties: V11} as V11,{id: id(V12), properties: V12} as V12",
+              Map("V8_nodeId" -> 4, "V9_nodeId" -> 2, "V10_properties" -> parameterMap, "V11_properties" -> parameterMap, "V12_properties" -> parameterMap))
+          ),
+          Seq(
+            q("match (V13) where id(V13) = {V13_nodeId} match (V14) where id(V14) = {V14_nodeId} match (V13)-[V15 :`fpp`]->(V14) set V15 += {V15_properties} return V15",
+              Map("V13_nodeId" -> 1, "V15_properties" -> parameterMap, "V14_nodeId" -> 4))
+          )
+        )
       }
 
       "overlapping produce and relation paths" in {

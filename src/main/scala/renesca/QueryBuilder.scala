@@ -266,7 +266,7 @@ class QueryBuilder {
   }
 
   //TODO: test separately
-  def filterGraphChanges(graphChanges: Seq[GraphChange]) = {
+  private def filterGraphChanges(graphChanges: Seq[GraphChange]) = {
     // First get rid of duplicate changes, keep only the last change
     val reversedDistinctChanges = graphChanges.reverse.distinct
 
@@ -295,13 +295,57 @@ class QueryBuilder {
     }.reverse
   }
 
+  class PathDependencyGraph(paths: Set[Path]) {
+    private val resolved: mutable.ArrayBuffer[Path] = mutable.ArrayBuffer.empty
+    private val seen: mutable.Set[Path] = mutable.Set.empty
+    private val pathCreators: Map[Node, Path] = paths.flatMap(p => p.nodes.map(_ -> p).toMap).toMap
+
+    case class CircularException(path: Path, dependency: Path) extends Exception
+
+    private def resolvePath(path: Path): Unit = {
+      if (resolved.contains(path))
+        return
+
+      seen += path
+      val readNodes = path.allNodes.diff(path.nodes).filter(_.origin.isLocal)
+      val dependencies = readNodes.flatMap(pathCreators.get(_))
+      dependencies.foreach(dep => {
+        if (!resolved.contains(dep)) {
+          if(seen.contains(dep)) {
+            throw CircularException(path, dep)
+            return
+          }
+
+          resolvePath(dep)
+        }
+      })
+
+      resolved += path
+    }
+
+    def resolvePaths: Either[String,Seq[Seq[Path]]] = {
+      try {
+        paths.foreach(p => resolvePath(p))
+      } catch {
+        case CircularException(path, dep) =>
+          return Left(s"Circular dependency between paths: $path depends on $dep")
+      }
+
+      Right(resolved.map(Seq(_)))
+    }
+  }
+
+  private def chunkProducePaths(paths: Seq[Path]): Either[String,Seq[Seq[Path]]] = {
+    val dependencyGraph = new PathDependencyGraph(paths.toSet)
+    dependencyGraph.resolvePaths
+  }
+
   private def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
     val illegalChange = allChanges.find(!_.isValid)
     if (illegalChange.isDefined)
       return Some("Found invalid graph change: " + illegalChange.get)
 
-    // TODO: more efficient!
-    // check whether paths overlap
+    // check whether paths try to resolve the same items
     val pathNodes = addPaths.flatMap(_.nodes)
     if(pathNodes.distinct.size != pathNodes.size) {
       return Some("Paths cannot resolve the same nodes")
@@ -312,15 +356,7 @@ class QueryBuilder {
       return Some("Paths cannot resolve the same relations")
     }
 
-    // check whether local paths depend on each other
-    // currenlty paths cannot contain nodes which are created by another path
-    val dependentPath = addLocalPaths.find(p => p.allNodes.diff(p.nodes).intersect(pathNodes).nonEmpty)
-    val dependentPathNodes = addLocalPaths.flatMap(p => p.allNodes.filter(_.origin.isLocal))
-    if(dependentPath.isDefined) {
-      return Some("Overlapping paths with local nodes are currently not supported")
-    }
-
-    // check whether nodes in a new relation or items in a new path should also be deleted, this is not possible!
+    // check whether nodes in a new relation or items in a new path should also be deleted
     if(deleteItems.intersect(addPaths.flatMap(p => p.relations ++ p.allNodes)).nonEmpty) {
       return Some("Cannot delete item which is contained in a path: " + deleteItems.mkString(","))
     }
@@ -377,7 +413,10 @@ class QueryBuilder {
         addNonLocalRelationQueries()
     }
 
-    val producePathChanges = addPathsToQueries(addLocalProducePaths) _
+    val localProducePathChunks = chunkProducePaths(addLocalProducePaths) match {
+      case Left(err) => return Left(err)
+      case Right(chunks) => chunks.map(c => addPathsToQueries(c) _)
+    }
 
     val relationChanges = {
       val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
@@ -387,11 +426,11 @@ class QueryBuilder {
         addLocalRelationPathQueries()
     }
 
-    Right(Seq(
-      independentChanges,
-      producePathChanges,
-      relationChanges
-    ))
+    Right(
+      Seq(independentChanges) ++
+      localProducePathChunks ++
+      Seq(relationChanges)
+    )
   }
 
   def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Boolean = {

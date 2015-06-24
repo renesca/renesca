@@ -43,5 +43,5 @@ case class AddItem(item: Item) extends GraphStructureChange with GraphItemChange
 case class AddPath(path: Path) extends GraphStructureChange with GraphPathChange {
   require(isValid, "AddPath changes can only be applied to local paths")
 
-  def isValid = path.relations.forall(_.origin.kind == path.origin.kind)
+  def isValid = (path.relations ++ path.nodes).forall(_.origin.kind == path.origin.kind)
 }

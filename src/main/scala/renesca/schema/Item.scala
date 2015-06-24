@@ -34,7 +34,6 @@ trait Node extends Item with Filter {
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
     filterNodes(node.inRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.startNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.inRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.startNode)), nodeFactory)
   }
-  def getStringProperty(key: String) = node.properties(key).asInstanceOf[StringPropertyValue]
 }
 
 trait AbstractRelation[+START <: Node, +END <: Node] extends Item {

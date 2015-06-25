@@ -7,7 +7,7 @@ Query and modify subgraphs from a Neo4j REST database with Scala.
 Also have a look at [renesca-magic](https://github.com/renesca/renesca-magic), which generates code for typesafe graph database schemas based on renesca.
 
 ## Concepts
-### Work with graphs, not lists
+### Work with graphs instead of lists
 Earlier we tried to interact with graph databases as if they were relational databases. This meant working with lists of query results. As Neo4J gives us full blown graphs as query results, we now take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.
 
 ### Track changes, persist later
@@ -30,10 +30,10 @@ libraryDependencies += "com.github.renesca" %% "renesca" % "0.3.0"
 ```
 
 ## Feedback
-Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . If you are stuck with renesca or renesca-magic for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together. And if there is something in this README that is unclear or you don't understand, please tell us, too.
+Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . Are you stuck with renesca or renesca-magic for some time? Is there something in this README that is unclear? Anything else? This means something does not work as intended or the API is not intuitive. Contact us and let's fix this together.
 
 ## Usage Example
-This example is also available as sbt project: [renesca/renesca-example](https://github.com/renesca/renesca-example)
+This example is also available as a sbt project: [renesca/renesca-example](https://github.com/renesca/renesca-example)
 
 ```scala
 package renesca.example
@@ -57,7 +57,7 @@ object Main extends App {
 
 
   // only proceed if database is available and empty
-  val wholeGraph = db.queryGraph("MATCH (n) RETURN n LIMIT 1")
+  val wholeGraph = db.queryWholeGraph
   if(wholeGraph.nonEmpty) {
     restService.actorSystem.shutdown()
     sys.error("Database is not empty.")

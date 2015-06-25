@@ -7,7 +7,7 @@ import renesca.table.Table
 
 import scala.collection.mutable
 
-case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Boolean = (graph: Graph, table: Table) => true)
+case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Option[String] = (graph: Graph, table: Table) => None)
 
 class QueryBuilder {
 
@@ -208,27 +208,29 @@ class QueryBuilder {
       val (query, reverseVariableMap) = queryPath(path)
 
       QueryConfig(path, query, (graph: Graph, table: Table) => {
-        table.columns.forall(col => {
-          val item = reverseVariableMap(col)
-          table.rows.headOption.exists(row => {
-            val map = row(col).asInstanceOf[MapParameterValue].value
-            item match {
-              case n: Node     =>
-                n.properties.clear()
-                n.labels.clear()
-                // TODO: without casts?
-                n.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-                n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
-                n.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-              case r: Relation =>
-                r.properties.clear()
-                r.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-                r.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-            }
-
-            true
-          })
-        })
+        if(table.rows.size > 1)
+          Some("More than one query result for path: " + path)
+        else
+          table.rows.headOption.map(row => {
+            table.columns.foreach(col => {
+              val item = reverseVariableMap(col)
+              val map = row(col).asInstanceOf[MapParameterValue].value
+              item match {
+                case n: Node     =>
+                  n.properties.clear()
+                  n.labels.clear()
+                  // TODO: without casts?
+                  n.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
+                  n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
+                  n.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
+                case r: Relation =>
+                  r.properties.clear()
+                  r.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
+                  r.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
+              }
+            })
+            None
+          }).getOrElse(Some("Query result is missing desired path: " + path))
       })
     })
   }
@@ -238,12 +240,15 @@ class QueryBuilder {
       val query = queryRelation(relation)
 
       QueryConfig(relation, query, (graph: Graph, table: Table) => {
-        graph.relations.headOption.exists(dbRelation => {
-          relation.properties.clear()
-          relation.properties ++= dbRelation.properties
-          relation.origin = dbRelation.origin
-          true
-        })
+        if(graph.relations.size > 1)
+          Some("More than one query result for relation: " + relation)
+        else
+          graph.relations.headOption.map(dbRelation => {
+            relation.properties.clear()
+            relation.properties ++= dbRelation.properties
+            relation.origin = dbRelation.origin
+            None
+          }).getOrElse(Some("Query result is missing desired relation: " + relation))
       })
     })
   }
@@ -253,14 +258,17 @@ class QueryBuilder {
       val query = queryNode(node)
 
       QueryConfig(node, query, (graph: Graph, table: Table) => {
-        graph.nodes.headOption.exists(dbNode => {
-          node.properties.clear()
-          node.labels.clear()
-          node.properties ++= dbNode.properties
-          node.labels ++= dbNode.labels
-          node.origin = dbNode.origin
-          true
-        })
+        if(graph.nodes.size > 1)
+          Some("More than one query result for node: " + node)
+        else
+          graph.nodes.headOption.map(dbNode => {
+            node.properties.clear()
+            node.labels.clear()
+            node.properties ++= dbNode.properties
+            node.labels ++= dbNode.labels
+            node.origin = dbNode.origin
+            None
+          }).getOrElse(Some("Query result is missing desired node: " + node))
       })
     })
   }
@@ -303,17 +311,16 @@ class QueryBuilder {
     case class CircularException(path: Path, dependency: Path) extends Exception
 
     private def resolvePath(path: Path): Unit = {
-      if (resolved.contains(path))
+      if(resolved.contains(path))
         return
 
       seen += path
       val readNodes = path.allNodes.diff(path.nodes).filter(_.origin.isLocal)
       val dependencies = readNodes.flatMap(pathCreators.get(_))
       dependencies.foreach(dep => {
-        if (!resolved.contains(dep)) {
+        if(!resolved.contains(dep)) {
           if(seen.contains(dep)) {
             throw CircularException(path, dep)
-            return
           }
 
           resolvePath(dep)
@@ -323,7 +330,7 @@ class QueryBuilder {
       resolved += path
     }
 
-    def resolvePaths: Either[String,Seq[Seq[Path]]] = {
+    def resolvePaths: Either[String, Seq[Seq[Path]]] = {
       try {
         paths.foreach(p => resolvePath(p))
       } catch {
@@ -335,14 +342,14 @@ class QueryBuilder {
     }
   }
 
-  private def chunkProducePaths(paths: Seq[Path]): Either[String,Seq[Seq[Path]]] = {
+  private def chunkProducePaths(paths: Seq[Path]): Either[String, Seq[Seq[Path]]] = {
     val dependencyGraph = new PathDependencyGraph(paths.toSet)
     dependencyGraph.resolvePaths
   }
 
   private def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
     val illegalChange = allChanges.find(!_.isValid)
-    if (illegalChange.isDefined)
+    if(illegalChange.isDefined)
       return Some("Found invalid graph change: " + illegalChange.get)
 
     // check whether paths try to resolve the same items
@@ -414,7 +421,7 @@ class QueryBuilder {
     }
 
     val localProducePathChunks = chunkProducePaths(addLocalProducePaths) match {
-      case Left(err) => return Left(err)
+      case Left(err)     => return Left(err)
       case Right(chunks) => chunks.map(c => addPathsToQueries(c) _)
     }
 
@@ -428,19 +435,16 @@ class QueryBuilder {
 
     Right(
       Seq(independentChanges) ++
-      localProducePathChunks ++
-      Seq(relationChanges)
+        localProducePathChunks ++
+        Seq(relationChanges)
     )
   }
 
-  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Boolean = {
-    !queryRequests.exists(getter => {
+  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Option[String] = {
+    queryRequests.view.map(getter => {
       val configs = getter()
       val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-      if(queries.isEmpty)
-        false
-      else
-        queryHandler(queries).zip(callbacks).exists { case ((g, t), f) => !f(g, t) }
-    })
+      queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }.find(_.isDefined).getOrElse(None)
+    }).find(_.isDefined).getOrElse(None)
   }
 }

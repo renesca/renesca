@@ -61,12 +61,11 @@ trait QueryHandler extends QueryInterface {
     builder.generateQueries(graph.changes) match {
       case Left(msg)      => Some(msg)
       case Right(queries) =>
-        if(builder.applyQueries(queries, queryGraphsAndTables)) {
+        val failure = builder.applyQueries(queries, queryGraphsAndTables)
+        if (failure.isEmpty)
           graph.clearChanges()
-          None
-        } else {
-          Some("Failed to apply queries")
-        }
+
+        failure
     }
   }
 

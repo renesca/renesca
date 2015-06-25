@@ -143,6 +143,9 @@ class QueryBuilder {
   private def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
     contentChanges.groupBy(_.item).map {
       case (item, changes) =>
+        if(item.origin.isLocal)
+          throw new Exception("Trying to edit local item: " + item)
+
         val propertyAdditions: mutable.Map[PropertyKey, ParameterValue] = mutable.Map.empty
         val propertyRemovals: mutable.Set[PropertyKey] = mutable.Set.empty
         val labelAdditions: mutable.Set[Label] = mutable.Set.empty

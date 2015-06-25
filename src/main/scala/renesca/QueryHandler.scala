@@ -210,9 +210,9 @@ class DbService extends QueryHandler {
     tx
   }
 
-  def transaction(code: Transaction => Any): Unit = {
+  def transaction[T](code: Transaction => T): T = {
     val tx = newTransaction
-    try {
+    val result = try {
       code(tx)
     } catch {
       case e: Exception =>
@@ -222,5 +222,7 @@ class DbService extends QueryHandler {
 
     // if there was a request and transacion is not done yet
     if(tx.id.isDefined && tx.isValid) tx.commit()
+
+    result
   }
 }

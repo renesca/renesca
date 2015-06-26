@@ -5,6 +5,7 @@ package renesca.schema
 // It also provides an add-method to insert the underlying Nodes/Relations contained in the corresponding wrappers.
 // These additions are automatically tracked as GraphChanges by the underlying graph.
 
+import renesca.graph.Path
 import renesca.{graph => raw}
 
 
@@ -36,15 +37,31 @@ trait Graph extends Filter {
         graph.relations += hyperRelation.startRelation.relation
         graph.relations += hyperRelation.endRelation.relation
         hyperRelation.path.foreach(graph += _)
-        hyperRelation.path = None
-        hyperRelation.graphPromise.success(graph)
+        hyperRelation.graphOption = Some(graph)
 
       case relation: Relation[_, _] =>
         graph.relations += relation.relation
 
       case schemaNode: Node =>
         graph.nodes += schemaNode.node
-        schemaNode.graphPromise.success(graph)
+        schemaNode.graphOption = Some(graph)
+    }
+  }
+  def remove(schemaItems: Item*) {
+    schemaItems.foreach {
+      case hyperRelation: HyperRelation[_, _, _, _, _] =>
+        graph.nodes -= hyperRelation.node
+        graph.relations -= hyperRelation.startRelation.relation
+        graph.relations -= hyperRelation.endRelation.relation
+        hyperRelation.path.foreach(graph -= _)
+        hyperRelation.graphOption = None
+
+      case relation: Relation[_, _] =>
+        graph.relations -= relation.relation
+
+      case schemaNode: Node =>
+        graph.nodes -= schemaNode.node
+        schemaNode.graphOption = None
     }
   }
 }

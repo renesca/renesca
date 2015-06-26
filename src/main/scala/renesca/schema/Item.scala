@@ -10,7 +10,7 @@ import scala.util.Success
 
 //TODO: sealed trait Item and AbstractRelation?
 trait Item {
-  def item:raw.Item 
+  def item: raw.Item
 }
 
 trait Node extends Item with Filter {
@@ -18,9 +18,10 @@ trait Node extends Item with Filter {
   val labels: Set[raw.Label]
   def node: raw.Node
   def item = node
-  private[schema] val graphPromise = Promise[raw.Graph]
+  private[schema] var graphOption: Option[raw.Graph] = None
+  private val emptyGraph = raw.Graph.empty
 
-  implicit def graph: raw.Graph = graphPromise.future.value.getOrElse(Success(raw.Graph.empty)).get
+  implicit def graph: raw.Graph = graphOption.getOrElse(emptyGraph)
 
   def neighboursAs[T <: Node](nodeFactory: NodeFactory[T]) = filterNodes(node.neighbours, nodeFactory)
   def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: RelationFactory[_, _, RELNODE]) = {
@@ -60,7 +61,12 @@ ENDRELATION <: Relation[HYPERRELATION, END],
   protected[schema] var _startRelation: STARTRELATION = _
   protected[schema] var _endRelation: ENDRELATION = _
 
-  var path: Option[raw.Path] = None
+  def path: Option[raw.Path] = {
+    if(startRelation != null && endRelation != null)
+      raw.Path(startRelation.relation, endRelation.relation).right.toOption
+    else
+      None
+  }
 
   def startRelation = _startRelation
   def endRelation = _endRelation

@@ -685,6 +685,34 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.relations.head mustEqual r2
       wholeGraph.nodes.size mustEqual 3
     }
+
+    "duplicate nodes" in {
+      val graphA = Graph(Seq(Node.create(Seq("MEH"))))
+      db.persistChanges(graphA)
+
+      val graph = Graph(Seq(Node.matches(Seq("MEH")), Node.matches(Seq("MEH"))))
+      db.persistChanges(graph)
+
+      graph.nodes.size mustEqual 2
+      graph.nodes.head mustEqual graph.nodes.last
+      graphA.nodes.size mustEqual 1
+      graph.nodes.head mustEqual graphA.nodes.head
+    }
+
+    "duplicate nodes with relation" in {
+      val graphA = Graph(Seq(Node.create(Seq("MEH"))))
+      db.persistChanges(graphA)
+
+      val graph = Graph(relations = Seq(Relation.create(Node.matches(Seq("MEH")), "aha", Node.matches(Seq("MEH")))))
+      db.persistChanges(graph)
+
+      graph.relations.size mustEqual 1
+      graph.relations.head.startNode mustEqual graph.relations.head.endNode
+      graph.nodes.size mustEqual 2
+      graph.nodes.head mustEqual graph.nodes.last
+      graphA.nodes.size mustEqual 1
+      graph.nodes.head mustEqual graphA.nodes.head
+    }
   }
 }
 

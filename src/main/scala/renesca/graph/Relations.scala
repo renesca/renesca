@@ -2,10 +2,8 @@ package renesca.graph
 
 import scala.collection.mutable
 
-class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation])
+class Relations(private val graph: Graph, private[graph] val self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation])
   extends mutable.Set[Relation] with mutable.SetLike[Relation, Relations] {
-
-  private[graph] var graph: Graph = null
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
@@ -13,9 +11,9 @@ class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutab
     if(relation.origin.isLocal)
       localChanges += AddItem(relation)
 
-    if(graph != null && !(graph.nodes contains relation.startNode))
+    if(!(graph.nodes contains relation.startNode))
       graph.nodes += relation.startNode
-    if(graph != null && !(graph.nodes contains relation.endNode))
+    if(!(graph.nodes contains relation.endNode))
       graph.nodes += relation.endNode
 
     self += relation
@@ -30,5 +28,5 @@ class Relations(private[graph] val self: mutable.LinkedHashSet[Relation] = mutab
 
   override def iterator = self.iterator
   override def contains(relation: Relation) = self contains relation
-  override def empty = new Relations(self.empty)
+  override def empty = new Relations(graph)
 }

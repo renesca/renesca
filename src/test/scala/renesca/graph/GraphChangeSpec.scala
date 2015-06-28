@@ -203,9 +203,21 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when adding a path" in {
+    "emit change when using Graph apply for local nodes/relations" in {
       val node1 = Node(1)
       val node2 = Node.create
+      val relation = Relation.create(node1, "nagut", node2)
+      val graph = Graph(List(node1, node2), List(relation))
+
+      graph.changes must contain(exactly(
+        AddItem(node2).asInstanceOf[GraphChange],
+        AddItem(relation).asInstanceOf[GraphChange]
+      )).inOrder
+    }
+
+    "emit change when adding a path" in {
+      val node1 = Node(1)
+      val node2 = Node(2)
       val graph = Graph(List(node1, node2))
       val relation = Relation.create(node1, "nagut", node2)
       val Right(path) = Path(relation)
@@ -214,7 +226,6 @@ class GraphChangeSpec extends Specification with Mockito {
 
       graph.changes must contain(exactly(
         AddPath(path).asInstanceOf[GraphChange],
-        AddItem(node2).asInstanceOf[GraphChange],
         AddItem(relation).asInstanceOf[GraphChange]
       )).inOrder
     }

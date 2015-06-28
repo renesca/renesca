@@ -2,10 +2,8 @@ package renesca.graph
 
 import scala.collection.mutable
 
-class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
+class Nodes(private val graph: Graph, private[graph] val self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
   extends mutable.Set[Node] with mutable.SetLike[Node, Nodes] {
-
-  private[graph] var graph: Graph = null
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
@@ -33,5 +31,5 @@ class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node
 
   override def iterator = self.iterator
   override def contains(node: Node) = self contains node
-  override def empty = new Nodes(self.empty)
+  override def empty = new Nodes(graph)
 }

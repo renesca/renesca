@@ -5,14 +5,14 @@ import renesca.json
 import scala.collection.mutable
 
 object Graph {
-  def apply(nodes: Traversable[Node], relations: Traversable[Relation] = Nil): Graph = {
-    new Graph(
-      new Nodes(mutable.LinkedHashSet.empty ++ nodes),
-      new Relations(mutable.LinkedHashSet.empty ++ relations)
-    )
+  def apply(nodes: Traversable[Node] = Nil, relations: Traversable[Relation] = Nil): Graph = {
+    val graph = new Graph
+    graph.nodes ++= nodes
+    graph.relations ++= relations
+    graph
   }
 
-  def apply(jsonGraph: json.Graph): Graph = {
+  private[renesca] def apply(jsonGraph: json.Graph): Graph = {
     val nodes: List[Node] = jsonGraph.nodes.map { case json.Node(id, labels, properties) =>
       Node(Id(id.toLong), labels.map(Label.apply), properties)
     }
@@ -31,17 +31,17 @@ object Graph {
           properties)
     }
 
-    Graph(nodes, relations)
+    apply(nodes, relations)
   }
 
-  def empty = new Graph(new Nodes, new Relations)
+  def empty = apply(Nil, Nil)
 }
 
-class Graph private[graph](val nodes: Nodes, val relations: Relations) {
+class Graph private[graph] {
   // private constructor to force usage of Factory
 
-  nodes.graph = this // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
-  relations.graph = this // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
+  val nodes = new Nodes(this) // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
+  val relations = new Relations(this) // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
 
   // graph must be consistent
   require(relations.forall { relation =>
@@ -90,7 +90,7 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
   def degree(node: Node) = inDegree(node) + outDegree(node)
 
   def merge(that: Graph) = {
-    val graph = Graph(this.nodes ++ that.nodes, this.relations ++ that.relations)
+    val graph = Graph.apply(this.nodes ++ that.nodes, this.relations ++ that.relations)
     graph.localChanges ++= this.changes
     graph.localChanges ++= that.changes
     graph
@@ -116,9 +116,4 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
-
-
-
-
-
 

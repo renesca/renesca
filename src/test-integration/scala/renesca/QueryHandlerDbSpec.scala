@@ -713,6 +713,37 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graphA.nodes.size mustEqual 1
       graph.nodes.head mustEqual graphA.nodes.head
     }
+
+    "directly persist nodes" in {
+      val a = Node.create(Set("I"))
+      val b = Node.merge(Set("cheezburger"))
+      db.persistChanges(a, b).isDefined mustEqual false
+
+      a.origin.isLocal mustEqual false
+      b.origin.isLocal mustEqual false
+    }
+
+    "directly persist relations with nodes" in {
+      val start = Node.create(Set("I"))
+      val end = Node.create(Set("cheezburger"))
+      val relation = Relation.create(start, "can haz", end)
+      db.persistChanges(start, relation, end).isDefined mustEqual false
+
+      start.origin.isLocal mustEqual false
+      end.origin.isLocal mustEqual false
+      relation.origin.isLocal mustEqual false
+    }
+
+    "directly persist relations without nodes" in {
+      val start = Node.create(Set("I"))
+      val end = Node.create(Set("cheezburger"))
+      val relation = Relation.create(start, "can haz", end)
+      db.persistChanges(relation).isDefined mustEqual false
+
+      start.origin.isLocal mustEqual false
+      end.origin.isLocal mustEqual false
+      relation.origin.isLocal mustEqual false
+    }
   }
 }
 

@@ -28,8 +28,28 @@ trait QueryInterface {
   def queryTables(queries: Query*): Seq[Table]
   def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
   def query(queries: Query*): Unit
+
   def persistChanges(graph: Graph): Option[String]
-  def persistChanges(schemaGraph: schema.Graph): Option[String] = persistChanges(schemaGraph.graph)
+
+  def persistChanges(schemaGraph: schema.Graph): Option[String] = {
+    persistChanges(schemaGraph.graph)
+  }
+
+  def persistChanges(item: Item, items: Item*): Option[String] = {
+    val (nodes, relations) = (item :: items.toList).map {
+      case n: Node => (Seq(n), Seq.empty)
+      case r: Relation => (Seq(r.startNode, r.endNode), Seq(r))
+    }.unzip
+
+    val graph = Graph(nodes.flatten, relations.flatten)
+    persistChanges(graph)
+  }
+
+  def persistChanges(item: schema.Item, items: schema.Item*): Option[String] = {
+    val graph = new schema.Graph { val graph = Graph.empty }
+    graph.add(item :: items.toList: _*)
+    persistChanges(graph)
+  }
 }
 
 trait QueryHandler extends QueryInterface {

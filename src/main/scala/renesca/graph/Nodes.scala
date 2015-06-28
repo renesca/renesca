@@ -19,7 +19,14 @@ class Nodes(self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node
 
   override def -=(node: Node) = {
     localChanges += DeleteItem(node)
-    graph.relations.self --= graph.incidentRelations(node)
+
+    // look for in and out relations of the to-be-deleted node
+    val (localIncidents, nonLocalIncidents) = graph.incidentRelations(node).partition(_.origin.isLocal)
+    // local relations should be removed with an according graph change
+    graph.relations --= localIncidents
+    // id relations should only be removed from the graph without emitting graph changes
+    graph.relations.self --= nonLocalIncidents
+
     self -= node
     this
   }

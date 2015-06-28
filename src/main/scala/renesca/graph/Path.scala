@@ -29,4 +29,14 @@ class Path private[graph](val allNodes: Seq[Node],
                            ) extends SubGraph {
 
   override def toString = s""""Path(${ relations.mkString(",") })"""
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Path]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Path => (that canEqual this) && this.nodes == that.nodes && this.relations == that.relations
+    case _          => false
+  }
+
+  override def hashCode: Int = origin.hashCode
+
 }

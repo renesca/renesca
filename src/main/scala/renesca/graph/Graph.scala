@@ -58,12 +58,6 @@ class Graph private[graph](val nodes: Nodes, val relations: Relations) {
     relations ++= path.relations
   }
 
-  def -=(path: Path): Unit = {
-    localChanges += RemovePath(path)
-    nodes --= path.allNodes
-    relations --= path.relations
-  }
-
   def changes: Seq[GraphChange] = {
     localChanges ++
       nodes.localChanges ++

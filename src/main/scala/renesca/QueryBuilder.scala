@@ -366,10 +366,7 @@ class QueryBuilder {
       return Some("Paths cannot resolve the same relations")
     }
 
-    // check whether nodes in a new relation or items in a new path should also be deleted
-    if(deleteItems.intersect(addPaths.flatMap(p => p.relations ++ p.allNodes)).nonEmpty) {
-      return Some("Cannot delete item which is contained in a path: " + deleteItems.mkString(","))
-    }
+    // check whether nodes in a new relation should also be deleted
     if(deleteItems.intersect(addRelations.flatMap(r => Seq(r.startNode, r.endNode))).nonEmpty) {
       return Some("Cannot delete start- or endnode of a new relation: " + deleteItems.mkString(","))
     }
@@ -388,8 +385,8 @@ class QueryBuilder {
     // gather content changes
     val contentChanges = changes.collect { case c: GraphContentChange => c }
 
-    // gather path changes
-    val addPaths = changes.collect { case AddPath(p) => p }
+    // gather path changes, we ignore all paths that reference deleted items
+    val addPaths = changes.collect { case AddPath(p) => p }.filterNot(p => deleteItems.intersect(p.allNodes ++ p.relations).nonEmpty)
     val (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths) = {
       val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
       val (addLocalProducePaths, addLocalRelationPaths) = addLocalPaths.partition(p => p.nodes.nonEmpty)

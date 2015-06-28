@@ -627,29 +627,63 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       end mustEqual end2
     }
 
-    "add merge Path with matched start and end node" in {
+    "add path with removed middle node" in {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
-      graph.nodes ++= Seq(start, end)
-      db.persistChanges(graph).isDefined mustEqual false
 
-      val graph2 = Graph.empty
-      val start2 = Node.matches(Seq("START"))
-      val middle2 = Node.merge(Seq("MIDDLE"))
-      val end2 = Node.matches(Seq("END"))
-      val r12 = Relation.merge(start2, "r1", middle2)
-      val r22 = Relation.merge(middle2, "r2", end2)
-      val Right(path2) = Path(r12,r22)
-      graph2 += path2
-      db.persistChanges(graph2).isDefined mustEqual false
+      val middle = Node.merge(Seq("MIDDLE"))
+      val r1 = Relation.merge(start, "r1", middle)
+      val r2 = Relation.merge(middle, "r2", end)
+      val Right(path) = Path(r1,r2)
+      graph += path
+      graph.nodes -= middle
+      db.persistChanges(graph).isDefined mustEqual false
 
       val wholeGraph = db.queryWholeGraph
 
-      wholeGraph.relations.size mustEqual 2
+      wholeGraph.relations.size mustEqual 0
+      wholeGraph.nodes.size mustEqual 2
+    }
+
+    "add path with removed end node" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val end = Node.create(Seq("END"))
+
+      val middle = Node.merge(Seq("MIDDLE"))
+      val r1 = Relation.merge(start, "r1", middle)
+      val r2 = Relation.merge(middle, "r2", end)
+      val Right(path) = Path(r1,r2)
+      graph += path
+      graph.nodes -= end
+      db.persistChanges(graph).isDefined mustEqual false
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 1
+      wholeGraph.relations.head mustEqual r1
+      wholeGraph.nodes.size mustEqual 2
+    }
+
+    "add path with removed relation" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val end = Node.create(Seq("END"))
+
+      val middle = Node.merge(Seq("MIDDLE"))
+      val r1 = Relation.merge(start, "r1", middle)
+      val r2 = Relation.merge(middle, "r2", end)
+      val Right(path) = Path(r1,r2)
+      graph += path
+      graph.relations -= r1
+      db.persistChanges(graph).isDefined mustEqual false
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 1
+      wholeGraph.relations.head mustEqual r2
       wholeGraph.nodes.size mustEqual 3
-      start mustEqual start2
-      end mustEqual end2
     }
   }
 }

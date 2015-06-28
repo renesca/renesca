@@ -129,14 +129,6 @@ class SchemaSpec extends Specification with Mockito {
     nodes.size mustEqual 0
   }
 
-  "add node to two graphs and fail" >> {
-    val graph = new TheGraph
-    val graph2 = new TheGraph
-    val node = TheNode()
-    graph.add(node)
-    graph2.add(node) must throwA[IllegalStateException]
-  }
-
   "add nodes and relation to graph" >> {
     val graph = new TheGraph
     val node = TheNode()

@@ -53,7 +53,6 @@ trait Graph extends Filter {
         graph.nodes -= hyperRelation.node
         graph.relations -= hyperRelation.startRelation.relation
         graph.relations -= hyperRelation.endRelation.relation
-        hyperRelation.path.foreach(graph -= _)
         hyperRelation.graphOption = None
 
       case relation: Relation[_, _] =>

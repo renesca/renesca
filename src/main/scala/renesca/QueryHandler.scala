@@ -36,18 +36,15 @@ trait QueryInterface {
   }
 
   def persistChanges(item: Item, items: Item*): Option[String] = {
-    val (nodes, relations) = (item :: items.toList).map {
-      case n: Node => (Seq(n), Seq.empty)
-      case r: Relation => (Seq(r.startNode, r.endNode), Seq(r))
-    }.unzip
-
-    val graph = Graph(nodes.flatten, relations.flatten)
+    val allItems = item :: items.toList
+    val graph = Graph(allItems.collect { case n: Node => n }, allItems.collect { case r: Relation => r })
     persistChanges(graph)
   }
 
   def persistChanges(item: schema.Item, items: schema.Item*): Option[String] = {
+    val allItems = item :: items.toList
     val graph = new schema.Graph { val graph = Graph.empty }
-    graph.add(item :: items.toList: _*)
+    graph.add(allItems: _*)
     persistChanges(graph)
   }
 }

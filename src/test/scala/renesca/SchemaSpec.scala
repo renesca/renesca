@@ -181,8 +181,8 @@ class SchemaSpec extends Specification with Mockito {
     val predecessors = node2.predecessorsAs(TheNode, TheHyperRelation)
 
     nodes.size mustEqual 2
-    relation.startNode.node mustEqual node.node
-    relation.endNode.node mustEqual node2.node
+    relation.startNodeOpt.get.node mustEqual node.node
+    relation.endNodeOpt.get.node mustEqual node2.node
     startHyperRelations.size mustEqual 1
     endHyperRelations.size mustEqual 1
     hyperRelations.size mustEqual 1
@@ -201,13 +201,12 @@ class SchemaSpec extends Specification with Mockito {
   "add hyperrelation without start- and endnode" >> {
     val graph = new TheGraph
     val relation = TheHyperRelation()
-    // graph.add(relation)
-    graph.graph.nodes += relation.node
+    graph.add(relation)
 
     val hyperRelations = graph.hyperRelationsAs(TheHyperRelation)
 
-    relation.startRelation mustEqual null
-    relation.endRelation mustEqual null
+    relation.startRelationOpt mustEqual None
+    relation.endRelationOpt mustEqual None
     hyperRelations.head.node mustEqual relation.node
   }
 }

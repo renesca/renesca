@@ -34,8 +34,8 @@ trait Graph extends Filter {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
         graph.nodes += hyperRelation.node
-        graph.relations += hyperRelation.startRelation.relation
-        graph.relations += hyperRelation.endRelation.relation
+        hyperRelation.startRelationOpt.foreach(graph.relations += _.relation)
+        hyperRelation.endRelationOpt.foreach(graph.relations += _.relation)
         hyperRelation.path.foreach(graph += _)
         hyperRelation.graphOption = Some(graph)
 
@@ -51,8 +51,8 @@ trait Graph extends Filter {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
         graph.nodes -= hyperRelation.node
-        graph.relations -= hyperRelation.startRelation.relation
-        graph.relations -= hyperRelation.endRelation.relation
+        hyperRelation.startRelationOpt.foreach(graph.relations -= _.relation)
+        hyperRelation.endRelationOpt.foreach(graph.relations -= _.relation)
         hyperRelation.graphOption = None
 
       case relation: Relation[_, _] =>

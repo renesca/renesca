@@ -39,16 +39,19 @@ trait Node extends Item with Filter {
 }
 
 trait AbstractRelation[+START <: Node, +END <: Node] extends Item {
-  def startNode: START
-  def endNode: END
+  def startNodeOpt: Option[START]
+  def endNodeOpt: Option[END]
 }
 
 trait Relation[+START <: Node, +END <: Node] extends AbstractRelation[START, END] {
+  def startNode: START
+  def endNode: END
+  def startNodeOpt = Some(startNode)
+  def endNodeOpt = Some(endNode)
   def relation: raw.Relation
   def item = relation
   def relationType: raw.RelationType = relation.relationType
 }
-
 
 trait HyperRelation[
 +START <: Node,
@@ -62,15 +65,15 @@ ENDRELATION <: Relation[HYPERRELATION, END],
   protected[schema] var _endRelation: ENDRELATION = _
 
   def path: Option[raw.Path] = {
-    if(startRelation != null && endRelation != null)
-      raw.Path(startRelation.relation, endRelation.relation).right.toOption
+    if(startRelationOpt.isDefined && endRelationOpt.isDefined)
+      raw.Path(startRelationOpt.get.relation, endRelationOpt.get.relation).right.toOption
     else
       None
   }
 
-  def startRelation = _startRelation
-  def endRelation = _endRelation
-  def startNode = startRelation.startNode
-  def endNode = endRelation.endNode
+  def startRelationOpt = Option(_startRelation)
+  def endRelationOpt = Option(_endRelation)
+  def startNodeOpt = startRelationOpt.map(_.startNode)
+  def endNodeOpt = endRelationOpt.map(_.endNode)
 }
 

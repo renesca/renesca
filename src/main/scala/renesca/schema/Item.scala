@@ -11,6 +11,14 @@ import scala.util.Success
 //TODO: sealed trait Item and AbstractRelation?
 trait Item {
   def rawItem: raw.Item
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Item =>
+      rawItem.equals(that.rawItem)
+    case _          => false
+  }
+
+  override def hashCode(): Int = 31 * rawItem.hashCode()
 }
 
 trait Node extends Item with Filter {

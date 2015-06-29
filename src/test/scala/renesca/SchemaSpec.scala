@@ -291,5 +291,39 @@ class SchemaSpec extends Specification with Mockito {
     relation.startNode.rawItem mustEqual a.rawItem
     relation.endNode.rawItem mustEqual b.rawItem
   }
+
+  "node equality" in {
+    val node = TheNode()
+    val node2 = TheNode.wrap(node.rawItem)
+    val node3 = TheNode()
+
+    node.equals(node2) mustEqual true
+    node.equals(node3) mustEqual false
+    node.equals("hi") mustEqual false
+  }
+
+  "relation equality" in {
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheRelation(node, node2)
+    val relation1 = TheRelation.wrap(relation.rawItem)
+    val relation2 = TheRelation(node, node2)
+
+    relation.equals(relation1) mustEqual true
+    relation.equals(relation2) mustEqual false
+    relation.equals("hi") mustEqual false
+  }
+
+  "hyperrelation equality" in {
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheHyperRelation(node, node2)
+    val relation1 = TheHyperRelation.wrap(relation.rawItem)
+    val relation2 = TheHyperRelation(node, node2)
+
+    relation.equals(relation1) mustEqual true
+    relation.equals(relation2) mustEqual false
+    relation.equals("hi") mustEqual false
+  }
 }
 

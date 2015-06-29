@@ -127,6 +127,18 @@ class SchemaSpec extends Specification with Mockito {
     val nodes = node.neighboursAs(TheNode)
 
     nodes.size mustEqual 0
+    node.graph mustEqual graph.graph
+  }
+
+  "remove node from graph" >> {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    graph.add(node, node2)
+    graph.remove(node)
+
+    graph.graph.nodes must contain(exactly(node2.rawItem))
+    node.graph mustNotEqual graph.graph
   }
 
   "add nodes and relation to graph" >> {
@@ -161,6 +173,34 @@ class SchemaSpec extends Specification with Mockito {
     predecessors.head.rawItem mustEqual node.rawItem
   }
 
+  "remove relation from graph" >> {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheRelation(node, node2)
+    graph.add(node, node2, relation)
+    graph.remove(relation)
+
+    graph.graph.nodes must contain(exactly(node.rawItem, node2.rawItem))
+    graph.graph.relations.size mustEqual 0
+    node.graph mustEqual graph.graph
+    node2.graph mustEqual graph.graph
+  }
+
+  "remove node of relation from graph" >> {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheRelation(node, node2)
+    graph.add(node, node2, relation)
+    graph.remove(node2)
+
+    graph.graph.nodes must contain(exactly(node.rawItem))
+    graph.graph.relations.size mustEqual 0
+    node.graph mustEqual graph.graph
+    node2.graph mustNotEqual graph.graph
+  }
+
   "add nodes and hyperrelation to graph" >> {
     val graph = new TheGraph
     val node = TheNode()
@@ -181,6 +221,7 @@ class SchemaSpec extends Specification with Mockito {
     val predecessors = node2.predecessorsAs(TheNode, TheHyperRelation)
 
     nodes.size mustEqual 2
+    relation.graph mustEqual graph.graph
     relation.startNodeOpt.get.rawItem mustEqual node.rawItem
     relation.endNodeOpt.get.rawItem mustEqual node2.rawItem
     startHyperRelations.size mustEqual 1
@@ -197,6 +238,36 @@ class SchemaSpec extends Specification with Mockito {
     predecessors.size mustEqual 1
     predecessors.head.rawItem mustEqual node.rawItem
   }
+
+  "remove hyperrelation from graph" >> {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheHyperRelation(node, node2)
+    graph.add(node, node2, relation)
+    graph.remove(relation)
+
+    graph.graph.nodes must contain(exactly(node.rawItem, node2.rawItem))
+    graph.graph.relations.size mustEqual 0
+    node.graph mustEqual graph.graph
+    node2.graph mustEqual graph.graph
+    relation.graph mustNotEqual graph.graph
+  }
+
+  "remove node of hyperrelation from graph" >> {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheHyperRelation(node, node2)
+    graph.add(node, node2, relation)
+    graph.remove(node)
+
+    graph.graph.nodes must contain(exactly(node2.rawItem))
+    graph.graph.relations.size mustEqual 0
+    node.graph mustNotEqual graph.graph
+    node2.graph mustEqual graph.graph
+    relation.graph mustNotEqual graph.graph
+  }.pendingUntilFixed("removal of start/end node should trigger removal of hyperrelations")
 
   "add hyperrelation without start- and endnode" >> {
     val graph = new TheGraph

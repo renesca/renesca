@@ -5,7 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.graph.{Graph, Node, Relation, RelationType}
+import renesca.graph._
 import renesca.json.protocols.ResponseJsonProtocol._
 import renesca.parameter.implicits._
 import renesca.parameter.{ArrayParameterValue, NullPropertyValue, ParameterValue}
@@ -39,7 +39,7 @@ class QueryHandlerSpec extends Specification with Mockito {
   */
 
   "QueryHandler" should {
-    "clear changes after persisting" in {
+    "clear changes after persisting raw graph" in {
       val queryHandler = new QueryHandler() {
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
         override protected def handleError(exceptions: Option[Exception]) {}
@@ -51,6 +51,68 @@ class QueryHandlerSpec extends Specification with Mockito {
       queryHandler.persistChanges(graph)
 
       there was one(graph).clearChanges()
+    }
+
+    "clear changes after persisting raw graph on transaction" in {
+      val transaction = new Transaction() {
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val graph = mock[Graph]
+      graph.changes returns Nil
+
+      transaction.persistChanges(graph)
+
+      there was one(graph).clearChanges()
+    }
+
+    "clear changes after persisting schema graph" in {
+      val queryHandler = new QueryHandler() {
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val schemaGraph = new schema.Graph {
+        val graph = mock[Graph]
+        graph.changes returns Nil
+      }
+
+      queryHandler.persistChanges(schemaGraph)
+
+      there was one(schemaGraph.graph).clearChanges()
+    }
+
+    "call changes after persisting item" in {
+      val queryHandler = new QueryHandler() {
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val node = mock[Node]
+      node.changes returns Nil
+
+      queryHandler.persistChanges(node)
+
+      there was one(node).changes
+    }
+
+    "call changes after persisting schema item" in {
+      val queryHandler = new QueryHandler() {
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val schemaNode = new schema.Node {
+        override val label: Label = Label("hi")
+        override val labels: Set[Label] = Set(label)
+        val rawItem = mock[Node]
+        rawItem.changes returns Nil
+      }
+
+      queryHandler.persistChanges(schemaNode)
+
+      there was one(schemaNode.rawItem).changes
     }
 
     "create no graph data as an empty graph" in new GraphQuery {

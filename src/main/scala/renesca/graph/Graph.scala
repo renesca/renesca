@@ -66,7 +66,7 @@ class Graph private[graph] {
       relations.toSeq.flatMap(_.changes)
   }
 
-  def clearChanges() {
+  private[renesca] def clearChanges() {
     nodes.clearChanges()
     relations.clearChanges()
 

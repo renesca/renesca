@@ -7,7 +7,7 @@ class Nodes(private val graph: Graph, private[graph] val self: mutable.LinkedHas
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
-  def clearChanges() = {
+  private[renesca] def clearChanges() = {
     self.foreach { node =>
       node.properties.localChanges.clear()
       node.labels.localChanges.clear()

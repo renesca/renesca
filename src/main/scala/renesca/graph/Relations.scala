@@ -7,7 +7,7 @@ class Relations(private val graph: Graph, private[graph] val self: mutable.Linke
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
-  def clearChanges() = {
+  private[renesca] def clearChanges() = {
     self.foreach { relation =>
       relation.properties.localChanges.clear()
     }

@@ -62,7 +62,7 @@ ENDRELATION <: Relation[HYPERRELATION, END],
   protected[schema] var _startRelation: STARTRELATION = _
   protected[schema] var _endRelation: ENDRELATION = _
 
-  def path: Option[raw.Path] = {
+  def rawPath: Option[raw.Path] = {
     if(startRelationOpt.isDefined && endRelationOpt.isDefined)
       raw.Path(startRelationOpt.get.rawItem, endRelationOpt.get.rawItem).right.toOption
     else

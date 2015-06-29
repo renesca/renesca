@@ -36,7 +36,7 @@ trait Graph extends Filter {
         graph.nodes += hyperRelation.rawItem
         hyperRelation.startRelationOpt.foreach(graph.relations += _.rawItem)
         hyperRelation.endRelationOpt.foreach(graph.relations += _.rawItem)
-        hyperRelation.path.foreach(graph += _)
+        hyperRelation.rawPath.foreach(graph += _)
         hyperRelation.graphOption = Some(graph)
 
       case relation: Relation[_, _] =>

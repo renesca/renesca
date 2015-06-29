@@ -67,16 +67,10 @@ class Graph private[graph] {
   }
 
   def clearChanges() {
+    nodes.clearChanges()
+    relations.clearChanges()
+
     localChanges.clear()
-    nodes.foreach { node =>
-      node.properties.localChanges.clear()
-      node.labels.localChanges.clear()
-    }
-    relations.foreach { relation =>
-      relation.properties.localChanges.clear()
-    }
-    nodes.localChanges.clear()
-    relations.localChanges.clear()
   }
 
   def outRelations(node: Node) = relations.filter(node == _.startNode).toSet

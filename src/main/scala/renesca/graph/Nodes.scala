@@ -7,6 +7,15 @@ class Nodes(private val graph: Graph, private[graph] val self: mutable.LinkedHas
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
+  def clearChanges() = {
+    self.foreach { node =>
+      node.properties.localChanges.clear()
+      node.labels.localChanges.clear()
+    }
+
+    localChanges.clear()
+  }
+
   override def +=(node: Node) = {
     if(node.origin.isLocal)
       localChanges += AddItem(node)

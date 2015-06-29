@@ -83,22 +83,27 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(schemaGraph.graph).clearChanges()
     }
 
-    "call changes after persisting item" in {
+    "overloaded persistChanges for item" in {
       val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder].smart
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
         override protected def handleError(exceptions: Option[Exception]) {}
       }
 
-      val node = mock[Node]
-      node.changes returns Nil
+      val node = Node(1)
+      queryHandler.persistChanges(node) // hier
 
-      queryHandler.persistChanges(node)
-
-      there was one(node).changes
+      there was one (queryHandler.builder).generateQueries(Seq.empty)
+      there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "call changes after persisting schema item" in {
+    "overloaded persistChanges for schema item" in {
       val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder].smart
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
         override protected def handleError(exceptions: Option[Exception]) {}
       }
@@ -106,13 +111,13 @@ class QueryHandlerSpec extends Specification with Mockito {
       val schemaNode = new schema.Node {
         override val label: Label = Label("hi")
         override val labels: Set[Label] = Set(label)
-        val rawItem = mock[Node]
-        rawItem.changes returns Nil
+        val rawItem = Node(1)
       }
 
       queryHandler.persistChanges(schemaNode)
 
-      there was one(schemaNode.rawItem).changes
+      there was one (queryHandler.builder).generateQueries(Seq.empty)
+      there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
     "create no graph data as an empty graph" in new GraphQuery {

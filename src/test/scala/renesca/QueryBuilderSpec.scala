@@ -516,28 +516,6 @@ class QueryBuilderSpec extends Specification with Mockito {
     }
 
     "Path" should {
-      "fail on inconsistent path origin" in {
-        val a = Node.matches
-        val b = Node.create
-        val c = Node.merge
-        val r1 = Relation.create(a, "kicks", b)
-        val r2 = Relation.merge(b, "kicks", c)
-        val p = Path(r1, r2)
-
-        p mustEqual Left("Relations have inconsistent origin")
-      }
-
-      "fail on disconnected path" in {
-        val a = Node.matches
-        val b = Node.create
-        val c = Node.merge
-        val r1 = Relation.create(a, "kicks", b)
-        val r2 = Relation.merge(a, "kicks", c)
-        val p = Path(r1, r2)
-
-        p mustEqual Left("Relations do not form a path")
-      }
-
       "fail on same node in paths" in {
         val a = Node(1)
         val a2 = Node(2)

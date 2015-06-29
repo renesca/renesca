@@ -209,5 +209,16 @@ class SchemaSpec extends Specification with Mockito {
     relation.endRelationOpt mustEqual None
     hyperRelations.head.rawItem mustEqual relation.rawItem
   }
+
+  "correct start/end node accessors" in {
+    val a = TheNode()
+    val b = TheNode()
+    val relation = TheRelation(a, b)
+
+    relation.startNode mustEqual relation.startNodeOpt.get
+    relation.endNode mustEqual relation.endNodeOpt.get
+    relation.startNode.rawItem mustEqual a.rawItem
+    relation.endNode.rawItem mustEqual b.rawItem
+  }
 }
 

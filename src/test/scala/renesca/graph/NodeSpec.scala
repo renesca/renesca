@@ -29,7 +29,7 @@ class NodeSpec extends Specification with Mockito {
     }
 
     "be equal to other nodes with same id" in {
-      Node(1) mustEqual Node(1)
+      Node(1) mustEqual Node(1L)
     }
 
     "not be equal to other nodes different id" in {

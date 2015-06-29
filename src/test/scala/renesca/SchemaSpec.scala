@@ -15,21 +15,21 @@ class SchemaSpec extends Specification with Mockito {
 
     class TheGraph(val graph: raw.Graph = raw.Graph.empty) extends Graph
 
-    class TheNode(val node: raw.Node) extends Node {
+    class TheNode(val rawItem: raw.Node) extends Node {
       val label = TheNode.label
       val labels = TheNode.labels
     }
 
-    class TheRelation(val startNode: TheNode, val relation: raw.Relation, val endNode: TheNode)
+    class TheRelation(val startNode: TheNode, val rawItem: raw.Relation, val endNode: TheNode)
       extends Relation[TheNode, TheNode]
 
-    class StartHyperRelation(val startNode: TheNode, val relation: raw.Relation, val endNode: TheHyperRelation)
+    class StartHyperRelation(val startNode: TheNode, val rawItem: raw.Relation, val endNode: TheHyperRelation)
       extends Relation[TheNode, TheHyperRelation]
 
-    class EndHyperRelation(val startNode: TheHyperRelation, val relation: raw.Relation, val endNode: TheNode)
+    class EndHyperRelation(val startNode: TheHyperRelation, val rawItem: raw.Relation, val endNode: TheNode)
       extends Relation[TheHyperRelation, TheNode]
 
-    class TheHyperRelation(val node: raw.Node)
+    class TheHyperRelation(val rawItem: raw.Node)
       extends HyperRelation[TheNode, StartHyperRelation, TheHyperRelation, EndHyperRelation, TheNode] {
       val label = TheHyperRelation.label
       val labels = TheHyperRelation.labels
@@ -52,7 +52,7 @@ class SchemaSpec extends Specification with Mockito {
         new TheRelation(TheNode.wrap(relation.startNode), relation, TheNode.wrap(relation.endNode))
       }
       def apply(startNode: TheNode, endNode: TheNode) = {
-        new TheRelation(startNode, raw.Relation.create(startNode.node, relationType, endNode.node), endNode)
+        new TheRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
       }
     }
 
@@ -63,7 +63,7 @@ class SchemaSpec extends Specification with Mockito {
         new StartHyperRelation(TheNode.wrap(relation.startNode), relation, TheHyperRelation.wrap(relation.endNode))
       }
       def apply(startNode: TheNode, endNode: TheHyperRelation) = {
-        new StartHyperRelation(startNode, raw.Relation.create(startNode.node, relationType, endNode.node), endNode)
+        new StartHyperRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
       }
     }
 
@@ -74,7 +74,7 @@ class SchemaSpec extends Specification with Mockito {
         new EndHyperRelation(TheHyperRelation.wrap(relation.endNode), relation, TheNode.wrap(relation.startNode))
       }
       def apply(startNode: TheHyperRelation, endNode: TheNode) = {
-        new EndHyperRelation(startNode, raw.Relation.create(startNode.node, relationType, endNode.node), endNode)
+        new EndHyperRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
       }
     }
 
@@ -151,14 +151,14 @@ class SchemaSpec extends Specification with Mockito {
     relations.size mustEqual 1
     hyperRelations.size mustEqual 0
     neighbours.size mustEqual 1
-    neighbours.head.node mustEqual node2.node
-    neighboursReverse.head.node mustEqual node.node
+    neighbours.head.rawItem mustEqual node2.rawItem
+    neighboursReverse.head.rawItem mustEqual node.rawItem
     neighbours2.size mustEqual 1
-    neighbours2.head.node mustEqual node.node
+    neighbours2.head.rawItem mustEqual node.rawItem
     successors.size mustEqual 1
-    successors.head.node mustEqual node2.node
+    successors.head.rawItem mustEqual node2.rawItem
     predecessors.size mustEqual 1
-    predecessors.head.node mustEqual node.node
+    predecessors.head.rawItem mustEqual node.rawItem
   }
 
   "add nodes and hyperrelation to graph" >> {
@@ -181,21 +181,21 @@ class SchemaSpec extends Specification with Mockito {
     val predecessors = node2.predecessorsAs(TheNode, TheHyperRelation)
 
     nodes.size mustEqual 2
-    relation.startNodeOpt.get.node mustEqual node.node
-    relation.endNodeOpt.get.node mustEqual node2.node
+    relation.startNodeOpt.get.rawItem mustEqual node.rawItem
+    relation.endNodeOpt.get.rawItem mustEqual node2.rawItem
     startHyperRelations.size mustEqual 1
     endHyperRelations.size mustEqual 1
     hyperRelations.size mustEqual 1
     neighbours.size mustEqual 1
-    neighbours.head.node mustEqual relation.node
-    neighboursReverse.head.node mustEqual node.node
-    relationNeighbours.map(_.node) must contain(exactly(node.node, node2.node))
+    neighbours.head.rawItem mustEqual relation.rawItem
+    neighboursReverse.head.rawItem mustEqual node.rawItem
+    relationNeighbours.map(_.rawItem) must contain(exactly(node.rawItem, node2.rawItem))
     neighbours2.size mustEqual 1
-    neighbours2.head.node mustEqual relation.node
+    neighbours2.head.rawItem mustEqual relation.rawItem
     successors.size mustEqual 1
-    successors.head.node mustEqual node2.node
+    successors.head.rawItem mustEqual node2.rawItem
     predecessors.size mustEqual 1
-    predecessors.head.node mustEqual node.node
+    predecessors.head.rawItem mustEqual node.rawItem
   }
 
   "add hyperrelation without start- and endnode" >> {
@@ -207,7 +207,7 @@ class SchemaSpec extends Specification with Mockito {
 
     relation.startRelationOpt mustEqual None
     relation.endRelationOpt mustEqual None
-    hyperRelations.head.node mustEqual relation.node
+    hyperRelations.head.rawItem mustEqual relation.rawItem
   }
 }
 

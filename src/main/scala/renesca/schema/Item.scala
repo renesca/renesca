@@ -10,31 +10,30 @@ import scala.util.Success
 
 //TODO: sealed trait Item and AbstractRelation?
 trait Item {
-  def item: raw.Item
+  def rawItem: raw.Item
 }
 
 trait Node extends Item with Filter {
   val label: raw.Label
   val labels: Set[raw.Label]
-  def node: raw.Node
-  def item = node
+  def rawItem: raw.Node
   private[schema] var graphOption: Option[raw.Graph] = None
   private val emptyGraph = raw.Graph.empty
 
   implicit def graph: raw.Graph = graphOption.getOrElse(emptyGraph)
 
-  def neighboursAs[T <: Node](nodeFactory: NodeFactory[T]) = filterNodes(node.neighbours, nodeFactory)
+  def neighboursAs[T <: Node](nodeFactory: NodeFactory[T]) = filterNodes(rawItem.neighbours, nodeFactory)
   def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: RelationFactory[_, _, RELNODE]) = {
-    filterNodes(node.outRelations.filter(_.relationType == relationFactory.relationType).map(_.endNode), nodeFactory)
+    filterNodes(rawItem.outRelations.filter(_.relationType == relationFactory.relationType).map(_.endNode), nodeFactory)
   }
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], relationFactory: RelationFactory[RELNODE, _, _]) = {
-    filterNodes(node.inRelations.filter(_.relationType == relationFactory.relationType).map(_.startNode), nodeFactory)
+    filterNodes(rawItem.inRelations.filter(_.relationType == relationFactory.relationType).map(_.startNode), nodeFactory)
   }
   def successorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[_, _, _, _, RELNODE]) = {
-    filterNodes(node.outRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.endNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.outRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.endNode)), nodeFactory)
+    filterNodes(rawItem.outRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.endNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.outRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.endNode)), nodeFactory)
   }
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
-    filterNodes(node.inRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.startNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.inRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.startNode)), nodeFactory)
+    filterNodes(rawItem.inRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.startNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.inRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.startNode)), nodeFactory)
   }
 }
 
@@ -48,9 +47,8 @@ trait Relation[+START <: Node, +END <: Node] extends AbstractRelation[START, END
   def endNode: END
   def startNodeOpt = Some(startNode)
   def endNodeOpt = Some(endNode)
-  def relation: raw.Relation
-  def item = relation
-  def relationType: raw.RelationType = relation.relationType
+  def rawItem: raw.Relation
+  def relationType: raw.RelationType = rawItem.relationType
 }
 
 trait HyperRelation[
@@ -66,7 +64,7 @@ ENDRELATION <: Relation[HYPERRELATION, END],
 
   def path: Option[raw.Path] = {
     if(startRelationOpt.isDefined && endRelationOpt.isDefined)
-      raw.Path(startRelationOpt.get.relation, endRelationOpt.get.relation).right.toOption
+      raw.Path(startRelationOpt.get.rawItem, endRelationOpt.get.rawItem).right.toOption
     else
       None
   }

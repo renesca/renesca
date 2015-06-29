@@ -33,33 +33,33 @@ trait Graph extends Filter {
   def add(schemaItems: Item*) {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
-        graph.nodes += hyperRelation.node
-        hyperRelation.startRelationOpt.foreach(graph.relations += _.relation)
-        hyperRelation.endRelationOpt.foreach(graph.relations += _.relation)
+        graph.nodes += hyperRelation.rawItem
+        hyperRelation.startRelationOpt.foreach(graph.relations += _.rawItem)
+        hyperRelation.endRelationOpt.foreach(graph.relations += _.rawItem)
         hyperRelation.path.foreach(graph += _)
         hyperRelation.graphOption = Some(graph)
 
       case relation: Relation[_, _] =>
-        graph.relations += relation.relation
+        graph.relations += relation.rawItem
 
       case schemaNode: Node =>
-        graph.nodes += schemaNode.node
+        graph.nodes += schemaNode.rawItem
         schemaNode.graphOption = Some(graph)
     }
   }
   def remove(schemaItems: Item*) {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
-        graph.nodes -= hyperRelation.node
-        hyperRelation.startRelationOpt.foreach(graph.relations -= _.relation)
-        hyperRelation.endRelationOpt.foreach(graph.relations -= _.relation)
+        graph.nodes -= hyperRelation.rawItem
+        hyperRelation.startRelationOpt.foreach(graph.relations -= _.rawItem)
+        hyperRelation.endRelationOpt.foreach(graph.relations -= _.rawItem)
         hyperRelation.graphOption = None
 
       case relation: Relation[_, _] =>
-        graph.relations -= relation.relation
+        graph.relations -= relation.rawItem
 
       case schemaNode: Node =>
-        graph.nodes -= schemaNode.node
+        graph.nodes -= schemaNode.rawItem
         schemaNode.graphOption = None
     }
   }

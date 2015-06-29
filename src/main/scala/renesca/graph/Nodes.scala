@@ -2,7 +2,7 @@ package renesca.graph
 
 import scala.collection.mutable
 
-class Nodes(private val graph: Graph, private[graph] val self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
+class Nodes(private val graph: Graph, self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
   extends mutable.Set[Node] with mutable.SetLike[Node, Nodes] {
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
@@ -27,12 +27,8 @@ class Nodes(private val graph: Graph, private[graph] val self: mutable.LinkedHas
   override def -=(node: Node) = {
     localChanges += DeleteItem(node)
 
-    // look for in and out relations of the to-be-deleted node
-    val (localIncidents, nonLocalIncidents) = graph.incidentRelations(node).partition(_.origin.isLocal)
-    // local relations should be removed with an according graph change
-    graph.relations --= localIncidents
-    // id relations should only be removed from the graph without emitting graph changes
-    graph.relations.self --= nonLocalIncidents
+    // delete in and out relations of the to-be-deleted node
+    graph.relations --= graph.incidentRelations(node)
 
     self -= node
     this

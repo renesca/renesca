@@ -12,9 +12,9 @@ case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) =>
 class QueryGenerator {
   def randomVariable = "V" + java.util.UUID.randomUUID().toString.replace("-", "")
 
-  private val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
+  protected val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
 
-  private def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
+  protected def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
     val remainingProperties = properties.filterKeys(!selection.contains(_))
     val selectedProperties = properties.filterKeys(selection.contains(_))
     val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"${ variable }_${ k }"), v) }
@@ -25,7 +25,7 @@ class QueryGenerator {
 
   //TODO should limit number of matches for merge and match to 1!
   // match/merge ... with variable limit 1 ...
-  private def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
+  protected def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
     resolvedItems.getOrElse(node, node.origin) match {
@@ -47,7 +47,7 @@ class QueryGenerator {
     }
   }
 
-  private def relationPattern(relation: Relation): (String, String, String, ParameterMap, String) = {
+  protected def relationPattern(relation: Relation): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     resolvedItems.getOrElse(relation, relation.origin) match {
       case Id(id)                =>
@@ -68,12 +68,12 @@ class QueryGenerator {
     }
   }
 
-  private def queryNode(node: Node) = {
+  protected def queryNode(node: Node) = {
     val (keyword, query, postfix, parameters, variable) = nodePattern(node)
     Query(s"$keyword $query $postfix return $variable", parameters)
   }
 
-  private def queryRelation(relation: Relation) = {
+  protected def queryRelation(relation: Relation) = {
     if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
       throw new Exception("Start node in relation is still local: " + relation)
     if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
@@ -330,7 +330,7 @@ class QueryBuilder {
 
   protected def newPathDependencyGraph(paths: Set[Path]) = new PathDependencyGraph(paths)
 
-  private def filterGraphChanges(graphChanges: Seq[GraphChange]) = {
+  protected def filterGraphChanges(graphChanges: Seq[GraphChange]) = {
     // First get rid of duplicate changes, keep only the last change
     val reversedDistinctChanges = graphChanges.reverse.distinct
 
@@ -359,7 +359,7 @@ class QueryBuilder {
     }.reverse
   }
 
-  private def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
+  protected def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
     val illegalChange = allChanges.find(!_.isValid)
     if(illegalChange.isDefined)
       return Some("Found invalid graph change: " + illegalChange.get)

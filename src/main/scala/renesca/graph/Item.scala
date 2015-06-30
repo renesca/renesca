@@ -29,10 +29,6 @@ sealed trait LocalOrigin extends Origin {
   def isLocal = true
 }
 
-sealed trait NonLocalOrigin extends Origin {
-  def isLocal = false
-}
-
 // origins are only equal if they have the same id
 class Create() extends LocalOrigin {
   val kind = Create.kind
@@ -49,9 +45,10 @@ class Match(val properties: Set[PropertyKey]) extends LocalOrigin {
   override def toString = s"Match($properties)"
 }
 
-case class Id(id: Long) extends NonLocalOrigin {
-  override def toString = id.toString
+case class Id(id: Long) extends Origin {
   val kind = Id.kind
+  def isLocal = false
+  override def toString = id.toString
 }
 
 object Create {
@@ -78,6 +75,7 @@ object Match {
 
 object Id {
   val kind = OriginKind.ID
+
   implicit def LongToId(id: Long): Id = Id(id)
   implicit def IntToId(id: Int): Id = Id(id)
 }

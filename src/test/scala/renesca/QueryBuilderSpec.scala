@@ -14,24 +14,36 @@ class QueryBuilderSpec extends Specification with Mockito {
   sequential
 
   class DeterministicQueryBuilder extends QueryBuilder {
-    var counter = -1
-    override def randomVariable = {
-      counter += 1
-      s"V$counter"
+    override def newQueryGenerator = new QueryGenerator {
+      var counter = -1
+      override def randomVariable = {
+        counter += 1
+        s"V$counter"
+      }
     }
   }
 
-  class FakeQueryBuilder(results: Seq[(Graph, Table)]) extends DeterministicQueryBuilder {
+  class FakeQueryBuilder(results: Seq[Seq[(Graph, Table)]]) extends DeterministicQueryBuilder {
     def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]]): Option[String] = {
-      applyQueries(queryRequests, _ => results)
+      var idx = 0
+      applyQueries(queryRequests, queries => {
+        if (queries.nonEmpty) {
+          val res = results(idx)
+          idx = idx + 1
+          res
+        } else {
+          Seq.empty
+        }
+      })
     }
   }
 
   object FakeQueryBuilder {
     def apply() = new FakeQueryBuilder(Seq.empty)
-    def apply(results: Seq[(Graph, Table)]) = new FakeQueryBuilder(results)
-    def apply(graph: Graph, graphResults: Graph*) = new FakeQueryBuilder((graph :: graphResults.toList).map(g => (g, Table(Seq.empty, Seq.empty))))
-    def apply(table: Table, tableResults: Table*) = new FakeQueryBuilder((table :: tableResults.toList).map(t => (Graph.empty, t)))
+    def apply(graph: Graph, graphResults: Graph*) = graphs(graph :: graphResults.toList)
+    def apply(table: Table, tableResults: Table*) = tables(table :: tableResults.toList)
+    def graphs(graph: Seq[Graph], graphResults: Seq[Graph]*) = new FakeQueryBuilder((graph :: graphResults.toList).filter(_.nonEmpty).map(gs => gs.map(g => (g, Table(Seq.empty, Seq.empty)))))
+    def tables(table: Seq[Table], tableResults: Seq[Table]*) = new FakeQueryBuilder((table :: tableResults.toList).filter(_.nonEmpty).map(ts => ts.map(t => (Graph.empty, t))))
   }
 
   def builder = new DeterministicQueryBuilder
@@ -72,9 +84,9 @@ class QueryBuilderSpec extends Specification with Mockito {
 
   "QueryBuilder" should {
     "have non-constant variables" in {
-      val realBuilder = new QueryBuilder
-      val a = realBuilder.randomVariable
-      val b = realBuilder.randomVariable
+      val gen = new QueryGenerator
+      val a = gen.randomVariable
+      val b = gen.randomVariable
 
       a mustNotEqual b
     }
@@ -267,30 +279,32 @@ class QueryBuilderSpec extends Specification with Mockito {
       }
 
       "query result interpretation should fail with more than one result" in {
-        val node = Node.matches
+        val a = Node.create
+        val b = Node.matches
         val changes = Seq(
-          AddItem(node)
+          AddItem(a),
+          AddItem(b)
         )
 
-        val q = FakeQueryBuilder(Graph(Set(Node(1), Node(2))))
+        val q = FakeQueryBuilder(Graph(Set(Node(0))), Graph(Set(Node(1), Node(2))))
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
         result mustEqual Some("More than one query result for node: (Match(Set()))")
-        node.origin.isLocal mustEqual true
+        a.origin.isLocal mustEqual true
+        b.origin.isLocal mustEqual true
       }
 
       "query result interpretation" in {
-        val node = Node.matches
+        val node = Node.matches(matches = Set("z"))
         val changes = Seq(
           AddItem(node)
         )
 
         val n1 = Node(1, labels = Set("foo"), properties = Map("a" -> 1L))
-        val q = FakeQueryBuilder(Graph(Set(n1)))
+        val q = new FakeQueryBuilder(Seq(Seq((Graph(Set(n1)), Table(Seq.empty, Seq.empty)))))
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
-
         result mustEqual None
         node.origin mustEqual Id(1)
         node.labels must contain(exactly(Label("foo")))
@@ -594,19 +608,22 @@ class QueryBuilderSpec extends Specification with Mockito {
 
       "query result interpretation should fail with more than one result" in {
         val a = Node(1)
-        val b = Node(2)
+        val b = Node.create
         val r = Relation.matches(a, "r", b)
         val changes = Seq(
+          AddItem(b),
           AddItem(r)
         )
 
-        val r1 = Relation(3, a, b, "r")
-        val r2 = Relation(4, a, b, "r")
-        val q = FakeQueryBuilder(Graph(Set(a, b), Set(r1, r2)))
+        val n2 = Node(2)
+        val r1 = Relation(3, a, n2, "r")
+        val r2 = Relation(4, a, n2, "r")
+        val q = FakeQueryBuilder.graphs(Seq(Graph(Set(n2))), Seq(Graph(Set(a, n2), Set(r1, r2))))
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("More than one query result for relation: (1)-[Match(Set()):r]->(2)")
+        result mustEqual Some("More than one query result for relation: (1)-[Match(Set()):r]->(Create())")
+        b.origin.isLocal mustEqual true
         r.origin.isLocal mustEqual true
       }
 

@@ -7,11 +7,12 @@ import renesca.table.Table
 
 import scala.collection.mutable
 
-case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Option[String] = (graph: Graph, table: Table) => None)
+case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Either[String, () => Any] = (graph: Graph, table: Table) => Right(() => ()))
 
-class QueryBuilder {
-
+class QueryGenerator {
   def randomVariable = "V" + java.util.UUID.randomUUID().toString.replace("-", "")
+
+  private val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
 
   private def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
     val remainingProperties = properties.filterKeys(!selection.contains(_))
@@ -27,7 +28,7 @@ class QueryBuilder {
   private def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
-    node.origin match {
+    resolvedItems.getOrElse(node, node.origin) match {
       case Id(id)                =>
         ("match", s"($variable)", s"where id($variable) = {${ variable }_nodeId}", Map(s"${ variable }_nodeId" -> id), variable)
       case Create()              =>
@@ -48,7 +49,7 @@ class QueryBuilder {
 
   private def relationPattern(relation: Relation): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
-    relation.origin match {
+    resolvedItems.getOrElse(relation, relation.origin) match {
       case Id(id)                =>
         ("match", s"[$variable]", s"where id($variable) = {${ variable }_relationId}", Map(s"${ variable }_relationId" -> id), variable)
       case Create()              =>
@@ -73,9 +74,9 @@ class QueryBuilder {
   }
 
   private def queryRelation(relation: Relation) = {
-    if(relation.startNode.origin.isLocal)
+    if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
       throw new Exception("Start node in relation is still local: " + relation)
-    if(relation.endNode.origin.isLocal)
+    if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
       throw new Exception("End node in relation is still local: " + relation)
 
     val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode)
@@ -90,7 +91,7 @@ class QueryBuilder {
 
     // first match all non-path nodes
     val boundNodes = path.relations.flatMap(r => Seq(r.startNode, r.endNode)).distinct diff path.nodes
-    if(boundNodes.exists(_.origin.isLocal))
+    if(boundNodes.exists(n => resolvedItems.getOrElse(n, n.origin).isLocal))
       throw new Exception("Bound node on path is still local: " + path)
 
     val (nodeQueries, nodeParameters) = boundNodes.map(node => {
@@ -140,7 +141,7 @@ class QueryBuilder {
     (Query(s"$nodeQuery $pathQuery $returnClause", parameters), reverseVariableMap)
   }
 
-  private def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
+  def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
     contentChanges.groupBy(_.item).map {
       case (item, changes) =>
         if(item.origin.isLocal)
@@ -187,7 +188,7 @@ class QueryBuilder {
     }.toSeq
   }
 
-  private def deletionToQueries(deleteItems: Seq[Item])() = {
+  def deletionToQueries(deleteItems: Seq[Item])() = {
     deleteItems.map {
       case n: Node     =>
         if(n.origin.isLocal)
@@ -206,77 +207,129 @@ class QueryBuilder {
     }
   }
 
-  private def addPathsToQueries(addPaths: Seq[Path])() = {
+  def addPathsToQueries(addPaths: Seq[Path])() = {
     addPaths.map(path => {
       val (query, reverseVariableMap) = queryPath(path)
 
       QueryConfig(path, query, (graph: Graph, table: Table) => {
         if(table.rows.size > 1)
-          Some("More than one query result for path: " + path)
+          Left("More than one query result for path: " + path)
         else
           table.rows.headOption.map(row => {
             table.columns.foreach(col => {
               val item = reverseVariableMap(col)
               val map = row(col).asInstanceOf[MapParameterValue].value
-              item match {
-                case n: Node     =>
-                  n.properties.clear()
-                  n.labels.clear()
-                  // TODO: without casts?
-                  n.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-                  n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
-                  n.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-                case r: Relation =>
-                  r.properties.clear()
-                  r.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-                  r.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-              }
+              resolvedItems += item -> Id(map("id").asInstanceOf[LongPropertyValue].value)
             })
-            None
-          }).getOrElse(Some("Query result is missing desired path: " + path))
+            Right(() => {
+              table.columns.foreach(col => {
+                val item = reverseVariableMap(col)
+                val map = row(col).asInstanceOf[MapParameterValue].value
+                // TODO: without casts?
+                item.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
+                item.properties.clear()
+                item.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
+                item match {
+                  case n: Node =>
+                    n.labels.clear()
+                    n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
+                  case _       =>
+                }
+              })
+            })
+          }).getOrElse(Left("Query result is missing desired path: " + path))
       })
     })
   }
 
-  private def addRelationsToQueries(addRelations: Seq[Relation])() = {
+  def addRelationsToQueries(addRelations: Seq[Relation])() = {
     addRelations.map(relation => {
       val query = queryRelation(relation)
 
       QueryConfig(relation, query, (graph: Graph, table: Table) => {
         if(graph.relations.size > 1)
-          Some("More than one query result for relation: " + relation)
+          Left("More than one query result for relation: " + relation)
         else
           graph.relations.headOption.map(dbRelation => {
-            relation.properties.clear()
-            relation.properties ++= dbRelation.properties
-            relation.origin = dbRelation.origin
-            None
-          }).getOrElse(Some("Query result is missing desired relation: " + relation))
+            resolvedItems += relation -> dbRelation.origin
+            Right(() => {
+              relation.properties.clear()
+              relation.properties ++= dbRelation.properties
+              relation.origin = dbRelation.origin
+            })
+          }).getOrElse(Left("Query result is missing desired relation: " + relation))
       })
     })
   }
 
-  private def addNodesToQueries(addNodes: Seq[Node])() = {
+  def addNodesToQueries(addNodes: Seq[Node])() = {
     addNodes.map(node => {
       val query = queryNode(node)
 
       QueryConfig(node, query, (graph: Graph, table: Table) => {
         if(graph.nodes.size > 1)
-          Some("More than one query result for node: " + node)
+          Left("More than one query result for node: " + node)
         else
           graph.nodes.headOption.map(dbNode => {
-            node.properties.clear()
-            node.labels.clear()
-            node.properties ++= dbNode.properties
-            node.labels ++= dbNode.labels
-            node.origin = dbNode.origin
-            None
-          }).getOrElse(Some("Query result is missing desired node: " + node))
+            resolvedItems += node -> dbNode.origin
+            Right(() => {
+              node.properties.clear()
+              node.labels.clear()
+              node.properties ++= dbNode.properties
+              node.labels ++= dbNode.labels
+              node.origin = dbNode.origin
+            })
+          }).getOrElse(Left("Query result is missing desired node: " + node))
       })
     })
   }
+}
 
-  //TODO: test separately
+class PathDependencyGraph(paths: Set[Path]) {
+  private val resolved: mutable.ArrayBuffer[Path] = mutable.ArrayBuffer.empty
+  private val seen: mutable.Set[Path] = mutable.Set.empty
+  private val pathCreators: Map[Node, Path] = paths.flatMap(p => p.nodes.map(_ -> p).toMap).toMap
+
+  case class CircularException(path: Path, dependency: Path) extends Exception
+
+  private def resolvePath(path: Path): Unit = {
+    if(resolved.contains(path))
+      return
+
+    seen += path
+    val readNodes = path.allNodes.diff(path.nodes).filter(_.origin.isLocal)
+    val dependencies = readNodes.flatMap(pathCreators.get(_))
+    dependencies.foreach(dep => {
+      if(!resolved.contains(dep)) {
+        if(seen.contains(dep)) {
+          throw CircularException(path, dep)
+        }
+
+        resolvePath(dep)
+      }
+    })
+
+    resolved += path
+  }
+
+  def resolvePaths: Either[String, Seq[Seq[Path]]] = {
+    try {
+      paths.foreach(p => resolvePath(p))
+    } catch {
+      case CircularException(path, dep) =>
+        return Left(s"Circular dependency between paths: $path depends on $dep")
+    }
+
+    Right(resolved.map(Seq(_)))
+  }
+}
+
+class QueryBuilder {
+
+  protected def newQueryGenerator = new QueryGenerator
+
+  protected def newPathDependencyGraph(paths: Set[Path]) = new PathDependencyGraph(paths)
+
   private def filterGraphChanges(graphChanges: Seq[GraphChange]) = {
     // First get rid of duplicate changes, keep only the last change
     val reversedDistinctChanges = graphChanges.reverse.distinct
@@ -306,50 +359,6 @@ class QueryBuilder {
     }.reverse
   }
 
-  class PathDependencyGraph(paths: Set[Path]) {
-    private val resolved: mutable.ArrayBuffer[Path] = mutable.ArrayBuffer.empty
-    private val seen: mutable.Set[Path] = mutable.Set.empty
-    private val pathCreators: Map[Node, Path] = paths.flatMap(p => p.nodes.map(_ -> p).toMap).toMap
-
-    case class CircularException(path: Path, dependency: Path) extends Exception
-
-    private def resolvePath(path: Path): Unit = {
-      if(resolved.contains(path))
-        return
-
-      seen += path
-      val readNodes = path.allNodes.diff(path.nodes).filter(_.origin.isLocal)
-      val dependencies = readNodes.flatMap(pathCreators.get(_))
-      dependencies.foreach(dep => {
-        if(!resolved.contains(dep)) {
-          if(seen.contains(dep)) {
-            throw CircularException(path, dep)
-          }
-
-          resolvePath(dep)
-        }
-      })
-
-      resolved += path
-    }
-
-    def resolvePaths: Either[String, Seq[Seq[Path]]] = {
-      try {
-        paths.foreach(p => resolvePath(p))
-      } catch {
-        case CircularException(path, dep) =>
-          return Left(s"Circular dependency between paths: $path depends on $dep")
-      }
-
-      Right(resolved.map(Seq(_)))
-    }
-  }
-
-  private def chunkProducePaths(paths: Seq[Path]): Either[String, Seq[Seq[Path]]] = {
-    val dependencyGraph = new PathDependencyGraph(paths.toSet)
-    dependencyGraph.resolvePaths
-  }
-
   private def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
     val illegalChange = allChanges.find(!_.isValid)
     if(illegalChange.isDefined)
@@ -375,6 +384,8 @@ class QueryBuilder {
   }
 
   def generateQueries(graphChanges: Seq[GraphChange]): Either[String, Seq[() => Seq[QueryConfig]]] = {
+    val gen = newQueryGenerator
+
     // filter graph changes
     val changes = filterGraphChanges(graphChanges)
 
@@ -407,11 +418,11 @@ class QueryBuilder {
 
     // generate queries
     val independentChanges = {
-      val contentChangeQueries = contentChangesToQueries(contentChanges) _
-      val deleteQueries = deletionToQueries(nonLocalDeleteItems) _
-      val addNodeQueries = addNodesToQueries(addNodes) _
-      val addNonLocalPathQueries = addPathsToQueries(addNonLocalPaths) _
-      val addNonLocalRelationQueries = addRelationsToQueries(addNonLocalRelations) _
+      val contentChangeQueries = gen.contentChangesToQueries(contentChanges) _
+      val deleteQueries = gen.deletionToQueries(nonLocalDeleteItems) _
+      val addNodeQueries = gen.addNodesToQueries(addNodes) _
+      val addNonLocalPathQueries = gen.addPathsToQueries(addNonLocalPaths) _
+      val addNonLocalRelationQueries = gen.addRelationsToQueries(addNonLocalRelations) _
 
       () => contentChangeQueries() ++
         deleteQueries() ++
@@ -420,14 +431,14 @@ class QueryBuilder {
         addNonLocalRelationQueries()
     }
 
-    val localProducePathChunks = chunkProducePaths(addLocalProducePaths) match {
+    val localProducePathChunks = newPathDependencyGraph(addLocalProducePaths.toSet).resolvePaths match {
       case Left(err)     => return Left(err)
-      case Right(chunks) => chunks.map(c => addPathsToQueries(c) _)
+      case Right(chunks) => chunks.map(c => gen.addPathsToQueries(c) _)
     }
 
     val relationChanges = {
-      val addLocalRelationQueries = addRelationsToQueries(addLocalRelations) _
-      val addLocalRelationPathQueries = addPathsToQueries(addLocalRelationPaths) _
+      val addLocalRelationQueries = gen.addRelationsToQueries(addLocalRelations) _
+      val addLocalRelationPathQueries = gen.addPathsToQueries(addLocalRelationPaths) _
 
       () => addLocalRelationQueries() ++
         addLocalRelationPathQueries()
@@ -441,10 +452,21 @@ class QueryBuilder {
   }
 
   def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Option[String] = {
-    queryRequests.view.map(getter => {
+    val handles = queryRequests.view.flatMap(getter => {
       val configs = getter()
       val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-      queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }.find(_.isDefined).getOrElse(None)
-    }).find(_.isDefined).getOrElse(None)
+      queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }
+    })
+
+    var failure: Option[String] = None
+    val successHandles = handles.takeWhile(h => {
+      failure = h.left.toOption
+      failure.isEmpty
+    }).force
+
+    if(failure.isEmpty)
+      successHandles.foreach(_.right.get())
+
+    failure
   }
 }

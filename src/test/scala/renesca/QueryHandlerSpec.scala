@@ -53,8 +53,10 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(graph).clearChanges()
     }
 
-    "clear changes after persisting raw graph on transaction" in {
-      val transaction = new Transaction() {
+    "pass failure from builder.generateQueries" in {
+      val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder]
+        builder.generateQueries(Seq.empty) returns Left("meh")
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
         override protected def handleError(exceptions: Option[Exception]) {}
       }
@@ -62,13 +64,35 @@ class QueryHandlerSpec extends Specification with Mockito {
       val graph = mock[Graph]
       graph.changes returns Nil
 
-      transaction.persistChanges(graph)
+      val result = queryHandler.persistChanges(graph)
 
-      there was one(graph).clearChanges()
+      result mustEqual Some("meh")
+      there was no(graph).clearChanges()
     }
 
-    "clear changes after persisting schema graph" in {
+    "pass failure from builder.applyQueries" in {
       val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder]
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Some("muh")
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val graph = mock[Graph]
+      graph.changes returns Nil
+
+      val result = queryHandler.persistChanges(graph)
+
+      result mustEqual Some("muh")
+      there was no(graph).clearChanges()
+    }
+
+    "overloaded persistChanges for schema graph" in {
+      val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder]
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
         override protected def handleError(exceptions: Option[Exception]) {}
       }
@@ -80,12 +104,14 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       queryHandler.persistChanges(schemaGraph)
 
-      there was one(schemaGraph.graph).clearChanges()
+      there was one (queryHandler.builder).generateQueries(Seq.empty)
+      there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
+
 
     "overloaded persistChanges for item" in {
       val queryHandler = new QueryHandler() {
-        override val builder = mock[QueryBuilder].smart
+        override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
         builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
@@ -93,7 +119,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val node = Node(1)
-      queryHandler.persistChanges(node) // hier
+      queryHandler.persistChanges(node)
 
       there was one (queryHandler.builder).generateQueries(Seq.empty)
       there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
@@ -101,7 +127,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "overloaded persistChanges for schema item" in {
       val queryHandler = new QueryHandler() {
-        override val builder = mock[QueryBuilder].smart
+        override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
         builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
         override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()

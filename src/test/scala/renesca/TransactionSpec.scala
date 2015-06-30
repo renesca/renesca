@@ -4,6 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import renesca.graph.Graph
 
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
@@ -136,6 +137,58 @@ class TransactionSpec extends Specification with Mockito {
     // TODO: should whether it was commited or rollbacked
     trans.isValid mustEqual false
     thrown mustEqual ex
+  }
+
+  "transaction persistChanges should rollback on error" in {
+    //TODO: why does it not work with spy?
+    var rollbacked = 0
+    class MehTransaction extends Transaction {
+      override val builder = mock[QueryBuilder]
+      builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Some("meh")
+      override def rollback() = rollbacked += 1
+      override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+      override protected def handleError(exceptions: Option[Exception]) {}
+    }
+
+    //      val transaction = spy(new MehTransaction)
+    val transaction = new MehTransaction
+
+    val graph = mock[Graph]
+    graph.changes returns Nil
+
+    val result = transaction.commit.persistChanges(graph)
+
+    result mustEqual Some("meh")
+    there was no(graph).clearChanges()
+    rollbacked mustEqual 1
+    //      there was one(transaction).rollback()
+  }
+
+  "transaction persistChanges should commit on success" in {
+    var committed = 0
+    class MehTransaction extends Transaction {
+      override val builder = mock[QueryBuilder]
+      builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
+      override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+      override protected def handleError(exceptions: Option[Exception]) {}
+
+      override val commit = new CommitTransaction {
+        override def apply() = committed += 1
+      }
+    }
+
+    val transaction = spy(new MehTransaction)
+
+    val graph = mock[Graph]
+    graph.changes returns Nil
+
+    val result = transaction.commit.persistChanges(graph)
+
+    result mustEqual None
+    there was one(graph).clearChanges()
+    committed mustEqual 1
   }
 }
 

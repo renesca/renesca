@@ -162,7 +162,9 @@ class Transaction extends QueryHandler {thisTransaction =>
     invalidate()
   }
 
-  val commit = new QueryHandler {
+  val commit = new CommitTransaction
+
+  class CommitTransaction extends QueryHandler {
     // Important:
     // queryService can be called only once, because it commits and invalidates the transaction.
     // This means that methods like persistChanges which are firing multiple queries and thus calling querySerice

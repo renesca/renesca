@@ -28,7 +28,7 @@ class Path private[graph](val allNodes: Seq[Node],
                           val origin: LocalOrigin
                            ) extends SubGraph {
 
-  override def toString = s""""Path(${ relations.mkString(",") })"""
+  override def toString = s"""Path(${ relations.mkString(",") })"""
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Path]
 

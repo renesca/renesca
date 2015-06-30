@@ -7,18 +7,34 @@ import org.specs2.runner.JUnitRunner
 import renesca.graph._
 import renesca.parameter._
 import renesca.parameter.implicits._
+import renesca.table.Table
 
 @RunWith(classOf[JUnitRunner])
 class QueryBuilderSpec extends Specification with Mockito {
   sequential
 
-  def builder = new QueryBuilder {
+  class DeterministicQueryBuilder extends QueryBuilder {
     var counter = -1
     override def randomVariable = {
       counter += 1
       s"V$counter"
     }
   }
+
+  class FakeQueryBuilder(results: Seq[(Graph, Table)]) extends DeterministicQueryBuilder {
+    def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]]): Option[String] = {
+      applyQueries(queryRequests, _ => results)
+    }
+  }
+
+  object FakeQueryBuilder {
+    def apply() = new FakeQueryBuilder(Seq.empty)
+    def apply(results: Seq[(Graph, Table)]) = new FakeQueryBuilder(results)
+    def apply(graph: Graph, graphResults: Graph*) = new FakeQueryBuilder((graph :: graphResults.toList).map(g => (g, Table(Seq.empty, Seq.empty))))
+    def apply(table: Table, tableResults: Table*) = new FakeQueryBuilder((table :: tableResults.toList).map(t => (Graph.empty, t)))
+  }
+
+  def builder = new DeterministicQueryBuilder
 
   def parameterMap: MapParameterValue = MapParameterValue(Map.empty)
 
@@ -36,7 +52,7 @@ class QueryBuilderSpec extends Specification with Mockito {
     }
 
     // to give some kind of error message...better than nosuchelement
-    if (response.left.toOption.isDefined)
+    if(response.left.toOption.isDefined)
       throw new Exception("Query unexpectedly failed: " + response.left.get)
 
     response.right.get.map(getter => {
@@ -234,6 +250,52 @@ class QueryBuilderSpec extends Specification with Mockito {
             "match (V0) where id(V0) = {V0_itemId} set V0 += {V0_propertyAdditions} remove V0.`remove` remove V0.`new` set V0:`franz` remove V0:`peter` remove V0:`helmut`",
             Map("V0_itemId" -> 1, "V0_propertyAdditions" -> Map("edit" -> true, "gisela" -> 3)))
         ))
+      }
+
+      "query result interpretation should fail with no results" in {
+        val node = Node.create
+        val changes = Seq(
+          AddItem(node)
+        )
+
+        val q = FakeQueryBuilder(Graph.empty)
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("Query result is missing desired node: (Create())")
+        node.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation should fail with more than one result" in {
+        val node = Node.matches
+        val changes = Seq(
+          AddItem(node)
+        )
+
+        val q = FakeQueryBuilder(Graph(Set(Node(1), Node(2))))
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("More than one query result for node: (Match(Set()))")
+        node.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation" in {
+        val node = Node.matches
+        val changes = Seq(
+          AddItem(node)
+        )
+
+        val n1 = Node(1, labels = Set("foo"), properties = Map("a" -> 1L))
+        val q = FakeQueryBuilder(Graph(Set(n1)))
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual None
+        node.origin mustEqual Id(1)
+        node.labels must contain(exactly(Label("foo")))
+        node.properties("a") mustEqual LongPropertyValue(1L)
+        node mustEqual n1
       }
     }
 
@@ -513,6 +575,59 @@ class QueryBuilderSpec extends Specification with Mockito {
             Map("V0_itemId" -> 3, "V0_propertyAdditions" -> Map("edit" -> true, "gisela" -> 3)))
         ))
       }
+
+      "query result interpretation should fail with no results" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+        val changes = Seq(
+          AddItem(r)
+        )
+
+        val q = FakeQueryBuilder(Graph.empty)
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("Query result is missing desired relation: (1)-[Match(Set()):r]->(2)")
+        r.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation should fail with more than one result" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+        val changes = Seq(
+          AddItem(r)
+        )
+
+        val r1 = Relation(3, a, b, "r")
+        val r2 = Relation(4, a, b, "r")
+        val q = FakeQueryBuilder(Graph(Set(a, b), Set(r1, r2)))
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("More than one query result for relation: (1)-[Match(Set()):r]->(2)")
+        r.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+        val changes = Seq(
+          AddItem(r)
+        )
+
+        val r1 = Relation(3, a, b, "r", Map("a" -> 1L))
+        val q = FakeQueryBuilder(Graph(Set(a, b), Set(r1)))
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual None
+        r.origin mustEqual Id(3)
+        r.properties("a") mustEqual LongPropertyValue(1L)
+        r mustEqual r1
+      }
     }
 
     "Path" should {
@@ -611,7 +726,7 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
 
-        Seq(
+          Seq(
             q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
             q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties")),
             q("merge (V2) on create set V2 += {V2_onCreateProperties} on match set V2 += {V2_onMatchProperties} return V2",
@@ -1092,6 +1207,83 @@ class QueryBuilderSpec extends Specification with Mockito {
               Map("V3_nodeId" -> 2, "V4_nodeId" -> 3, "V5_properties" -> parameterMap))
           )
         )
+      }
+
+      "query result interpretation should fail with no results" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+        val Right(p) = Path(r)
+        val changes = Seq(
+          AddItem(r),
+          AddPath(p)
+        )
+
+        val q = FakeQueryBuilder(Graph.empty)
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("Query result is missing desired path: Path((1)-[Match(Set()):r]->(2))")
+        r.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation should fail with more than one result" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+        val Right(p) = Path(r)
+        val changes = Seq(
+          AddItem(r),
+          AddPath(p)
+        )
+
+        val cols = Seq("V0", "V1", "V2")
+        val rows = Seq(
+          Seq(MapParameterValue(Map.empty), MapParameterValue(Map.empty), MapParameterValue(Map.empty)),
+          Seq(MapParameterValue(Map.empty), MapParameterValue(Map.empty), MapParameterValue(Map.empty))
+        )
+        val q = FakeQueryBuilder(Table(cols, rows))
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual Some("More than one query result for path: Path((1)-[Match(Set()):r]->(2))")
+        r.origin.isLocal mustEqual true
+      }
+
+      "query result interpretation" in {
+        val a = Node(1)
+        val b = Node.matches
+        val c = Node(2)
+        val r1 = Relation.matches(a, "r", b)
+        val r2 = Relation.matches(b, "r", c)
+        val Right(p) = Path(r1, r2)
+        val changes = Seq(
+          AddItem(r1),
+          AddItem(b),
+          AddItem(r2),
+          AddPath(p)
+        )
+
+        val cols = Seq("V0", "V1", "V2", "V3", "V4")
+        val rows = Seq(
+          Seq(
+            MapParameterValue(Map("labels" -> ArrayParameterValue(Seq.empty), "properties" -> MapParameterValue(Map.empty), "id" -> 1L)),
+            MapParameterValue(Map("labels" -> ArrayParameterValue(Seq.empty), "properties" -> MapParameterValue(Map.empty), "id" -> 2L)),
+            MapParameterValue(Map("labels" -> ArrayParameterValue(Seq.empty), "properties" -> MapParameterValue(Map.empty), "id" -> 10L)),
+            MapParameterValue(Map("properties" -> MapParameterValue(Map("a" -> 1L)), "id" -> 3L)),
+            MapParameterValue(Map("properties" -> MapParameterValue(Map.empty), "id" -> 4L))
+          )
+        )
+        val table = Table(cols, rows)
+        val q = FakeQueryBuilder(table)
+        val Right(queries) = q.generateQueries(changes)
+        val result = q.applyQueries(queries)
+
+        result mustEqual None
+        r1.origin mustEqual Id(3L)
+        r2.origin mustEqual Id(4L)
+        b.origin mustEqual Id(10L)
+        r1.properties("a") mustEqual LongPropertyValue(1L)
       }
     }
   }

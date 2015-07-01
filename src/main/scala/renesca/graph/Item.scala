@@ -22,6 +22,7 @@ import renesca.graph.OriginKind._
 
 sealed trait Origin {
   def isLocal: Boolean
+  def isMatching: Boolean
   def kind: OriginKind
 }
 
@@ -32,22 +33,26 @@ sealed trait LocalOrigin extends Origin {
 // origins are only equal if they have the same id
 class Create() extends LocalOrigin {
   val kind = Create.kind
+  def isMatching = false
   override def toString = "Create()"
 }
 
 class Merge(val properties: Set[PropertyKey], val onMatch: Set[PropertyKey]) extends LocalOrigin {
   val kind = Merge.kind
+  def isMatching = false
   override def toString = s"Merge($properties, $onMatch)"
 }
 
 class Match(val properties: Set[PropertyKey]) extends LocalOrigin {
   val kind = Match.kind
+  def isMatching = true
   override def toString = s"Match($properties)"
 }
 
 case class Id(id: Long) extends Origin {
   val kind = Id.kind
   def isLocal = false
+  def isMatching = true
   override def toString = id.toString
 }
 

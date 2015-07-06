@@ -12,7 +12,7 @@ case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) =>
 class QueryGenerator {
   def randomVariable = "V" + java.util.UUID.randomUUID().toString.replace("-", "")
 
-  protected val resolvedOrigins: mutable.Map[Item,Origin] = mutable.Map.empty
+  protected val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
 
   protected def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
     val remainingProperties = properties.filterKeys(!selection.contains(_))
@@ -25,52 +25,36 @@ class QueryGenerator {
 
   //TODO should limit number of matches for merge and match to 1!
   // match/merge ... with variable limit 1 ...
-  protected def nodePattern(node: Node, idOnly: Boolean = false, readOnly: Boolean = false): (String, String, String, ParameterMap, String) = {
+  protected def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
-    resolvedOrigins.getOrElse(node, node.origin) match {
+    resolvedItems.getOrElse(node, node.origin) match {
       case Id(id)                =>
         ("match", s"($variable)", s"where id($variable) = {${ variable }_nodeId}", Map(s"${ variable }_nodeId" -> id), variable)
       case Create()              =>
-        if (readOnly || idOnly)
-          throw new Exception("Should match node, but found Create: " + node)
-
         ("create", s"($variable $labels {${ variable }_properties})", "", Map(s"${ variable }_properties" -> node.properties.toMap), variable)
       case Merge(merge, onMatch) =>
-        if (readOnly || idOnly)
-          throw new Exception("Should match node, but found Merge: " + node)
-
         val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, merge.toSet)
         val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
         ("merge", s"($variable $labels $mergeLiteralMap)", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
           parameterMap ++ Map(s"${ variable }_onCreateProperties" -> remainingProperties.toMap, s"${ variable }_onMatchProperties" -> onMatchProperties.toMap),
           variable)
       case Match(matches)        =>
-        if (idOnly)
-          throw new Exception("Should match id node, but found Matches: " + node)
-
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, matches)
-        if (readOnly)
-          ("match", s"($variable $labels $matchLiteralMap)", "", parameterMap, variable)
-        else
-          ("match", s"($variable $labels $matchLiteralMap)", s"set $variable += {${ variable }_properties}",
-            parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
-            variable)
+        ("match", s"($variable $labels $matchLiteralMap)", s"set $variable += {${ variable }_properties}",
+          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+          variable)
     }
   }
 
-  protected def relationPattern(relation: Relation, readOnly: Boolean = false): (String, String, String, ParameterMap, String) = {
+  protected def relationPattern(relation: Relation): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
-    resolvedOrigins.getOrElse(relation, relation.origin) match {
+    resolvedItems.getOrElse(relation, relation.origin) match {
       case Id(id)                =>
         ("match", s"[$variable]", s"where id($variable) = {${ variable }_relationId}", Map(s"${ variable }_relationId" -> id), variable)
       case Create()              =>
-        if (readOnly)
-          throw new Exception("Should match relation readOnly, but found Create: " + relation)
         ("create", s"[$variable :`${ relation.relationType }` {${ variable }_properties}]", "", Map(s"${ variable }_properties" -> relation.properties.toMap), variable)
       case Merge(merge, onMatch) =>
-        if (readOnly)
-          throw new Exception("Should match relation readOnly, but found Merge: " + relation)
         val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, merge)
         val onMatchProperties = remainingProperties.filterKeys(onMatch)
         ("merge", s"[$variable :`${ relation.relationType }` $mergeLiteralMap]", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
@@ -78,12 +62,9 @@ class QueryGenerator {
           variable)
       case Match(matches)        =>
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, matches)
-        if (readOnly)
-          ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", "", parameterMap, variable)
-        else
-          ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", s"set $variable += {${ variable }_properties}",
-            parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
-            variable)
+        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", s"set $variable += {${ variable }_properties}",
+          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+          variable)
     }
   }
 
@@ -93,8 +74,13 @@ class QueryGenerator {
   }
 
   protected def queryRelation(relation: Relation) = {
-    val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode, idOnly = true)
-    val (endKeyword, endQuery, endPostfix, endParameters, endVariable) = nodePattern(relation.endNode, idOnly = true)
+    if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
+      throw new Exception("Start node in relation is still local: " + relation)
+    if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
+      throw new Exception("End node in relation is still local: " + relation)
+
+    val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode)
+    val (endKeyword, endQuery, endPostfix, endParameters, endVariable) = nodePattern(relation.endNode)
     val (keyword, query, postfix, parameters, variable) = relationPattern(relation)
     Query(s"$startKeyword $startQuery $startPostfix $endKeyword $endQuery $endPostfix $keyword ($startVariable)-$query->($endVariable) $postfix return $variable",
       startParameters ++ parameters ++ endParameters)
@@ -105,8 +91,11 @@ class QueryGenerator {
 
     // first match all non-path nodes
     val boundNodes = path.relations.flatMap(r => Seq(r.startNode, r.endNode)).distinct diff path.nodes
+    if(boundNodes.exists(n => resolvedItems.getOrElse(n, n.origin).isLocal))
+      throw new Exception("Bound node on path is still local: " + path)
+
     val (nodeQueries, nodeParameters) = boundNodes.map(node => {
-      val (keyword, query, postfix, parameters, variable) = nodePattern(node, idOnly = true)
+      val (keyword, query, postfix, parameters, variable) = nodePattern(node)
       variableMap += node -> variable
       (s"$keyword $query $postfix", parameters.toMap)
     }).unzip
@@ -202,11 +191,17 @@ class QueryGenerator {
   def deletionToQueries(deleteItems: Seq[Item])() = {
     deleteItems.map {
       case n: Node     =>
-        val (keyword, query, postfix, parameters, variable) = nodePattern(n, readOnly = true)
+        if(n.origin.isLocal)
+          throw new Exception("Trying to delete local node: " + n)
+
+        val (keyword, query, postfix, parameters, variable) = nodePattern(n)
         val optionalVariable = randomVariable
         QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
       case r: Relation =>
-        val (keyword, query, postfix, parameters, variable) = relationPattern(r, readOnly = true)
+        if(r.origin.isLocal)
+          throw new Exception("Trying to delete local relation: " + r)
+
+        val (keyword, query, postfix, parameters, variable) = relationPattern(r)
         //TODO: invalidate Id origin of deleted item?
         QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
     }
@@ -224,7 +219,7 @@ class QueryGenerator {
             table.columns.foreach(col => {
               val item = reverseVariableMap(col)
               val map = row(col).asInstanceOf[MapParameterValue].value
-              resolvedOrigins += item -> Id(map("id").asInstanceOf[LongPropertyValue].value)
+              resolvedItems += item -> Id(map("id").asInstanceOf[LongPropertyValue].value)
             })
             Right(() => {
               table.columns.foreach(col => {
@@ -256,7 +251,7 @@ class QueryGenerator {
           Left("More than one query result for relation: " + relation)
         else
           graph.relations.headOption.map(dbRelation => {
-            resolvedOrigins += relation -> dbRelation.origin
+            resolvedItems += relation -> dbRelation.origin
             Right(() => {
               relation.properties.clear()
               relation.properties ++= dbRelation.properties
@@ -276,7 +271,7 @@ class QueryGenerator {
           Left("More than one query result for node: " + node)
         else
           graph.nodes.headOption.map(dbNode => {
-            resolvedOrigins += node -> dbNode.origin
+            resolvedItems += node -> dbNode.origin
             Right(() => {
               node.properties.clear()
               node.labels.clear()
@@ -396,7 +391,7 @@ class QueryBuilder {
 
     // gather deletion changes
     val deleteItems = changes.collect { case DeleteItem(i) => i }
-    val matchesDeleteItems = deleteItems.filter(_.origin.isMatching)
+    val nonLocalDeleteItems = deleteItems.filterNot(_.origin.isLocal)
 
     // gather content changes
     val contentChanges = changes.collect { case c: GraphContentChange => c }
@@ -424,7 +419,7 @@ class QueryBuilder {
     // generate queries
     val independentChanges = {
       val contentChangeQueries = gen.contentChangesToQueries(contentChanges) _
-      val deleteQueries = gen.deletionToQueries(matchesDeleteItems) _
+      val deleteQueries = gen.deletionToQueries(nonLocalDeleteItems) _
       val addNodeQueries = gen.addNodesToQueries(addNodes) _
       val addNonLocalPathQueries = gen.addPathsToQueries(addNonLocalPaths) _
       val addNonLocalRelationQueries = gen.addRelationsToQueries(addNonLocalRelations) _

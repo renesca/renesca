@@ -5,7 +5,7 @@ import akka.util.Timeout
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
-import spray.http.HttpHeaders.{Authorization, Location}
+import spray.http.HttpHeaders.{RawHeader, Authorization, Location}
 import spray.http.HttpMethods._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
@@ -38,6 +38,9 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
     // val accept:MediaRange = `application/json`// withCharset `UTF-8`
     // headers += Accept(accept)
     headers ++= credentials.map(Authorization(_))
+    // accept streaming of results from rest endpoint
+    // http://neo4j.com/docs/2.2.3/rest-api-streaming.html
+    headers += RawHeader("X-Stream", "true")
 
     Post(
       uri = Uri(s"$server$path"),

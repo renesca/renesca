@@ -19,6 +19,8 @@ trait Item {
   }
 
   override def hashCode(): Int = 31 * rawItem.hashCode()
+
+  def validate: Option[String] = None
 }
 
 trait Node extends Item with Filter {

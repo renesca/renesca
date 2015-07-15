@@ -11,6 +11,11 @@ import renesca.{graph => raw}
 
 //TODO: implicits from Graph to raw.Graph
 trait Graph extends Filter {
+  def nodes: Set[_ <: Node]
+  def relations: Set[_ <: Relation[_,_]]
+  def abstractRelations: Set[_ <: AbstractRelation[_,_]]
+  def hyperRelations: Set[_ <: HyperRelation[_,_,_,_,_]]
+
   def nodesAs[T <: Node](nodeFactory: NodeFactory[T]) = {
     filterNodes(graph.nodes.toSet, nodeFactory)
   }

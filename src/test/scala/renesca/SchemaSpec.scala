@@ -13,7 +13,12 @@ class SchemaSpec extends Specification with Mockito {
 
   object TheSchema {
 
-    class TheGraph(val graph: raw.Graph = raw.Graph.empty) extends Graph
+    class TheGraph(val graph: raw.Graph = raw.Graph.empty) extends Graph {
+      def abstractRelations = ???
+      def hyperRelations = ???
+      def nodes = ???
+      def relations = ???
+    }
 
     class TheNode(val rawItem: raw.Node) extends Node {
       val label = TheNode.label

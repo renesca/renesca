@@ -100,6 +100,10 @@ class QueryHandlerSpec extends Specification with Mockito {
       val schemaGraph = new schema.Graph {
         val graph = mock[Graph]
         graph.changes returns Nil
+        def abstractRelations = Set.empty
+        def hyperRelations = Set.empty
+        def nodes = Set.empty
+        def relations = Set.empty
       }
 
       queryHandler.persistChanges(schemaGraph)
@@ -108,6 +112,37 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
+    "fail persistChanges if schema graph cannot be validated" in {
+      val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder]
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val schemaNode = new schema.Node {
+        override val label: Label = Label("hi")
+        override val labels: Set[Label] = Set(label)
+        val rawItem = Node(1)
+        override def validate = Some("nope")
+      }
+
+      val schemaGraph = new schema.Graph {
+        val graph = mock[Graph]
+        graph.changes returns Seq(SetLabel(schemaNode.rawItem, "meh"))
+        def abstractRelations = Set.empty
+        def hyperRelations = Set.empty
+        def nodes = Set(schemaNode)
+        def relations = Set.empty
+      }
+
+      val failure = queryHandler.persistChanges(schemaGraph)
+
+      failure mustEqual Some("Validation for item '(1)' failed: nope")
+      there was no (queryHandler.builder).generateQueries(Seq.empty)
+      there was no (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
+    }
 
     "overloaded persistChanges for item" in {
       val queryHandler = new QueryHandler() {
@@ -144,6 +179,29 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       there was one (queryHandler.builder).generateQueries(Seq.empty)
       there was one (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
+    }
+
+    "fail persistChanges if schema item cannot be validated" in {
+      val queryHandler = new QueryHandler() {
+        override val builder = mock[QueryBuilder]
+        builder.generateQueries(Seq.empty) returns Right(Seq.empty)
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
+        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
+        override protected def handleError(exceptions: Option[Exception]) {}
+      }
+
+      val schemaNode = new schema.Node {
+        override val label: Label = Label("hi")
+        override val labels: Set[Label] = Set(label)
+        val rawItem = Node(1)
+        override def validate = Some("nope")
+      }
+
+      val failure = queryHandler.persistChanges(schemaNode)
+
+      failure mustEqual Some("Validation for item '(1)' failed: nope")
+      there was no (queryHandler.builder).generateQueries(Seq.empty)
+      there was no (queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
     "create no graph data as an empty graph" in new GraphQuery {

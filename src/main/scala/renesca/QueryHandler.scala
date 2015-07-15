@@ -32,7 +32,10 @@ trait QueryInterface {
   def persistChanges(graph: Graph): Option[String]
 
   def persistChanges(schemaGraph: schema.Graph): Option[String] = {
-    persistChanges(schemaGraph.graph)
+    validateSchemaGraph(schemaGraph) match {
+      case Some(err) => Some(err)
+      case None => persistChanges(schemaGraph.graph)
+    }
   }
 
   def persistChanges(item: Item, items: Item*): Option[String] = {
@@ -43,9 +46,30 @@ trait QueryInterface {
 
   def persistChanges(item: schema.Item, items: schema.Item*): Option[String] = {
     val allItems = item :: items.toList
-    val graph = new schema.Graph { val graph = Graph.empty }
-    graph.add(allItems: _*)
-    persistChanges(graph)
+    validateSchemaItems(allItems) match {
+      case Some(err) => Some(err)
+      case None => persistChanges(item.rawItem, items.map(_.rawItem): _*)
+    }
+  }
+
+  def validateSchemaGraph(schemaGraph: schema.Graph): Option[String] = {
+    val changes = schemaGraph.graph.changes.collect { case c:GraphItemChange => c.item }.toSet
+    val items = (schemaGraph.nodes ++ schemaGraph.abstractRelations).filter(changes contains _.rawItem)
+    validateSchemaItems(items)
+  }
+
+  def validateSchemaItems(items: Iterable[schema.Item]): Option[String] = {
+    val validations = items.map { item =>
+      item.validate match {
+        case Some(err) => Some(s"Validation for item '${item.rawItem}' failed: $err")
+        case None      => None
+      }
+    }.flatten
+
+    if (validations.isEmpty)
+      None
+    else
+      Some(validations.mkString(","))
   }
 }
 

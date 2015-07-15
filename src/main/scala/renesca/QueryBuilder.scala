@@ -386,7 +386,6 @@ class QueryBuilder {
   def generateQueries(graphChanges: Seq[GraphChange]): Either[String, Seq[() => Seq[QueryConfig]]] = {
     val gen = newQueryGenerator
 
-    // filter graph changes
     val changes = filterGraphChanges(graphChanges)
 
     // gather deletion changes

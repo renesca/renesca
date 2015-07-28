@@ -12,6 +12,7 @@ package renesca
 
 import renesca.graph._
 import renesca.parameter._
+import renesca.schema.{HyperRelation, AbstractRelation}
 import renesca.table.Table
 
 object Query {
@@ -48,7 +49,20 @@ trait QueryInterface {
     val allItems = item :: items.toList
     validateSchemaItems(allItems) match {
       case Some(err) => Some(err)
-      case None => persistChanges(item.rawItem, items.map(_.rawItem): _*)
+      case None =>
+        val schemaGraph = new schema.Graph {
+          // the schema graph methods will never be called,
+          // but we use the implementation of the add function,
+          // which also adds the path of hyperrelations to the graph.
+          override def nodes: Set[_ <: schema.Node] = ???
+          override def hyperRelations: Set[_ <: HyperRelation[_, _, _, _, _]] = ???
+          override def relations: Set[_ <: schema.Relation[_, _]] = ???
+          override def abstractRelations: Set[_ <: AbstractRelation[_, _]] = ???
+          override def graph: Graph = Graph.empty
+        }
+
+        schemaGraph.add(allItems: _*)
+        persistChanges(schemaGraph.graph)
     }
   }
 

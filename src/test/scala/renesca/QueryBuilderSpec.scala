@@ -1096,6 +1096,37 @@ class QueryBuilderSpec extends Specification with Mockito {
 
       "match" in {
         val a = Node.matches
+        val b = Node.matches
+        val c = Node.matches
+        val r1 = Relation.matches(a, "kicks", b)
+        val r2 = Relation.matches(b, "from", c)
+        val Right(p) = Path(r1, r2)
+
+        val changes = Seq(
+          AddItem(a),
+          AddItem(b),
+          AddItem(c),
+          AddItem(r1),
+          AddItem(r2),
+          AddPath(p)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+          Seq(
+            q("match (V0) set V0 += {V0_properties} return V0", parameterMap("V0_properties")),
+            q("match (V1) set V1 += {V1_properties} return V1", parameterMap("V1_properties"))
+          ),
+          Seq(
+            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V5 :`kicks`]->(V4) -[V6 :`from`]->(V3) set V4 += {V4_properties} set V5 += {V5_properties} set V6 += {V6_properties} return {id: id(V2), properties: V2, labels: labels(V2)} as V2,{id: id(V3), properties: V3, labels: labels(V3)} as V3,{id: id(V4), properties: V4, labels: labels(V4)} as V4,{id: id(V5), properties: V5} as V5,{id: id(V6), properties: V6} as V6",
+              Map("V6_properties" -> parameterMap, "V5_properties" -> parameterMap, "V3_nodeId" -> 2, "V2_nodeId" -> 1, "V4_properties" -> parameterMap))
+          )
+        )
+      }
+
+      "match with merge and create node" in {
+        val a = Node.matches
         val b = Node.create
         val c = Node.merge
         val r1 = Relation.matches(a, "kicks", b)

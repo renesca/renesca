@@ -1,4 +1,4 @@
-import SonatypeKeys._
+
 
 
 name := "renesca"
@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-client" % "1.3.3",
   "io.spray" %% "spray-json" % "1.3.2",
   "com.typesafe.akka" %% "akka-actor" % "2.3.11",
-  "org.specs2" %% "specs2" % "2.4.17" % "test,test-integration",
+  "org.specs2" %% "specs2-core" % "3.6.3" % "test,test-integration",
   "com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "",
   "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "test,test-integration")
 
@@ -95,4 +95,4 @@ val restService = new RestService("http://localhost:7474", Some(credentials))
 
 val db = new DbService
 db.restService = restService
-"""
+                              """

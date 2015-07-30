@@ -440,7 +440,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val b = Node.create(Seq("b"))
       val r = Relation.create(a, "r", b)
       val q = Relation.create(a, "r", b)
-      graph.relations ++= Seq(r,q)
+      graph.relations ++= Seq(r, q)
       db.persistChanges(graph).isDefined mustEqual false
 
       val a2 = Node.matches(Seq("a"))
@@ -522,7 +522,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.merge(Seq("END"))
       val r1 = Relation.merge(start, "r1", middle)
       val r2 = Relation.merge(middle, "r2", end)
-      val Right(path) = Path(r1,r2)
+      val Right(path) = Path(r1, r2)
       graph += path
       db.persistChanges(graph).isDefined mustEqual false
 
@@ -532,7 +532,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end2 = Node.merge(Seq("END"))
       val r12 = Relation.merge(start2, "r1", middle2)
       val r22 = Relation.merge(middle2, "r2", end2)
-      val Right(path2) = Path(r12,r22)
+      val Right(path2) = Path(r12, r22)
       graph2 += path2
       db.persistChanges(graph2).isDefined mustEqual false
 
@@ -554,7 +554,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end = Node.create(Seq("END"))
       val r1 = Relation.create(start, "r1", middle)
       val r2 = Relation.create(middle, "r2", end)
-      val Right(path) = Path(r1,r2)
+      val Right(path) = Path(r1, r2)
       graph += path
       db.persistChanges(graph).isDefined mustEqual false
 
@@ -564,7 +564,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end2 = Node.matches(Seq("END"))
       val r12 = Relation.matches(start2, "r1", middle2)
       val r22 = Relation.matches(middle2, "r2", end2)
-      val Right(path2) = Path(r12,r22)
+      val Right(path2) = Path(r12, r22)
       graph2 += path2
       db.persistChanges(graph2).isDefined mustEqual false
 
@@ -591,7 +591,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end2 = Node.merge(Seq("END"))
       val r12 = Relation.merge(start2, "r1", middle2)
       val r22 = Relation.merge(middle2, "r2", end2)
-      val Right(path2) = Path(r12,r22)
+      val Right(path2) = Path(r12, r22)
       graph2 += path2
       db.persistChanges(graph2).isDefined mustEqual false
 
@@ -615,7 +615,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val end2 = Node.matches(Seq("END"))
       val r12 = Relation.merge(start2, "r1", middle2)
       val r22 = Relation.merge(middle2, "r2", end2)
-      val Right(path2) = Path(r12,r22)
+      val Right(path2) = Path(r12, r22)
       graph2 += path2
       db.persistChanges(graph2).isDefined mustEqual false
 
@@ -635,7 +635,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val middle = Node.merge(Seq("MIDDLE"))
       val r1 = Relation.merge(start, "r1", middle)
       val r2 = Relation.merge(middle, "r2", end)
-      val Right(path) = Path(r1,r2)
+      val Right(path) = Path(r1, r2)
       graph += path
       graph.nodes -= middle
       db.persistChanges(graph).isDefined mustEqual false
@@ -654,7 +654,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val middle = Node.merge(Seq("MIDDLE"))
       val r1 = Relation.merge(start, "r1", middle)
       val r2 = Relation.merge(middle, "r2", end)
-      val Right(path) = Path(r1,r2)
+      val Right(path) = Path(r1, r2)
       graph += path
       graph.nodes -= end
       db.persistChanges(graph).isDefined mustEqual false
@@ -674,7 +674,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val middle = Node.merge(Seq("MIDDLE"))
       val r1 = Relation.merge(start, "r1", middle)
       val r2 = Relation.merge(middle, "r2", end)
-      val Right(path) = Path(r1,r2)
+      val Right(path) = Path(r1, r2)
       graph += path
       graph.relations -= r1
       db.persistChanges(graph).isDefined mustEqual false
@@ -743,6 +743,15 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       start.origin.isLocal mustEqual false
       end.origin.isLocal mustEqual false
       relation.origin.isLocal mustEqual false
+    }
+    "order by in query returns ordered nodes in graph" in {
+      val g = Graph.empty
+      for(i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
+        g.nodes += Node.create(properties = Map("i" -> i))
+      db.persistChanges(g)
+
+      val resultGraph = db.queryGraph("match (n) return n order by n.i")
+      resultGraph.nodes.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
     }
   }
 }

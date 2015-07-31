@@ -112,7 +112,19 @@ class DistinctBufferSpec extends Specification {
       }
 
       "map" in {
+//        import DistinctBuffer.canBuildFrom
+        //TODO why do we have to do import canBuildFrom?
+        // if we don't import:
+
+        // [error] DistinctBufferSpec.scala:120: ambiguous implicit values:
+        // [error]  both method canBuildFrom in trait AbstractDistinctBufferFactory of type [A]=> scala.collection.generic.CanBuildFrom[renesca.AbstractDistinctBuffer[_, renesca.DistinctBuffer],A,renesca.AbstractDistinctBuffer[A,renesca.DistinctBuffer]]
+        // [error]  and method canBuildFrom in object Buffer of type [A]=> scala.collection.generic.CanBuildFrom[scala.collection.mutable.Buffer.Coll,A,scala.collection.mutable.Buffer[A]]
+        // [error]  match expected type scala.collection.generic.CanBuildFrom[renesca.AbstractDistinctBuffer[Int,renesca.DistinctBuffer],String,That]
+        // [error]         b.map(_.toString) must beAnInstanceOf[DistinctBuffer[String]]
+        // [error]              ^
+
         val b = DistinctBuffer(1, 2, 3)
+
         b.map(_.toString) must contain(exactly("1", "2", "3").inOrder)
         b.map(_.toString) must beAnInstanceOf[DistinctBuffer[String]]
       }
@@ -126,5 +138,7 @@ class DistinctBufferSpec extends Specification {
       }
     }
   }
+
+  //TODO: covarinance checks
 }
 

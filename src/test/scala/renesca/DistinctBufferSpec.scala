@@ -112,7 +112,7 @@ class DistinctBufferSpec extends Specification {
       }
 
       "map" in {
-//        import DistinctBuffer.canBuildFrom
+        import DistinctBuffer.canBuildFrom
         //TODO why do we have to do import canBuildFrom?
         // if we don't import:
 

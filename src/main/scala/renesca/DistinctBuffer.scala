@@ -86,86 +86,28 @@ trait AbstractDistinctBufferFactory[CC[X] <: AbstractDistinctBuffer[X, CC]] exte
 }
 
 trait AbstractDistinctBufferWithFixedType[A, CC <: AbstractDistinctBufferWithFixedType[A, CC]]
-  extends mutable.Buffer[A]
+  extends AbstractDistinctBufferImpl[A]
   with mutable.BufferLike[A, AbstractDistinctBufferWithFixedType[A, CC]] {
 
   protected def factory: AbstractDistinctBufferWithFixedTypeFactory[A, CC]
-  protected def buffer: ArrayBuffer[A]
-  protected def set: mutable.HashSet[A]
 
   override protected[this] def newBuilder: mutable.Builder[A, AbstractDistinctBufferWithFixedType[A, CC]] =
     factory.newBuilder
-
-  override def apply(n: Int): A = {
-    if(n < 0 || length <= n) throw new IndexOutOfBoundsException
-
-    buffer(n)
-  }
-
-  override def update(n: Int, newelem: A) {
-    if(n < 0 || length <= n) throw new IndexOutOfBoundsException
-    if(set contains newelem) return
-
-    buffer.update(n, newelem)
-    set += newelem
-  }
-
-  override def remove(n: Int): A = {
-    if(n < 0 || length <= n) throw new IndexOutOfBoundsException
-
-    val removed = buffer.remove(n)
-    set -= removed
-    removed
-  }
-
-  override def clear() {
-    buffer.clear()
-    set.clear()
-  }
-
-  override def +=(elem: A): AbstractDistinctBufferWithFixedType.this.type = {
-    if(set contains elem) return this
-
-    set += elem
-    buffer += elem
-    this
-  }
-
-  override def +=:(elem: A): AbstractDistinctBufferWithFixedType.this.type = {
-    if(set contains elem) return this
-
-    set += elem
-    elem +=: buffer
-    this
-  }
-
-  override def insertAll(n: Int, elems: Traversable[A]) {
-    if(n < 0 || length <= n) throw new IndexOutOfBoundsException
-
-    val newElems = elems.toSeq diff set.toSeq
-    set ++= newElems
-    buffer.insertAll(n, newElems)
-  }
-
-
-  //TODO: override contains by set.contains
-  // override def contains[A1 >: A](elem: A1): Boolean = set.contains(elem)
-
-  override def iterator: Iterator[A] = buffer.iterator
-
-  override def length = buffer.length
 }
 
 trait AbstractDistinctBuffer[A, CC[X] <: AbstractDistinctBuffer[X, CC]]
-  extends mutable.Buffer[A]
+  extends AbstractDistinctBufferImpl[A]
   with mutable.BufferLike[A, AbstractDistinctBuffer[A, CC]] {
 
   protected def factory: AbstractDistinctBufferFactory[CC]
-  protected def buffer: ArrayBuffer[A]
-  protected def set: mutable.HashSet[A]
 
   override protected[this] def newBuilder: mutable.Builder[A, AbstractDistinctBuffer[A, CC]] =
     factory.newBuilder[A]
+}
+
+trait AbstractDistinctBufferImpl[A] extends mutable.Buffer[A] {
+  protected def buffer: ArrayBuffer[A]
+  protected def set: mutable.HashSet[A]
 
   override def apply(n: Int): A = {
     if(n < 0 || length <= n) throw new IndexOutOfBoundsException
@@ -194,7 +136,7 @@ trait AbstractDistinctBuffer[A, CC[X] <: AbstractDistinctBuffer[X, CC]]
     set.clear()
   }
 
-  override def +=(elem: A): AbstractDistinctBuffer.this.type = {
+  override def +=(elem: A): this.type = {
     if(set contains elem) return this
 
     set += elem
@@ -202,7 +144,7 @@ trait AbstractDistinctBuffer[A, CC[X] <: AbstractDistinctBuffer[X, CC]]
     this
   }
 
-  override def +=:(elem: A): AbstractDistinctBuffer.this.type = {
+  override def +=:(elem: A): this.type = {
     if(set contains elem) return this
 
     set += elem
@@ -226,3 +168,4 @@ trait AbstractDistinctBuffer[A, CC[X] <: AbstractDistinctBuffer[X, CC]]
 
   override def length = buffer.length
 }
+

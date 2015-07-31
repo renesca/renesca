@@ -9,8 +9,8 @@ object Nodes extends AbstractDistinctBufferWithFixedTypeFactory[Node, Nodes] {
 }
 
 class Nodes private(
-             protected val buffer: mutable.ArrayBuffer[Node],
-             protected val set: mutable.HashSet[Node])
+                     protected val buffer: mutable.ArrayBuffer[Node],
+                     protected val set: mutable.HashSet[Node])
   extends AbstractDistinctBufferWithFixedType[Node, Nodes] {
 
   override protected def factory = Nodes

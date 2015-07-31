@@ -40,7 +40,8 @@ object Graph {
 class Graph private[graph] {
   // private constructor to force usage of Factory
 
-  val nodes = new Nodes(this) // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
+  val nodes = Nodes.empty // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
+  nodes.graph = this
   val relations = new Relations(this) // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
@@ -91,15 +92,19 @@ class Graph private[graph] {
   def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
 
   override def equals(other: Any): Boolean = other match {
+    // we are converting nodes and relations to sets, because order should not matter
+    // TODO: is there a more efficient way to do this?
     case that: Graph =>
       (that canEqual this) &&
-        this.nodes == that.nodes &&
-        this.relations == that.relations
+        this.nodes.toSet == that.nodes.toSet &&
+        this.relations.toSet == that.relations.toSet
     case _           => false
   }
 
   override def hashCode(): Int = {
-    val state = Seq(nodes, relations)
+    // we are converting nodes and relations to sets, because order should not matter
+    // TODO: is there a more efficient way to do this?
+    val state = Seq(nodes.toSet, relations.toSet)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }

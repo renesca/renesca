@@ -1,14 +1,26 @@
 package renesca.graph
 
+import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory}
+
 import scala.collection.mutable
 
-class Nodes(private val graph: Graph, self: mutable.LinkedHashSet[Node] = mutable.LinkedHashSet.empty[Node])
-  extends mutable.Set[Node] with mutable.SetLike[Node, Nodes] {
+object Nodes extends AbstractDistinctBufferWithFixedTypeFactory[Node, Nodes] {
+  override protected def constructor(buffer: mutable.ArrayBuffer[Node], set: mutable.HashSet[Node]) = new Nodes(buffer, set)
+}
+
+class Nodes private(
+             protected val buffer: mutable.ArrayBuffer[Node],
+             protected val set: mutable.HashSet[Node])
+  extends AbstractDistinctBufferWithFixedType[Node, Nodes] {
+
+  override protected def factory = Nodes
+
+  var graph: Graph = null //TODO: move to constructor and factory
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   private[renesca] def clearChanges() = {
-    self.foreach { node =>
+    buffer.foreach { node =>
       node.properties.localChanges.clear()
       node.labels.localChanges.clear()
     }
@@ -20,7 +32,7 @@ class Nodes(private val graph: Graph, self: mutable.LinkedHashSet[Node] = mutabl
     if(node.origin.isLocal)
       localChanges += AddItem(node)
 
-    self += node
+    super[AbstractDistinctBufferWithFixedType].+=(node)
     this
   }
 
@@ -30,11 +42,7 @@ class Nodes(private val graph: Graph, self: mutable.LinkedHashSet[Node] = mutabl
     // delete in and out relations of the to-be-deleted node
     graph.relations --= graph.incidentRelations(node)
 
-    self -= node
+    super[AbstractDistinctBufferWithFixedType].-=(node)
     this
   }
-
-  override def iterator = self.iterator
-  override def contains(node: Node) = self contains node
-  override def empty = new Nodes(graph)
 }

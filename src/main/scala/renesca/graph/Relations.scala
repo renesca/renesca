@@ -1,14 +1,26 @@
 package renesca.graph
 
+import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory}
+
 import scala.collection.mutable
 
-class Relations(private val graph: Graph, self: mutable.LinkedHashSet[Relation] = mutable.LinkedHashSet.empty[Relation])
-  extends mutable.Set[Relation] with mutable.SetLike[Relation, Relations] {
+object Relations extends AbstractDistinctBufferWithFixedTypeFactory[Relation, Relations] {
+  override protected[renesca] def constructor(buffer: mutable.ArrayBuffer[Relation], set: mutable.HashSet[Relation]) = new Relations(buffer, set)
+}
+
+class Relations private(
+                         protected[renesca] val buffer: mutable.ArrayBuffer[Relation],
+                         protected[renesca] val set: mutable.HashSet[Relation])
+  extends AbstractDistinctBufferWithFixedType[Relation, Relations] {
+
+  override protected[renesca] def factory = Relations
+
+  var graph: Graph = null //TODO: move to constructor and factory
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 
   private[renesca] def clearChanges() = {
-    self.foreach { relation =>
+    buffer.foreach { relation =>
       relation.properties.localChanges.clear()
     }
 
@@ -24,17 +36,20 @@ class Relations(private val graph: Graph, self: mutable.LinkedHashSet[Relation] 
     if(!(graph.nodes contains relation.endNode))
       graph.nodes += relation.endNode
 
-    self += relation
+    super[AbstractDistinctBufferWithFixedType].+=(relation)
     this
   }
 
+  //TODO: FIXME override remove
   override def -=(relation: Relation) = {
     localChanges += DeleteItem(relation)
-    self -= relation
+    super[AbstractDistinctBufferWithFixedType].-=(relation)
     this
   }
 
-  override def iterator = self.iterator
-  override def contains(relation: Relation) = self contains relation
-  override def empty = new Relations(graph)
+  override def clone() = {
+    val clone = super.clone().asInstanceOf[Relations]
+    clone.graph = graph
+    clone
+  }
 }

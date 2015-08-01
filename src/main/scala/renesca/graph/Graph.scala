@@ -42,7 +42,8 @@ class Graph private[graph] {
 
   val nodes = Nodes.empty // TODO: is it possible to eliminate this cyclic reference? (used for removing node incident relations)
   nodes.graph = this
-  val relations = new Relations(this) // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
+  val relations = Relations.empty // TODO: is it possible to eliminate this cyclic reference? (used for adding nonexistent start/endNode to graph)
+  relations.graph = this
 
   private[graph] val localChanges = mutable.ArrayBuffer.empty[GraphChange]
 

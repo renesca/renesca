@@ -26,66 +26,67 @@ class GraphSpec extends Specification with Mockito {
   }
 
   "Graph" should {
+    "Node" in {
+      "provide access to relations" in new ExampleGraph {
 
-    "provide access to relations" in new ExampleGraph {
+        import graph._
 
-      import graph._
+        outRelations(A) must contain(exactly(ArB, ArC))
+        outRelations(B) must contain(exactly(BrC))
+        outRelations(C) must beEmpty
 
-      outRelations(A) must contain(exactly(ArB, ArC))
-      outRelations(B) must contain(exactly(BrC))
-      outRelations(C) must beEmpty
+        inRelations(A) must beEmpty
+        inRelations(B) must contain(ArB)
+        inRelations(C) must contain(exactly(BrC, ArC))
 
-      inRelations(A) must beEmpty
-      inRelations(B) must contain(ArB)
-      inRelations(C) must contain(exactly(BrC, ArC))
+        incidentRelations(A) must contain(exactly(ArB, ArC))
+        incidentRelations(B) must contain(exactly(ArB, BrC))
+        incidentRelations(C) must contain(exactly(ArC, BrC))
+      }
 
-      incidentRelations(A) must contain(exactly(ArB, ArC))
-      incidentRelations(B) must contain(exactly(ArB, BrC))
-      incidentRelations(C) must contain(exactly(ArC, BrC))
-    }
+      "provide access to neighbours" in new ExampleGraph {
 
-    "provide access to neighbours" in new ExampleGraph {
+        import graph._
 
-      import graph._
+        predecessors(A) must beEmpty
+        predecessors(B) must contain(exactly(A))
+        predecessors(C) must contain(exactly(A, B))
 
-      predecessors(A) must beEmpty
-      predecessors(B) must contain(exactly(A))
-      predecessors(C) must contain(exactly(A, B))
+        successors(A) must contain(exactly(B, C))
+        successors(B) must contain(exactly(C))
+        successors(C) must beEmpty
 
-      successors(A) must contain(exactly(B, C))
-      successors(B) must contain(exactly(C))
-      successors(C) must beEmpty
+        neighbours(A) must contain(exactly(B, C))
+        neighbours(B) must contain(exactly(A, C))
+        neighbours(C) must contain(exactly(A, B))
+      }
 
-      neighbours(A) must contain(exactly(B, C))
-      neighbours(B) must contain(exactly(A, C))
-      neighbours(C) must contain(exactly(A, B))
-    }
+      "provide access to degrees" in new ExampleGraph {
 
-    "provide access to degrees" in new ExampleGraph {
+        import graph._
 
-      import graph._
+        inDegree(A) mustEqual 0
+        inDegree(B) mustEqual 1
+        inDegree(C) mustEqual 2
 
-      inDegree(A) mustEqual 0
-      inDegree(B) mustEqual 1
-      inDegree(C) mustEqual 2
+        outDegree(A) mustEqual 2
+        outDegree(B) mustEqual 1
+        outDegree(C) mustEqual 0
 
-      outDegree(A) mustEqual 2
-      outDegree(B) mustEqual 1
-      outDegree(C) mustEqual 0
+        degree(A) mustEqual 2
+        degree(B) mustEqual 2
+        degree(C) mustEqual 2
+      }
 
-      degree(A) mustEqual 2
-      degree(B) mustEqual 2
-      degree(C) mustEqual 2
-    }
+      "delete itself from graph" in new ExampleGraph {
 
-    "delete itself from graph" in new ExampleGraph {
+        import graph._
 
-      import graph._
+        graph.nodes -= B
 
-      graph.nodes -= B
-
-      nodes must contain(exactly(A, C))
-      relations must contain(exactly(ArC))
+        nodes must contain(exactly(A, C))
+        relations must contain(exactly(ArC))
+      }
     }
 
     "merge graphs" in new ExampleGraph {

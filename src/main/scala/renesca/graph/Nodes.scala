@@ -1,19 +1,28 @@
 package renesca.graph
 
-import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory}
+import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory, DistinctBufferBuilder}
 
 import scala.collection.mutable
 
 object Nodes extends AbstractDistinctBufferWithFixedTypeFactory[Node, Nodes] {
-  override protected def constructor(buffer: mutable.ArrayBuffer[Node], set: mutable.HashSet[Node]) = new Nodes(buffer, set)
+  override protected[renesca] def constructor(buffer: mutable.ArrayBuffer[Node], set: mutable.HashSet[Node]) = new Nodes(buffer, set)
 }
 
 class Nodes private(
-                     protected val buffer: mutable.ArrayBuffer[Node],
-                     protected val set: mutable.HashSet[Node])
+                     protected[renesca] val buffer: mutable.ArrayBuffer[Node],
+                     protected[renesca] val set: mutable.HashSet[Node])
   extends AbstractDistinctBufferWithFixedType[Node, Nodes] {
 
-  override protected def factory = Nodes
+  override protected[renesca] def factory = Nodes
+
+  override protected[renesca] def newBuilder =
+    new DistinctBufferBuilder(factory.constructor) {
+      override def result() = {
+        val result = super.result()
+        result.graph = graph
+        result
+      }
+    }
 
   var graph: Graph = null //TODO: move to constructor and factory
 
@@ -36,6 +45,7 @@ class Nodes private(
     this
   }
 
+  //TODO: FIXME override remove
   override def -=(node: Node) = {
     localChanges += DeleteItem(node)
 
@@ -45,4 +55,6 @@ class Nodes private(
     super[AbstractDistinctBufferWithFixedType].-=(node)
     this
   }
+
+  override def clone() = super.clone().asInstanceOf[Nodes]
 }

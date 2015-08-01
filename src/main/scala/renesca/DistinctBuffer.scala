@@ -4,110 +4,100 @@ import scala.collection.generic.{CanBuildFrom, GenericCompanion}
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class DistinctBuffer[A] private(
-                                 protected val buffer: ArrayBuffer[A],
-                                 protected val set: mutable.HashSet[A])
+class DistinctBuffer[A] private[renesca](
+                                          protected[renesca] val buffer: ArrayBuffer[A],
+                                          protected[renesca] val set: mutable.HashSet[A])
   extends AbstractDistinctBuffer[A, DistinctBuffer] {
-  override protected def factory = DistinctBuffer
+  override protected[renesca] def factory = DistinctBuffer
 }
 
 object DistinctBuffer extends AbstractDistinctBufferFactory[DistinctBuffer] {
-  override protected def constructor[A](buffer: ArrayBuffer[A], set: mutable.HashSet[A]) = new DistinctBuffer[A](buffer, set)
+  override protected[renesca] def constructor[A](buffer: ArrayBuffer[A], set: mutable.HashSet[A]) = new DistinctBuffer[A](buffer, set)
 }
 
 
 trait AbstractDistinctBufferWithFixedTypeFactory[A, CC <: AbstractDistinctBufferWithFixedType[A, CC]] {
-  protected def constructor(buffer: ArrayBuffer[A], set: mutable.HashSet[A]): CC
-
-  def newBuilder: mutable.Builder[A, CC] = new mutable.Builder[A, CC] {
-    val buffer = ArrayBuffer.empty[A]
-    val set = mutable.HashSet.empty[A]
-
-    override def +=(elem: A): this.type = {
-      if(!(set contains elem)) {
-        buffer += elem
-        set += elem
-      }
-      this
-    }
-    override def result(): CC = constructor(buffer, set)
-    override def clear() {
-      buffer.clear()
-      set.clear()
-    }
-  }
+  implicit protected[renesca] def constructor(buffer: ArrayBuffer[A], set: mutable.HashSet[A]): CC
 
   implicit def canBuildFrom: CanBuildFrom[AbstractDistinctBufferWithFixedType[_, CC], A, AbstractDistinctBufferWithFixedType[A, CC]] =
     new CanBuildFrom[AbstractDistinctBufferWithFixedType[_, CC], A, AbstractDistinctBufferWithFixedType[A, CC]] {
-      def apply(): mutable.Builder[A, AbstractDistinctBufferWithFixedType[A, CC]] = newBuilder
-      def apply(from: AbstractDistinctBufferWithFixedType[_, CC]): mutable.Builder[A, AbstractDistinctBufferWithFixedType[A, CC]] = newBuilder
+      def apply(): mutable.Builder[A, AbstractDistinctBufferWithFixedType[A, CC]] = new DistinctBufferBuilder(constructor)
+      def apply(from: AbstractDistinctBufferWithFixedType[_, CC]) = new DistinctBufferBuilder(constructor)
     }
 
-  def empty: CC = newBuilder.result()
+  def empty[A]: CC = AbstractDistinctBufferFactoryImpl.empty
 
-  def apply(elems: A*): CC = {
-    if(elems.isEmpty) empty
+  def apply(elems: A*): CC = AbstractDistinctBufferFactoryImpl.apply(elems:_*)
+}
+
+trait AbstractDistinctBufferFactory[CC[X] <: AbstractDistinctBuffer[X, CC]] {
+  implicit protected[renesca] def constructor[A](buffer: ArrayBuffer[A], set: mutable.HashSet[A]): CC[A]
+
+  implicit def canBuildFrom[A]: CanBuildFrom[AbstractDistinctBuffer[_, CC], A, AbstractDistinctBuffer[A, CC]] =
+    new CanBuildFrom[AbstractDistinctBuffer[_, CC], A, AbstractDistinctBuffer[A, CC]] {
+      def apply(): mutable.Builder[A, AbstractDistinctBuffer[A, CC]] = new DistinctBufferBuilder(constructor)
+      def apply(from: AbstractDistinctBuffer[_, CC]) = new DistinctBufferBuilder(constructor)
+    }
+
+  def empty[A]: CC[A] = AbstractDistinctBufferFactoryImpl.empty
+
+  def apply[A](elems: A*): CC[A] = AbstractDistinctBufferFactoryImpl.apply(elems:_*)
+}
+
+object AbstractDistinctBufferFactoryImpl {
+  def empty[A, CC](implicit constructor: (ArrayBuffer[A], mutable.HashSet[A]) => CC): CC = (new DistinctBufferBuilder[A, CC](constructor)).result()
+
+  def apply[A,CC](elems: A*)(implicit constructor: (ArrayBuffer[A], mutable.HashSet[A]) => CC): CC = {
+    if(elems.isEmpty) empty(constructor)
     else {
-      val b = newBuilder
+      val b = new DistinctBufferBuilder[A, CC](constructor)
       b ++= elems
       b.result()
     }
   }
 }
 
-trait AbstractDistinctBufferFactory[CC[X] <: AbstractDistinctBuffer[X, CC]] extends GenericCompanion[CC] {
-  protected def constructor[A](buffer: ArrayBuffer[A], set: mutable.HashSet[A]): CC[A]
-
-  protected def myNewBuilder[A]: mutable.Builder[A, CC[A]] = new mutable.Builder[A, CC[A]] {
-    val buffer = ArrayBuffer.empty[A]
-    val set = mutable.HashSet.empty[A]
-
-    override def +=(elem: A): this.type = {
-      if(!(set contains elem)) {
-        buffer += elem
-        set += elem
-      }
-      this
-    }
-    override def result(): CC[A] = constructor(buffer, set)
-    override def clear() {
-      buffer.clear()
-      set.clear()
-    }
-  }
-
-  override def newBuilder[A] = myNewBuilder[A]
-
-  implicit def canBuildFrom[A]: CanBuildFrom[AbstractDistinctBuffer[_, CC], A, AbstractDistinctBuffer[A, CC]] =
-    new CanBuildFrom[AbstractDistinctBuffer[_, CC], A, AbstractDistinctBuffer[A, CC]] {
-      def apply(): mutable.Builder[A, AbstractDistinctBuffer[A, CC]] = newBuilder
-      def apply(from: AbstractDistinctBuffer[_, CC]): mutable.Builder[A, AbstractDistinctBuffer[A, CC]] = newBuilder
-    }
-}
-
 trait AbstractDistinctBufferWithFixedType[A, CC <: AbstractDistinctBufferWithFixedType[A, CC]]
   extends AbstractDistinctBufferImpl[A]
   with mutable.BufferLike[A, AbstractDistinctBufferWithFixedType[A, CC]] {
 
-  protected def factory: AbstractDistinctBufferWithFixedTypeFactory[A, CC]
+  protected[renesca] def factory: AbstractDistinctBufferWithFixedTypeFactory[A, CC]
 
-  override protected[this] def newBuilder: mutable.Builder[A, AbstractDistinctBufferWithFixedType[A, CC]] =
-    factory.newBuilder
+  override protected[renesca] def newBuilder =
+    new DistinctBufferBuilder(factory.constructor)
 }
 
 trait AbstractDistinctBuffer[A, CC[X] <: AbstractDistinctBuffer[X, CC]]
   extends AbstractDistinctBufferImpl[A]
   with mutable.BufferLike[A, AbstractDistinctBuffer[A, CC]] {
 
-  protected def factory: AbstractDistinctBufferFactory[CC]
+  protected[renesca] def factory: AbstractDistinctBufferFactory[CC]
 
-  override protected[this] def newBuilder: mutable.Builder[A, AbstractDistinctBuffer[A, CC]] =
-    factory.newBuilder[A]
+  override protected[renesca] def newBuilder: mutable.Builder[A, AbstractDistinctBuffer[A, CC]] =
+    new DistinctBufferBuilder(factory.constructor)
+}
+
+class DistinctBufferBuilder[A, CC](constructor: (ArrayBuffer[A], mutable.HashSet[A]) => CC) extends mutable.Builder[A, CC] {
+  val buffer = ArrayBuffer.empty[A]
+  val set = mutable.HashSet.empty[A]
+
+  override def +=(elem: A): this.type = {
+    if(!(set contains elem)) {
+      buffer += elem
+      set += elem
+    }
+    this
+  }
+  override def result(): CC = constructor(buffer, set)
+  override def clear() {
+    buffer.clear()
+    set.clear()
+  }
 }
 
 trait AbstractDistinctBufferImpl[A] extends mutable.Buffer[A] {
-  protected def buffer: ArrayBuffer[A]
-  protected def set: mutable.HashSet[A]
+  protected[renesca] def buffer: ArrayBuffer[A]
+  protected[renesca] def set: mutable.HashSet[A]
 
   override def apply(n: Int): A = {
     if(n < 0 || length <= n) throw new IndexOutOfBoundsException

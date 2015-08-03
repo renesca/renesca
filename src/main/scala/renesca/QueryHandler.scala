@@ -12,7 +12,7 @@ package renesca
 
 import renesca.graph._
 import renesca.parameter._
-import renesca.schema.{HyperRelation, AbstractRelation}
+import renesca.schema.{AbstractRelation, HyperRelation}
 import renesca.table.Table
 
 object Query {
@@ -35,7 +35,7 @@ trait QueryInterface {
   def persistChanges(schemaGraph: schema.Graph): Option[String] = {
     validateSchemaGraph(schemaGraph) match {
       case Some(err) => Some(err)
-      case None => persistChanges(schemaGraph.graph)
+      case None      => persistChanges(schemaGraph.graph)
     }
   }
 
@@ -49,15 +49,15 @@ trait QueryInterface {
     val allItems = item :: items.toList
     validateSchemaItems(allItems) match {
       case Some(err) => Some(err)
-      case None =>
+      case None      =>
         val schemaGraph = new schema.Graph {
           // the schema graph methods will never be called,
           // but we use the implementation of the add function,
           // which also adds the path of hyperrelations to the graph.
-          override def nodes: Set[_ <: schema.Node] = ???
-          override def hyperRelations: Set[_ <: HyperRelation[_, _, _, _, _]] = ???
-          override def relations: Set[_ <: schema.Relation[_, _]] = ???
-          override def abstractRelations: Set[_ <: AbstractRelation[_, _]] = ???
+          override def nodes: Seq[_ <: schema.Node] = ???
+          override def hyperRelations: Seq[_ <: HyperRelation[_, _, _, _, _]] = ???
+          override def relations: Seq[_ <: schema.Relation[_, _]] = ???
+          override def abstractRelations: Seq[_ <: AbstractRelation[_, _]] = ???
           override def graph: Graph = Graph.empty
         }
 
@@ -67,7 +67,7 @@ trait QueryInterface {
   }
 
   def validateSchemaGraph(schemaGraph: schema.Graph): Option[String] = {
-    val changes = schemaGraph.graph.changes.collect { case c:GraphItemChange => c.item }.toSet
+    val changes = schemaGraph.graph.changes.collect { case c: GraphItemChange => c.item }.toSet
     val items = (schemaGraph.nodes ++ schemaGraph.abstractRelations).filter(changes contains _.rawItem)
     validateSchemaItems(items)
   }
@@ -75,12 +75,12 @@ trait QueryInterface {
   def validateSchemaItems(items: Iterable[schema.Item]): Option[String] = {
     val validations = items.map { item =>
       item.validate match {
-        case Some(err) => Some(s"Validation for item '${item.rawItem}' failed: $err")
+        case Some(err) => Some(s"Validation for item '${ item.rawItem }' failed: $err")
         case None      => None
       }
     }.flatten
 
-    if (validations.isEmpty)
+    if(validations.isEmpty)
       None
     else
       Some(validations.mkString(","))
@@ -117,7 +117,7 @@ trait QueryHandler extends QueryInterface {
       case Left(msg)      => Some(msg)
       case Right(queries) =>
         val failure = builder.applyQueries(queries, queryGraphsAndTables)
-        if (failure.isEmpty)
+        if(failure.isEmpty)
           graph.clearChanges()
 
         failure

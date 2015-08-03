@@ -5,6 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
+import renesca.DistinctBuffer
 import renesca.parameter.implicits._
 import renesca.parameter.{PropertyValue, StringPropertyValue}
 
@@ -87,7 +88,24 @@ class NodesSpec extends Specification with Mockito {
         nodes.graph = graph
         val clone = nodes.clone()
         clone.graph mustEqual graph
+        clone must beAnInstanceOf[Nodes]
       }
+
+      "Nodes.take" >> {
+        val nodes = Nodes(Node(1), Node(2))
+        nodes.graph = graph
+        val take = nodes.take(1)
+        take must contain(exactly(Node(1)))
+        take must beAnInstanceOf[Nodes]
+        take.asInstanceOf[Nodes].graph mustEqual graph
+      }
+
+      "Nodes.map" >> {
+        val nodes = Nodes(Node(1, labels = List("A")), Node(2, labels = List("B")))
+        nodes.graph = graph
+        val map = nodes.map(_.labels.head)
+        map must beAnInstanceOf[DistinctBuffer[String]]
+      }.pendingUntilFixed
 
       "graph creation" >> {
         val graph = Graph(List(Node(1), Node(2)), List(Relation(3, Node(1), Node(2), "r")))

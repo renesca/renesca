@@ -113,6 +113,7 @@ class DistinctBufferSpec extends Specification {
 
       "map" in {
         import DistinctBuffer.canBuildFrom
+
         //TODO why do we have to do import canBuildFrom?
         // if we don't import:
 
@@ -127,6 +128,11 @@ class DistinctBufferSpec extends Specification {
 
         b.map(_.toString) must contain(exactly("1", "2", "3").inOrder)
         b.map(_.toString) must beAnInstanceOf[DistinctBuffer[String]]
+      }
+
+      "clone" in {
+        val b = DistinctBuffer(1, 2, 3)
+        b.clone() must beAnInstanceOf[DistinctBuffer[Int]]
       }
 
       "equals" in {

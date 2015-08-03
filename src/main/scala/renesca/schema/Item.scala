@@ -5,9 +5,6 @@ package renesca.schema
 
 import renesca.{graph => raw}
 
-import scala.concurrent.Promise
-import scala.util.Success
-
 //TODO: sealed trait Item and AbstractRelation?
 trait Item {
   def rawItem: raw.Item

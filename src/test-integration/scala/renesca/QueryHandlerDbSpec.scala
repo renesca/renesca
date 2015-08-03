@@ -753,6 +753,19 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val resultGraph = db.queryGraph("match (n) return n order by n.i")
       resultGraph.nodes.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
     }
+
+    "order by in query returns ordered nodes in node neighbours" in {
+      val g = Graph.empty
+      val n = Node.create(List("A"))
+      g.nodes += n
+      for(i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
+        g.relations += Relation.create(n, "r", Node.create(properties = Map("i" -> i)))
+      db.persistChanges(g)
+
+      implicit val resultGraph = db.queryGraph("match (a:A)-[r]->(n) return a,r,n order by n.i")
+      val a = resultGraph.nodes.find(_.labels contains "A").get
+      a.neighbours.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
+    }
   }
 }
 

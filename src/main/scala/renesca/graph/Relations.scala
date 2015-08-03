@@ -1,6 +1,6 @@
 package renesca.graph
 
-import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory}
+import renesca.{AbstractDistinctBufferWithFixedType, AbstractDistinctBufferWithFixedTypeFactory, DistinctBufferBuilder}
 
 import scala.collection.mutable
 
@@ -14,6 +14,15 @@ class Relations private(
   extends AbstractDistinctBufferWithFixedType[Relation, Relations] {
 
   override protected[renesca] def factory = Relations
+
+  override protected[renesca] def newBuilder =
+    new DistinctBufferBuilder(factory.constructor) {
+      override def result() = {
+        val result = super.result()
+        result.graph = graph
+        result
+      }
+    }
 
   var graph: Graph = null //TODO: move to constructor and factory
 

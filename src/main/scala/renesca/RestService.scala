@@ -5,7 +5,7 @@ import akka.util.Timeout
 import renesca.json.protocols.RequestJsonProtocol._
 import renesca.json.protocols.ResponseJsonProtocol._
 import spray.client.pipelining._
-import spray.http.HttpHeaders.{RawHeader, Authorization, Location}
+import spray.http.HttpHeaders.{Authorization, Location, RawHeader}
 import spray.http.HttpMethods._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._

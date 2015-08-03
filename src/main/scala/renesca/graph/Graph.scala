@@ -68,9 +68,9 @@ class Graph private[graph] {
     localChanges.clear()
   }
 
-  def outRelations(node: Node) = relations.filter(node == _.startNode).toSet
-  def inRelations(node: Node) = relations.filter(node == _.endNode).toSet
-  def incidentRelations(node: Node): Set[Relation] = inRelations(node) ++ outRelations(node)
+  def outRelations(node: Node) = relations.filter(node == _.startNode)
+  def inRelations(node: Node) = relations.filter(node == _.endNode)
+  def incidentRelations(node: Node) = inRelations(node) ++ outRelations(node)
   def neighbours(node: Node) = incidentRelations(node).map(_.other(node))
   def successors(node: Node) = outRelations(node).map(_.endNode)
   def predecessors(node: Node) = inRelations(node).map(_.startNode)

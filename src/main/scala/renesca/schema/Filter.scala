@@ -5,7 +5,7 @@ import renesca.{graph => raw}
 trait Filter {
   def graph: raw.Graph
 
-  def filterNodes[T <: Node](nodes: Set[raw.Node], nodeFactory: NodeFactory[T]): Set[T] = {
+  def filterNodes[T <: Node](nodes: Seq[raw.Node], nodeFactory: NodeFactory[T]): Seq[T] = {
     nodes.filter(_.labels.contains(nodeFactory.label)).map { node =>
       val schemaNode = nodeFactory.wrap(node)
       schemaNode.graphOption = Some(graph)
@@ -14,7 +14,7 @@ trait Filter {
   }
 
   def filterRelations[START <: Node, RELATION <: Relation[START, END], END <: Node]
-  (relations: Set[raw.Relation], relationFactory: RelationFactory[START, RELATION, END]): Set[RELATION] = {
+  (relations: Seq[raw.Relation], relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
     relations.filter(_.relationType == relationFactory.relationType).map(relationFactory.wrap)
   }
 
@@ -24,9 +24,9 @@ trait Filter {
   HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
   ENDRELATION <: Relation[HYPERRELATION, END],
   END <: Node]
-  (nodes: Set[raw.Node], relations: Set[raw.Relation],
+  (nodes: Seq[raw.Node], relations: Seq[raw.Relation],
    hyperRelationFactory: HyperRelationFactory[START, STARTRELATION, HYPERRELATION, ENDRELATION, END])
-  : Set[HYPERRELATION] = {
+  : Seq[HYPERRELATION] = {
     nodes.filter(_.labels.contains(hyperRelationFactory.label)).map { node =>
       val startRelation = relations.find(relation => relation.relationType == hyperRelationFactory.startRelationType && relation.endNode == node)
       val endRelation = relations.find(relation => relation.relationType == hyperRelationFactory.endRelationType && relation.startNode == node)

@@ -1,6 +1,6 @@
 package renesca
 
-import scala.collection.generic.{CanBuildFrom, GenericCompanion}
+import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 

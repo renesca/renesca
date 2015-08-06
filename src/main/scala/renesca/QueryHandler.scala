@@ -58,7 +58,7 @@ trait QueryInterface {
           override def hyperRelations: Seq[_ <: HyperRelation[_, _, _, _, _]] = ???
           override def relations: Seq[_ <: schema.Relation[_, _]] = ???
           override def abstractRelations: Seq[_ <: AbstractRelation[_, _]] = ???
-          override def graph: Graph = Graph.empty
+          val graph: Graph = Graph.empty
         }
 
         schemaGraph.add(allItems: _*)

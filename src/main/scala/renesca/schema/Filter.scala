@@ -31,10 +31,12 @@ trait Filter {
       val startRelation = relations.find(relation => relation.relationType == hyperRelationFactory.startRelationType && relation.endNode == node)
       val endRelation = relations.find(relation => relation.relationType == hyperRelationFactory.endRelationType && relation.startNode == node)
       // The Start- and EndRelation might not be part of the graph
-      if(startRelation.isEmpty || endRelation.isEmpty)
+      val schemaNode = if(startRelation.isEmpty || endRelation.isEmpty)
         hyperRelationFactory.wrap(node)
       else
         hyperRelationFactory.wrap(startRelation.get, node, endRelation.get)
+      schemaNode.graphOption = Some(graph)
+      schemaNode
     }
   }
 }

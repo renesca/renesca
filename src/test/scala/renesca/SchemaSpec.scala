@@ -297,6 +297,22 @@ class SchemaSpec extends Specification with Mockito {
     relation.endNode.rawItem mustEqual b.rawItem
   }
 
+  "set graph in filterNodes" in {
+    val g = mock[raw.Graph]
+    val filter = new Filter {override val graph = g}
+    val node = TheNode()
+    val filtered = filter.filterNodes(Seq(node.rawItem), TheNode)
+    filtered.head.graph mustEqual g
+  }
+
+  "set graph in filterHyperRelations" in {
+    val g = mock[raw.Graph]
+    val filter = new Filter {override val graph = g}
+    val node = TheHyperRelation()
+    val filtered = filter.filterHyperRelations(Seq(node.rawItem),Nil, TheHyperRelation)
+    filtered.head.graph mustEqual g
+  }
+
   "node equality" in {
     val node = TheNode()
     val node2 = TheNode.wrap(node.rawItem)

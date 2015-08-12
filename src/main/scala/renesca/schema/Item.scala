@@ -42,6 +42,21 @@ trait Node extends Item with Filter {
   def predecessorsAs[RELNODE <: Node, NODE <: RELNODE](nodeFactory: NodeFactory[NODE], hyperRelationFactory: HyperRelationFactory[RELNODE, _, _, _, _]) = {
     filterNodes(rawItem.inRelations.filter(_.relationType == hyperRelationFactory.endRelationType).map(_.startNode).filter(_.labels contains hyperRelationFactory.label).flatMap(_.inRelations.filter(_.relationType == hyperRelationFactory.startRelationType).map(_.startNode)), nodeFactory)
   }
+
+  def inRelationsAs[START <: Node, RELATION <: Relation[START, END], END <: Node]
+  (relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
+    filterRelations(rawItem.inRelations, relationFactory)
+  }
+
+  def outRelationsAs[START <: Node, RELATION <: Relation[START, END], END <: Node]
+  (relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
+    filterRelations(rawItem.outRelations, relationFactory)
+  }
+
+  def relationsAs[START <: Node, RELATION <: Relation[START, END], END <: Node]
+  (relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
+    filterRelations(rawItem.relations, relationFactory)
+  }
 }
 
 trait AbstractRelation[+START <: Node, +END <: Node] extends Item {

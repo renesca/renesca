@@ -313,6 +313,19 @@ class SchemaSpec extends Specification with Mockito {
     filtered.head.graph mustEqual g
   }
 
+  "node.relationsAs" in {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheRelation(node, node2)
+    val relation2 = TheRelation(node2, node)
+    graph.add(node, node2, relation, relation2)
+
+    node.relationsAs(TheRelation) must contain(exactly(relation, relation2))
+    node.inRelationsAs(TheRelation) must contain(exactly(relation2))
+    node2.outRelationsAs(TheRelation) must contain(exactly(relation2))
+  }
+
   "node equality" in {
     val node = TheNode()
     val node2 = TheNode.wrap(node.rawItem)

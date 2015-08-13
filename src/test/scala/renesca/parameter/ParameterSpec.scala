@@ -123,5 +123,19 @@ class ParameterSpec extends Specification {
     }
 
     "hashcodes" in todo
+
+    "Syntactic sugar for casting" in {
+      "asString" in { val p: ParameterValue = StringPropertyValue("Kleiderschrank"); p.asString mustEqual "Kleiderschrank" }
+      "asLong" in { val p: ParameterValue = LongPropertyValue(5); p.asLong mustEqual 5 }
+      "asDouble" in { val p: ParameterValue = DoublePropertyValue(5.5); p.asDouble mustEqual 5.5 }
+      "asBoolean" in { val p: ParameterValue = BooleanPropertyValue(false); p.asBoolean mustEqual false }
+
+      "asStringArray" in { val p: ParameterValue = StringArrayPropertyValue("Kleiderschrank"); p.asStringArray mustEqual Seq("Kleiderschrank") }
+      "asLongArray" in { val p: ParameterValue = LongArrayPropertyValue(5); p.asLongArray mustEqual Seq(5) }
+      "asDoubleArray" in { val p: ParameterValue = DoubleArrayPropertyValue(5.5); p.asDoubleArray mustEqual Seq(5.5) }
+      "asBooleanArray" in { val p: ParameterValue = BooleanArrayPropertyValue(false); p.asBooleanArray mustEqual Seq(false) }
+
+      "asMap" in { val p: ParameterValue = MapParameterValue(Map("A" -> 3)); p.asMap("A") mustEqual 3 }
+    }
   }
 }

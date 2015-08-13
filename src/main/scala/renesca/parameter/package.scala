@@ -27,7 +27,19 @@ package object parameter {
     override def hashCode = name.hashCode
   }
 
-  sealed trait ParameterValue
+  sealed trait ParameterValue {
+    def asString: String = this.asInstanceOf[StringPropertyValue].value
+    def asLong: Long = this.asInstanceOf[LongPropertyValue].value
+    def asDouble: Double = this.asInstanceOf[DoublePropertyValue].value
+    def asBoolean: Boolean = this.asInstanceOf[BooleanPropertyValue].value
+
+    def asStringArray: Seq[String] = this.asInstanceOf[StringArrayPropertyValue].elements.map(_.value)
+    def asLongArray: Seq[Long] = this.asInstanceOf[LongArrayPropertyValue].elements.map(_.value)
+    def asDoubleArray: Seq[Double] = this.asInstanceOf[DoubleArrayPropertyValue].elements.map(_.value)
+    def asBooleanArray: Seq[Boolean] = this.asInstanceOf[BooleanArrayPropertyValue].elements.map(_.value)
+
+    def asMap: Map[String, ParameterValue] = this.asInstanceOf[MapParameterValue].value.map { case (k, v) => k.name -> v }
+  }
 
   sealed trait SoleParameterValue extends ParameterValue
 

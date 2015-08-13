@@ -299,7 +299,7 @@ class SchemaSpec extends Specification with Mockito {
 
   "set graph in filterNodes" in {
     val g = mock[raw.Graph]
-    val filter = new Filter {override val graph = g}
+    val filter = new Filter {override val graph = g }
     val node = TheNode()
     val filtered = filter.filterNodes(Seq(node.rawItem), TheNode)
     filtered.head.graph mustEqual g
@@ -307,9 +307,9 @@ class SchemaSpec extends Specification with Mockito {
 
   "set graph in filterHyperRelations" in {
     val g = mock[raw.Graph]
-    val filter = new Filter {override val graph = g}
+    val filter = new Filter {override val graph = g }
     val node = TheHyperRelation()
-    val filtered = filter.filterHyperRelations(Seq(node.rawItem),Nil, TheHyperRelation)
+    val filtered = filter.filterHyperRelations(Seq(node.rawItem), Nil, TheHyperRelation)
     filtered.head.graph mustEqual g
   }
 
@@ -324,6 +324,19 @@ class SchemaSpec extends Specification with Mockito {
     node.relationsAs(TheRelation) must contain(exactly(relation, relation2))
     node.inRelationsAs(TheRelation) must contain(exactly(relation2))
     node2.outRelationsAs(TheRelation) must contain(exactly(relation2))
+  }
+
+  "node.relationsAs (hyperrelations)" in {
+    val graph = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheHyperRelation(node, node2)
+    val relation2 = TheHyperRelation(node2, node)
+    graph.add(node, node2, relation, relation2)
+
+    node.relationsAs(TheHyperRelation) must contain(exactly(relation, relation2))
+    node.inRelationsAs(TheHyperRelation) must contain(exactly(relation2))
+    node2.outRelationsAs(TheHyperRelation) must contain(exactly(relation2))
   }
 
   "node equality" in {

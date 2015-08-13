@@ -57,6 +57,36 @@ trait Node extends Item with Filter {
   (relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
     filterRelations(rawItem.relations, relationFactory)
   }
+
+  def inRelationsAs[
+  START <: Node,
+  STARTRELATION <: Relation[START, HYPERRELATION],
+  HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
+  ENDRELATION <: Relation[HYPERRELATION, END],
+  END <: Node]
+  (hyperRelationFactory: HyperRelationFactory[START, STARTRELATION, HYPERRELATION, ENDRELATION, END]): Seq[HYPERRELATION] = {
+    filterHyperRelations(rawItem.predecessors, graph.relations, hyperRelationFactory)
+  }
+
+  def outRelationsAs[
+  START <: Node,
+  STARTRELATION <: Relation[START, HYPERRELATION],
+  HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
+  ENDRELATION <: Relation[HYPERRELATION, END],
+  END <: Node]
+  (hyperRelationFactory: HyperRelationFactory[START, STARTRELATION, HYPERRELATION, ENDRELATION, END]): Seq[HYPERRELATION] = {
+    filterHyperRelations(rawItem.successors, graph.relations, hyperRelationFactory)
+  }
+
+  def relationsAs[
+  START <: Node,
+  STARTRELATION <: Relation[START, HYPERRELATION],
+  HYPERRELATION <: HyperRelation[START, STARTRELATION, HYPERRELATION, ENDRELATION, END],
+  ENDRELATION <: Relation[HYPERRELATION, END],
+  END <: Node]
+  (hyperRelationFactory: HyperRelationFactory[START, STARTRELATION, HYPERRELATION, ENDRELATION, END]): Seq[HYPERRELATION] = {
+    filterHyperRelations(rawItem.neighbours, graph.relations, hyperRelationFactory)
+  }
 }
 
 trait AbstractRelation[+START <: Node, +END <: Node] extends Item {

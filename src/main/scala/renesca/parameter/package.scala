@@ -102,7 +102,7 @@ package object parameter {
     override def equals(other: Any): Boolean = other match {
       case that: LongArrayPropertyValue => this.elements == that.elements
       case that: ArrayParameterValue    => this.elements == that.value
-      case that: Seq[_]                 => elements.sameElements(that)
+      case that: Seq[_]                 => elements == that
       case _                            => false
     }
     override def hashCode = elements.hashCode
@@ -112,7 +112,7 @@ package object parameter {
     override def equals(other: Any): Boolean = other match {
       case that: DoubleArrayPropertyValue => this.elements == that.elements
       case that: ArrayParameterValue      => this.elements == that.value
-      case that: Seq[_]                   => elements.sameElements(that)
+      case that: Seq[_]                   => elements == that
       case _                              => false
     }
     override def hashCode = elements.hashCode
@@ -122,7 +122,7 @@ package object parameter {
     override def equals(other: Any): Boolean = other match {
       case that: StringArrayPropertyValue => this.elements == that.elements
       case that: ArrayParameterValue      => this.elements == that.value
-      case that: Seq[_]                   => elements.sameElements(that)
+      case that: Seq[_]                   => elements == that
       case _                              => false
     }
     override def hashCode = elements.hashCode
@@ -132,7 +132,7 @@ package object parameter {
     override def equals(other: Any): Boolean = other match {
       case that: BooleanArrayPropertyValue => this.elements == that.elements
       case that: ArrayParameterValue       => this.elements == that.value
-      case that: Seq[_]                    => elements.sameElements(that)
+      case that: Seq[_]                    => elements == that
       case _                               => false
     }
     override def hashCode = elements.hashCode
@@ -145,7 +145,7 @@ package object parameter {
       case that: DoubleArrayPropertyValue  => this.value == that.elements
       case that: StringArrayPropertyValue  => this.value == that.elements
       case that: BooleanArrayPropertyValue => this.value == that.elements
-      case that: Seq[_]                    => value.sameElements(that)
+      case that: Seq[_]                    => value == that
       case _                               => false
     }
     override def hashCode = value.hashCode
@@ -155,7 +155,7 @@ package object parameter {
   case class MapParameterValue(value: ParameterMap) extends SoleParameterValue {
     override def equals(other: Any): Boolean = other match {
       case that: MapParameterValue => this.value == that.value
-      case that: Map[_, _]         => value.sameElements(that)
+      case that: Map[_, _]         => value == that
       case _                       => false
     }
     override def hashCode = value.hashCode

@@ -4,7 +4,7 @@
 name := "renesca"
 
 
-version := "0.3.2-2"
+version := "0.3.2-3"
 
 scalaVersion := "2.11.7"
 

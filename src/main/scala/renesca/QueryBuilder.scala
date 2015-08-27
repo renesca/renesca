@@ -453,8 +453,12 @@ class QueryBuilder {
   def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Option[String] = {
     val handles = queryRequests.view.flatMap(getter => {
       val configs = getter()
-      val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-      queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }
+      if (configs.isEmpty)
+        Seq.empty
+      else {
+        val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
+        queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }
+      }
     })
 
     var failure: Option[String] = None

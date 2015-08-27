@@ -10,6 +10,7 @@ import spray.http.HttpMethods._
 import spray.http.{HttpRequest, _}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import spray.json._
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -49,10 +50,22 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
       content = jsonRequest
     ).withHeaders(headers.toList)
   }
+def timeColored(text:String, ms:Long):String = {
+          val red = "\033[31m"
+          val yellow = "\033[33m"
+          val reset = "\033[0m"
+          if(ms < 100) return text
+          else if(ms < 1000) return s"$yellow$text$reset"
+          else return s"$red$text$reset"
+        }
 
   private def awaitResponse(path: String, jsonRequest: json.Request): (List[HttpHeader], json.Response) = {
     val httpRequest = buildHttpPostRequest(path, jsonRequest)
+    val startTime = System.currentTimeMillis
     val httpResponse = awaitResponse(httpRequest)
+    val endTime = System.currentTimeMillis
+    val diff = endTime - startTime
+    println(timeColored("REQUESTING:\n" + jsonRequest.toJson + "\n-- REQUEST TOOK: " + diff + "ms\n\n", diff))
     val jsonResponse: json.Response = httpResponse.entity.as[json.Response] match {
       case Right(json)                => json
       case Left(deserializationError) => throw new RuntimeException(s"Deserialization Error: $deserializationError\n\n${ httpResponse.entity.asString }")

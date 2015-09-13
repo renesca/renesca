@@ -41,8 +41,13 @@ class QueryGenerator {
           variable)
       case Match(matches)        =>
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, matches)
-        ("match", s"($variable $labels $matchLiteralMap)", s"set $variable += {${ variable }_properties}",
-          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+        val (propertySetter, propertyMap) = if (remainingProperties.isEmpty)
+          ("", Map.empty)
+        else
+          (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
+
+        ("match", s"($variable $labels $matchLiteralMap)", propertySetter,
+          parameterMap ++ propertyMap,
           variable)
     }
   }
@@ -62,8 +67,13 @@ class QueryGenerator {
           variable)
       case Match(matches)        =>
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, matches)
-        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", s"set $variable += {${ variable }_properties}",
-          parameterMap ++ Map(s"${ variable }_properties" -> remainingProperties.toMap),
+        val (propertySetter, propertyMap) = if (remainingProperties.isEmpty)
+          ("", Map.empty)
+        else
+          (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
+
+        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", propertySetter,
+          parameterMap ++ propertyMap,
           variable)
     }
   }

@@ -128,7 +128,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "not delete local node" in {
+      "not delete create node" in {
         val n = Node.create
         val changes = Seq(
           DeleteItem(n)
@@ -211,7 +211,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete" in {
+      "delete id node" in {
         val changes = Seq(
           DeleteItem(Node(1))
         )
@@ -222,6 +222,34 @@ class QueryBuilderSpec extends Specification with Mockito {
           q(
             "match (V0) where id(V0) = {V0_nodeId} optional match (V0)-[V1]-() delete V1, V0",
             Map("V0_nodeId" -> 1))
+        ))
+      }
+
+      "delete matches node" in {
+        val a = Node.matches(Seq("l"), Map("18" -> 48, "B" -> 0), Set("B"))
+
+        val changes = Seq(
+          DeleteItem(a)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("match (V0 :`l` {B: {V0_B}}) optional match (V0)-[V1]-() delete V1, V0", Map("V0_B" -> 0))
+        ))
+      }
+
+      "delete merge node" in {
+        val a = Node.merge(Seq("l"), Map("18" -> 48, "B" -> 0), Set("B"), Set("18"))
+
+        val changes = Seq(
+          DeleteItem(a)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("match (V0 :`l` {B: {V0_B}}) optional match (V0)-[V1]-() delete V1, V0", Map("V0_B" -> 0))
         ))
       }
 
@@ -531,7 +559,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete" in {
+      "delete id relation" in {
         val a = Node(1)
         val b = Node(2)
         val r = Relation(3, a, b, "r")
@@ -545,6 +573,107 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries mustEqual Seq(Seq(
           q("match ()-[V0]-() where id(V0) = {V0_relationId} delete V0",
             Map("V0_relationId" -> 3))
+        ))
+      }
+
+      "delete node and relation" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(r),
+          DeleteItem(a)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("match (V0) where id(V0) = {V0_nodeId} optional match (V0)-[V1]-() delete V1, V0",
+            Map("V0_nodeId" -> 1))
+        ))
+      }
+
+      "delete create node and relation" in {
+        val a = Node(1)
+        val b = Node.create
+        val r = Relation.matches(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(b),
+          DeleteItem(r)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries.size mustEqual 0
+      }
+
+      "delete matches node and relation" in {
+        val a = Node(1)
+        val b = Node.matches
+        val r = Relation.matches(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(r),
+          DeleteItem(b)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("match (V0) optional match (V0)-[V1]-() delete V1, V0", parameterMap)
+        ))
+      }
+
+      "delete matches relation" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.matches(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(r)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("match (V0) where id(V0) = {V0_nodeId} match (V1) where id(V1) = {V1_nodeId} match (V0)-[V2 :`r`]->(V1) delete V2", Map("V0_nodeId" -> 1, "V1_nodeId" -> 2))
+        ))
+      }
+
+      "delete create relation" in {
+        val a = Node(1)
+        val b = Node(2)
+        val r = Relation.create(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(r)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries.size mustEqual 0
+      }
+
+      "delete matches relation with local nodes" in {
+        val a = Node.merge
+        val b = Node.matches
+        val r = Relation.matches(a, "r", b)
+
+        val changes = Seq(
+          DeleteItem(r),
+          AddItem(a),
+          AddItem(b)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(Seq(
+          q("merge (V0) on create set V0 += {V0_onCreateProperties} on match set V0 += {V0_onMatchProperties} return V0", parameterMap("V0_onCreateProperties", "V0_onMatchProperties")),
+          q("match (V1) return V1", parameterMap)
+        ), Seq(
+          q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V4 :`r`]->(V3) delete V4", Map("V2_nodeId" -> 1, "V3_nodeId" -> 2))
         ))
       }
 
@@ -1181,13 +1310,14 @@ class QueryBuilderSpec extends Specification with Mockito {
 
         queries mustEqual Seq(
           Seq(
-            q("create (V0 {V0_properties}) return V0", parameterMap("V0_properties")),
-            q("merge (V1) on create set V1 += {V1_onCreateProperties} on match set V1 += {V1_onMatchProperties} return V1",
-              Map("V1_onCreateProperties" -> parameterMap, "V1_onMatchProperties" -> parameterMap))
+            q("match (V0) optional match (V0)-[V1]-() delete V1, V0", parameterMap),
+            q("create (V2 {V2_properties}) return V2", parameterMap("V2_properties")),
+            q("merge (V3) on create set V3 += {V3_onCreateProperties} on match set V3 += {V3_onMatchProperties} return V3",
+              Map("V3_onCreateProperties" -> parameterMap, "V3_onMatchProperties" -> parameterMap))
           ),
           Seq(
-            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V4 :`from`]->(V3) return V4",
-              Map("V2_nodeId" -> 1, "V3_nodeId" -> 2))
+            q("match (V4) where id(V4) = {V4_nodeId} match (V5) where id(V5) = {V5_nodeId} match (V4)-[V6 :`from`]->(V5) return V6",
+              Map("V4_nodeId" -> 2, "V5_nodeId" -> 3))
           )
         )
       }
@@ -1252,7 +1382,8 @@ class QueryBuilderSpec extends Specification with Mockito {
           ),
           Seq(
             q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} match (V3)-[V5 :`from`]->(V4) return V5",
-              Map("V3_nodeId" -> 2, "V4_nodeId" -> 3))
+              Map("V3_nodeId" -> 2, "V4_nodeId" -> 3)),
+            q("match (V6) where id(V6) = {V6_nodeId} match (V7) where id(V7) = {V7_nodeId} match (V6)-[V8 :`kicks`]->(V7) delete V8", Map("V6_nodeId" -> 1, "V7_nodeId" -> 2))
           )
         )
       }

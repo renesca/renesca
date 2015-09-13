@@ -25,7 +25,7 @@ class QueryGenerator {
 
   //TODO should limit number of matches for merge and match to 1!
   // match/merge ... with variable limit 1 ...
-  protected def nodePattern(node: Node): (String, String, String, ParameterMap, String) = {
+  protected def nodePattern(node: Node, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
     resolvedItems.getOrElse(node, node.origin) match {
@@ -41,7 +41,7 @@ class QueryGenerator {
           variable)
       case Match(matches)        =>
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, matches)
-        val (propertySetter, propertyMap) = if (remainingProperties.isEmpty)
+        val (propertySetter, propertyMap) = if (forDeletion || remainingProperties.isEmpty)
           ("", Map.empty)
         else
           (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
@@ -52,7 +52,7 @@ class QueryGenerator {
     }
   }
 
-  protected def relationPattern(relation: Relation): (String, String, String, ParameterMap, String) = {
+  protected def relationPattern(relation: Relation, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     resolvedItems.getOrElse(relation, relation.origin) match {
       case Id(id)                =>
@@ -67,7 +67,7 @@ class QueryGenerator {
           variable)
       case Match(matches)        =>
         val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, matches)
-        val (propertySetter, propertyMap) = if (remainingProperties.isEmpty)
+        val (propertySetter, propertyMap) = if (forDeletion || remainingProperties.isEmpty)
           ("", Map.empty)
         else
           (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
@@ -83,17 +83,22 @@ class QueryGenerator {
     Query(s"$keyword $query $postfix return $variable", parameters)
   }
 
-  protected def queryRelation(relation: Relation) = {
+  protected def queryRelationPattern(relation: Relation, forDeletion: Boolean = false) = {
     if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
       throw new Exception("Start node in relation is still local: " + relation)
     if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
       throw new Exception("End node in relation is still local: " + relation)
 
-    val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode)
-    val (endKeyword, endQuery, endPostfix, endParameters, endVariable) = nodePattern(relation.endNode)
-    val (keyword, query, postfix, parameters, variable) = relationPattern(relation)
-    Query(s"$startKeyword $startQuery $startPostfix $endKeyword $endQuery $endPostfix $keyword ($startVariable)-$query->($endVariable) $postfix return $variable",
-      startParameters ++ parameters ++ endParameters)
+    val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode, forDeletion)
+    val (endKeyword, endQuery, endPostfix, endParameters, endVariable) = nodePattern(relation.endNode, forDeletion)
+    val (keyword, query, postfix, parameters, variable) = relationPattern(relation, forDeletion)
+
+    (s"$startKeyword $startQuery $startPostfix $endKeyword $endQuery $endPostfix $keyword ($startVariable)-$query->($endVariable) $postfix", variable, startParameters ++ parameters ++ endParameters)
+  }
+
+  protected def queryRelation(relation: Relation) = {
+    val (queryPattern, variable, params) = queryRelationPattern(relation)
+    Query(s"$queryPattern return $variable", params)
   }
 
   private def queryPath(path: Path) = {
@@ -200,20 +205,19 @@ class QueryGenerator {
 
   def deletionToQueries(deleteItems: Seq[Item])() = {
     deleteItems.map {
-      case n: Node     =>
-        if(n.origin.isLocal)
-          throw new Exception("Trying to delete local node: " + n)
-
-        val (keyword, query, postfix, parameters, variable) = nodePattern(n)
+      case n: Node =>
+        val (keyword, query, postfix, parameters, variable) = nodePattern(n, true)
         val optionalVariable = randomVariable
         QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
       case r: Relation =>
-        if(r.origin.isLocal)
-          throw new Exception("Trying to delete local relation: " + r)
-
-        val (keyword, query, postfix, parameters, variable) = relationPattern(r)
         //TODO: invalidate Id origin of deleted item?
-        QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
+        if (!r.origin.isLocal) { // if not local we can match by id and have a simpler query
+          val (keyword, query, postfix, parameters, variable) = relationPattern(r, true)
+          QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
+        } else {
+          val (queryPattern, variable, params) = queryRelationPattern(r, true)
+          QueryConfig(r, Query(s"$queryPattern delete $variable", params))
+        }
     }
   }
 
@@ -400,7 +404,36 @@ class QueryBuilder {
 
     // gather deletion changes
     val deleteItems = changes.collect { case DeleteItem(i) => i }
-    val nonLocalDeleteItems = deleteItems.filterNot(_.origin.isLocal)
+    val (independentDeleteItems, dependentDeleteRelations) = {
+      // translate origin of delete items. merge nodes and relations can be
+      // matched via their merge properties, so we can delete them like match
+      // items.
+      deleteItems.foreach { item =>
+        item.origin = item.origin match {
+          case Merge(merge, _) => Match(merge)
+          case other           => other
+        }
+      }
+
+      val deleteNodes = deleteItems.collect { case n: Node => n }
+      val filteredDeleteNodes = deleteNodes.filter(i => !i.origin.isLocal || i.origin.kind == Match.kind)
+      val deleteRelations = deleteItems.collect { case r:Relation => r }.filter { relation =>
+        // deleting a node deletes all connected relations, thus relation
+        // deletion is already handled if the start- or endnode is deleted.
+        // create relation can be ignored
+        !deleteNodes.contains(relation.startNode) && !deleteNodes.contains(relation.endNode) && (!relation.origin.isLocal || relation.origin.kind == Match.kind)
+      }
+
+      // split delete changes into dependent and independent changes
+      // independent changes that are directly handled in the first request:
+      // 1. all nodes
+      // 2. relations that can be referenced by their id (non-local relation)
+      // 2. relations that can be referenced by the id of their non-local start- and endnode
+      // all other delete changes are send in the last request, when everything is resolved
+      val (deleteLocalRelations, deleteNonLocalRelations) = deleteRelations.partition(r => r.origin.isLocal && (r.startNode.origin.isLocal || r.endNode.origin.isLocal))
+
+      (filteredDeleteNodes ++ deleteNonLocalRelations, deleteLocalRelations)
+    }
 
     // gather content changes
     val contentChanges = changes.collect { case c: GraphContentChange => c }
@@ -425,10 +458,11 @@ class QueryBuilder {
       case None      =>
     }
 
-    // generate queries
+    // independent changes that do not dependent on the results of any other
+    // change request and can be sent in one request
     val independentChanges = {
       val contentChangeQueries = gen.contentChangesToQueries(contentChanges) _
-      val deleteQueries = gen.deletionToQueries(nonLocalDeleteItems) _
+      val deleteQueries = gen.deletionToQueries(independentDeleteItems) _
       val addNodeQueries = gen.addNodesToQueries(addNodes) _
       val addNonLocalPathQueries = gen.addPathsToQueries(addNonLocalPaths) _
       val addNonLocalRelationQueries = gen.addRelationsToQueries(addNonLocalRelations) _
@@ -440,17 +474,25 @@ class QueryBuilder {
         addNonLocalRelationQueries()
     }
 
+    // node producing paths that can be referenced by relations and might
+    // reference nodes created in the first request the dependency graph
+    // resolves dependencies between the paths, and sends a request for each
+    // independent chunk
     val localProducePathChunks = newPathDependencyGraph(addLocalProducePaths.toSet).resolvePaths match {
       case Left(err)     => return Left(err)
       case Right(chunks) => chunks.map(c => gen.addPathsToQueries(c) _)
     }
 
+    // after all possible node producing queries are resolved, the relations
+    // can be handled in the last request
     val relationChanges = {
       val addLocalRelationQueries = gen.addRelationsToQueries(addLocalRelations) _
       val addLocalRelationPathQueries = gen.addPathsToQueries(addLocalRelationPaths) _
+      val deleteQueries = gen.deletionToQueries(dependentDeleteRelations) _
 
       () => addLocalRelationQueries() ++
-        addLocalRelationPathQueries()
+        addLocalRelationPathQueries() ++
+        deleteQueries()
     }
 
     Right(

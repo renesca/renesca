@@ -25,6 +25,7 @@ trait QueryInterface {
   def queryWholeGraph: Graph
   def queryGraph(query: Query): Graph
   def queryTable(query: Query): Table
+  def queryGraphAndTable(query: Query): (Graph,Table)
   def queryGraphs(queries: Query*): Seq[Graph]
   def queryTables(queries: Query*): Seq[Table]
   def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
@@ -93,6 +94,7 @@ trait QueryHandler extends QueryInterface {
   override def queryWholeGraph: Graph = queryGraph("match (n) optional match (n)-[r]-() return n,r")
   override def queryGraph(query: Query): Graph = queryGraphs(query).head
   override def queryTable(query: Query): Table = queryTables(query).head
+  override def queryGraphAndTable(query: Query): (Graph,Table) = queryGraphsAndTables(query).head
 
   override def queryGraphs(queries: Query*): Seq[Graph] = {
     val results = executeQueries(queries, List("graph"))

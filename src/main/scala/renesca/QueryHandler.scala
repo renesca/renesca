@@ -31,6 +31,11 @@ trait QueryInterface {
   def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
   def query(queries: Query*): Unit
 
+  def queryGraph(statement: String, parameters: ParameterMap = Map.empty): Graph = queryGraph(Query(statement, parameters))
+  def queryTable(statement: String, parameters: ParameterMap = Map.empty): Table = queryTable(Query(statement, parameters))
+  def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): (Graph,Table) = queryGraphAndTable(Query(statement, parameters))
+  def query(statement: String, parameters: ParameterMap = Map.empty): Unit = query(Query(statement, parameters))
+
   def persistChanges(graph: Graph): Option[String]
 
   def persistChanges(schemaGraph: schema.Graph): Option[String] = {

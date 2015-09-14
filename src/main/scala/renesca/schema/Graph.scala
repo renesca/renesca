@@ -55,6 +55,7 @@ trait Graph extends Filter {
   def remove(schemaItems: Item*) {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
+        hyperRelation.rawPath.foreach(graph += _)
         graph.nodes -= hyperRelation.rawItem
         hyperRelation.startRelationOpt.foreach(graph.relations -= _.rawItem)
         hyperRelation.endRelationOpt.foreach(graph.relations -= _.rawItem)

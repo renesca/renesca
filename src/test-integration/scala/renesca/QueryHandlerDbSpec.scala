@@ -131,6 +131,24 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.nodes must beEmpty
     }
 
+    "delete match node" in {
+      val graph = Graph.empty
+      val node = Node.create(Set("BEER"))
+      val node2 = Node.create(Set("WINE"))
+      graph.nodes += node
+      graph.nodes += node2
+      db.persistChanges(graph).isDefined mustEqual false
+
+      val graph2 = Graph.empty
+      val del = Node.matches(Set("WINE"))
+      graph2.nodes -= del
+      db.persistChanges(graph2).isDefined mustEqual false
+
+      val resultGraph = db.queryGraph("match n return n")
+      resultGraph.nodes.size mustEqual 1
+      resultGraph.nodes.head.labels mustEqual Set(Label("BEER"))
+    }
+
     "delete node with relations" in {
       // 1. create (m)-r->(n)<-l-(q)
       // 2. query (m)-r->(n)
@@ -207,6 +225,29 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val resultGraph = db.queryWholeGraph
       resultGraph.nodes must haveSize(2)
       resultGraph.relations must beEmpty
+    }
+
+    "delete match relation" in {
+      val graph = Graph.empty
+      val start = Node.create
+      val end = Node.create
+      graph.nodes += start
+      graph.nodes += end
+      val relation = Relation.create(start, "EATS", end)
+      val relation2 = Relation.create(start, "DRINKS", end)
+      graph.relations += relation
+      graph.relations += relation2
+      db.persistChanges(graph).isDefined mustEqual false
+
+      val graph2 = Graph.empty
+      val relation3 = Relation.matches(start, "EATS", end)
+      graph2.relations -= relation3
+      db.persistChanges(graph2).isDefined mustEqual false
+
+      val resultGraph = db.queryWholeGraph
+      resultGraph.nodes must haveSize(2)
+      resultGraph.relations must haveSize(1)
+      resultGraph.relations.head.relationType mustEqual RelationType("DRINKS")
     }
 
     "add node" in {
@@ -627,6 +668,46 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       end mustEqual end2
     }
 
+    "delete match path" in {
+      val graph = Graph.empty
+      val start = Node.create(Seq("START"))
+      val end = Node.create(Seq("END"))
+      val middle = Node.create(Seq("MIDDLE"))
+      val r1 = Relation.create(start, "r1", middle)
+      val r2 = Relation.create(middle, "r2", end)
+      val Right(path) = Path(r1, r2)
+
+      val middle2 = Node.create(Seq("MIDDLE2"))
+      val r12 = Relation.create(start, "r1", middle2)
+      val r22 = Relation.create(middle2, "r2", end)
+      val Right(path2) = Path(r12, r22)
+
+      graph += path
+      graph += path2
+      graph.nodes += middle
+      graph.relations += r1
+      graph.relations += r2
+      db.persistChanges(graph).isDefined mustEqual false
+
+      val matchGraph = Graph.empty
+      val matchMiddle = Node.matches(Seq("MIDDLE"))
+      val matchr1 = Relation.matches(start, "r1", matchMiddle)
+      val matchr2 = Relation.matches(matchMiddle, "r2", end)
+      val Right(matchpath) = Path(matchr1, matchr2)
+
+      matchGraph += matchpath
+      matchGraph.nodes -= matchMiddle
+      matchGraph.relations -= matchr1
+      matchGraph.relations -= matchr2
+      db.persistChanges(matchGraph).isDefined mustEqual false
+
+      val wholeGraph = db.queryWholeGraph
+
+      wholeGraph.relations.size mustEqual 2
+      wholeGraph.nodes.size mustEqual 3
+      wholeGraph.nodes.map(_.labels) contains Set(Label("MIDDLE2"))
+    }
+
     "add path with removed middle node" in {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
@@ -646,7 +727,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.nodes.size mustEqual 2
     }
 
-    "add path with removed end node" in {
+    "fail on add path with removed end node" in {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -657,16 +738,16 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val Right(path) = Path(r1, r2)
       graph += path
       graph.nodes -= end
-      db.persistChanges(graph).isDefined mustEqual false
+      val failure = db.persistChanges(graph)
 
       val wholeGraph = db.queryWholeGraph
 
-      wholeGraph.relations.size mustEqual 1
-      wholeGraph.relations.head mustEqual r1
-      wholeGraph.nodes.size mustEqual 2
+      failure.isDefined mustEqual true
+      wholeGraph.relations.size mustEqual 0
+      wholeGraph.nodes.size mustEqual 0
     }
 
-    "add path with removed relation" in {
+    "fail on add path with removed relation" in {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -677,13 +758,13 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val Right(path) = Path(r1, r2)
       graph += path
       graph.relations -= r1
-      db.persistChanges(graph).isDefined mustEqual false
+      val failure = db.persistChanges(graph)
 
       val wholeGraph = db.queryWholeGraph
 
-      wholeGraph.relations.size mustEqual 1
-      wholeGraph.relations.head mustEqual r2
-      wholeGraph.nodes.size mustEqual 3
+      failure.isDefined mustEqual true
+      wholeGraph.relations.size mustEqual 0
+      wholeGraph.nodes.size mustEqual 0
     }
 
     "duplicate nodes" in {

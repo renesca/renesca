@@ -1287,10 +1287,10 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "remove startnode of path" in {
+      "delete match path without middle node" in {
         val a = Node.matches
         val b = Node.create
-        val c = Node.merge
+        val c = Node.matches
         val r1 = Relation.matches(a, "kicks", b)
         val r2 = Relation.matches(b, "from", c)
         val Right(p) = Path(r1, r2)
@@ -1302,30 +1302,28 @@ class QueryBuilderSpec extends Specification with Mockito {
           AddItem(r1),
           AddItem(r2),
           AddPath(p),
-          DeleteItem(a),
-          DeleteItem(r1)
+          DeleteItem(r1),
+          DeleteItem(r2)
         )
 
         val queries = exq(builder.generateQueries(changes))
 
         queries mustEqual Seq(
           Seq(
-            q("match (V0) optional match (V0)-[V1]-() delete V1, V0", parameterMap),
-            q("create (V2 {V2_properties}) return V2", parameterMap("V2_properties")),
-            q("merge (V3) on create set V3 += {V3_onCreateProperties} on match set V3 += {V3_onMatchProperties} return V3",
-              Map("V3_onCreateProperties" -> parameterMap, "V3_onMatchProperties" -> parameterMap))
+            q("match (V0) return V0", parameterMap),
+            q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties")),
+            q("match (V2) return V2",parameterMap)
           ),
           Seq(
-            q("match (V4) where id(V4) = {V4_nodeId} match (V5) where id(V5) = {V5_nodeId} match (V4)-[V6 :`from`]->(V5) return V6",
-              Map("V4_nodeId" -> 2, "V5_nodeId" -> 3))
+            q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} match (V5) where id(V5) = {V5_nodeId} match (V3)-[V6 :`kicks`]->(V4) -[V7 :`from`]->(V5) delete V6,V7", Map("V3_nodeId" -> 1, "V4_nodeId" -> 2, "V5_nodeId" -> 3))
           )
         )
       }
 
-      "remove middle node of path" in {
+      "delete match path" in {
         val a = Node.matches
-        val b = Node.create
-        val c = Node.merge
+        val b = Node.matches
+        val c = Node.matches
         val r1 = Relation.matches(a, "kicks", b)
         val r2 = Relation.matches(b, "from", c)
         val Right(p) = Path(r1, r2)
@@ -1347,18 +1345,20 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries mustEqual Seq(
           Seq(
             q("match (V0) return V0", parameterMap),
-            q("merge (V1) on create set V1 += {V1_onCreateProperties} on match set V1 += {V1_onMatchProperties} return V1",
-              Map("V1_onCreateProperties" -> parameterMap, "V1_onMatchProperties" -> parameterMap))
+            q("match (V1) return V1",parameterMap)
+          ),
+          Seq(
+            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V5 :`kicks`]->(V4) -[V6 :`from`]->(V3) optional match (V4)-[V7]-() delete V7,V5,V6,V4", Map("V2_nodeId" -> 1, "V3_nodeId" -> 2))
           )
         )
       }
 
-      "remove relation of path" in {
+      "delete merge path" in {
         val a = Node.matches
-        val b = Node.create
-        val c = Node.merge
-        val r1 = Relation.matches(a, "kicks", b)
-        val r2 = Relation.matches(b, "from", c)
+        val b = Node.merge
+        val c = Node.matches
+        val r1 = Relation.merge(a, "kicks", b)
+        val r2 = Relation.merge(b, "from", c)
         val Right(p) = Path(r1, r2)
 
         val changes = Seq(
@@ -1368,7 +1368,9 @@ class QueryBuilderSpec extends Specification with Mockito {
           AddItem(r1),
           AddItem(r2),
           AddPath(p),
-          DeleteItem(r1)
+          DeleteItem(b),
+          DeleteItem(r1),
+          DeleteItem(r2)
         )
 
         val queries = exq(builder.generateQueries(changes))
@@ -1376,16 +1378,79 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries mustEqual Seq(
           Seq(
             q("match (V0) return V0", parameterMap),
-            q("create (V1 {V1_properties}) return V1", parameterMap("V1_properties")),
-            q("merge (V2) on create set V2 += {V2_onCreateProperties} on match set V2 += {V2_onMatchProperties} return V2",
-              Map("V2_onCreateProperties" -> parameterMap, "V2_onMatchProperties" -> parameterMap))
+            q("match (V1) return V1",parameterMap)
           ),
           Seq(
-            q("match (V3) where id(V3) = {V3_nodeId} match (V4) where id(V4) = {V4_nodeId} match (V3)-[V5 :`from`]->(V4) return V5",
-              Map("V3_nodeId" -> 2, "V4_nodeId" -> 3)),
-            q("match (V6) where id(V6) = {V6_nodeId} match (V7) where id(V7) = {V7_nodeId} match (V6)-[V8 :`kicks`]->(V7) delete V8", Map("V6_nodeId" -> 1, "V7_nodeId" -> 2))
+            q("match (V2) where id(V2) = {V2_nodeId} match (V3) where id(V3) = {V3_nodeId} match (V2)-[V5 :`kicks`]->(V4) -[V6 :`from`]->(V3) optional match (V4)-[V7]-() delete V7,V5,V6,V4" , Map("V2_nodeId" -> 1, "V3_nodeId" -> 2))
           )
         )
+      }
+
+      "delete create path" in {
+        val a = Node.matches
+        val b = Node.create
+        val c = Node.matches
+        val r1 = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "from", c)
+        val Right(p) = Path(r1, r2)
+
+        val changes = Seq(
+          AddItem(a),
+          AddItem(b),
+          AddItem(c),
+          AddItem(r1),
+          AddItem(r2),
+          AddPath(p),
+          DeleteItem(b),
+          DeleteItem(r1),
+          DeleteItem(r2)
+        )
+
+        val queries = exq(builder.generateQueries(changes))
+
+        queries mustEqual Seq(
+          Seq(
+            q("match (V0) return V0", parameterMap),
+            q("match (V1) return V1",parameterMap)
+          )
+        )
+      }
+
+      "fail on partial relation deletion of path" in {
+        val a = Node.matches
+        val b = Node.create
+        val r = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "back", a)
+        val Right(p) = Path(r, r2)
+
+        val changes = Seq(
+          AddPath(p),
+          DeleteItem(r)
+        )
+
+        val result = builder.generateQueries(changes)
+
+        result.left.toOption.isDefined mustEqual true
+        result.left.get startsWith "Cannot partially match paths, will not delete parts of a path: "
+      }
+
+      "fail on partial node deletion of path" in {
+        val a = Node.matches
+        val b = Node.create
+        val c = Node.matches
+        val r = Relation.create(a, "kicks", b)
+        val r2 = Relation.create(b, "back", c)
+        val Right(p) = Path(r, r2)
+
+        val changes = Seq(
+          AddPath(p),
+          DeleteItem(b)
+        )
+
+        val result = builder.generateQueries(changes)
+
+        result.left.toOption.isDefined mustEqual true
+        result.left.get startsWith "Cannot partially match paths, will not delete parts of a path: "
       }
 
       "query result interpretation should fail with no results" in {

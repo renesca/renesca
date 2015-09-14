@@ -25,7 +25,7 @@ object Path {
 class Path private[graph](val allNodes: Seq[Node],
                           val nodes: Seq[Node],
                           val relations: Seq[Relation],
-                          val origin: LocalOrigin
+                          var origin: LocalOrigin
                            ) extends SubGraph {
 
   override def toString = s"""Path(${ relations.mkString(",") })"""

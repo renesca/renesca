@@ -101,7 +101,7 @@ class QueryGenerator {
     Query(s"$queryPattern return $variable", params)
   }
 
-  private def queryPath(path: Path) = {
+  private def queryPathPattern(path: Path, forDeletion: Boolean = false) = {
     val variableMap = mutable.LinkedHashMap.empty[Item, String]
 
     // first match all non-path nodes
@@ -110,7 +110,7 @@ class QueryGenerator {
       throw new Exception("Bound node on path is still local: " + path)
 
     val (nodeQueries, nodeParameters) = boundNodes.map(node => {
-      val (keyword, query, postfix, parameters, variable) = nodePattern(node)
+      val (keyword, query, postfix, parameters, variable) = nodePattern(node, forDeletion)
       variableMap += node -> variable
       (s"$keyword $query $postfix", parameters.toMap)
     }).unzip
@@ -122,11 +122,11 @@ class QueryGenerator {
       val (pathQueries, pathSetters, pathParameters) = path.relations.zipWithIndex.map { case (relation, i) =>
         // a path assures that the start node was already matched by the previous relation (if there is one)
         val (_, startQuery, startSetter, startParameters, startVariable) = if(i == 0)
-                                                                             variableMap.get(relation.startNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.startNode))
+                                                                             variableMap.get(relation.startNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.startNode, forDeletion))
                                                                            else
                                                                              ("", "", "", Map.empty, variableMap(relation.startNode))
-        val (_, endQuery, endSetter, endParameters, endVariable) = variableMap.get(relation.endNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.endNode))
-        val (_, relQuery, relSetter, relParameters, relVariable) = relationPattern(relation)
+        val (_, endQuery, endSetter, endParameters, endVariable) = variableMap.get(relation.endNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.endNode, forDeletion))
+        val (_, relQuery, relSetter, relParameters, relVariable) = relationPattern(relation, forDeletion)
         variableMap ++= Seq(relation.startNode -> startVariable, relation.endNode -> endVariable, relation -> relVariable)
 
         (s"$startQuery-$relQuery->$endQuery",
@@ -143,8 +143,14 @@ class QueryGenerator {
       }, parameters)
     }
 
-    val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }.toMap
     val parameters = (nodeParameters.flatten ++ pathParameters).toMap
+
+    (s"$nodeQuery $pathQuery", parameters, variableMap)
+  }
+
+  private def queryPath(path: Path) = {
+    val (queryPattern, parameters, variableMap) = queryPathPattern(path)
+    val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }.toMap
 
     val returnClause = "return " + variableMap.map {
       case (k, variable) => k match {
@@ -153,7 +159,7 @@ class QueryGenerator {
       }
     }.mkString(",")
 
-    (Query(s"$nodeQuery $pathQuery $returnClause", parameters), reverseVariableMap)
+    (Query(s"$queryPattern $returnClause", parameters), reverseVariableMap)
   }
 
   def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
@@ -206,18 +212,35 @@ class QueryGenerator {
   def deletionToQueries(deleteItems: Seq[Item])() = {
     deleteItems.map {
       case n: Node =>
-        val (keyword, query, postfix, parameters, variable) = nodePattern(n, true)
+        val (keyword, query, postfix, parameters, variable) = nodePattern(n, forDeletion = true)
         val optionalVariable = randomVariable
         QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
       case r: Relation =>
         //TODO: invalidate Id origin of deleted item?
         if (!r.origin.isLocal) { // if not local we can match by id and have a simpler query
-          val (keyword, query, postfix, parameters, variable) = relationPattern(r, true)
+          val (keyword, query, postfix, parameters, variable) = relationPattern(r,  forDeletion =true)
           QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
         } else {
-          val (queryPattern, variable, params) = queryRelationPattern(r, true)
+          val (queryPattern, variable, params) = queryRelationPattern(r, forDeletion = true)
           QueryConfig(r, Query(s"$queryPattern delete $variable", params))
         }
+    }
+  }
+
+  def deletionPathsToQueries(deletePaths: Seq[Path])() = {
+    deletePaths.map { path =>
+      val (queryPattern, parameters, variableMap) = queryPathPattern(path, forDeletion = true)
+
+      val (optionalMatchers, matcherVariables) = path.nodes.map { n =>
+        val optionalVariable = randomVariable
+        val variable = variableMap(n)
+        (s"optional match ($variable)-[$optionalVariable]-()", optionalVariable)
+      }.unzip
+
+      val variables = (path.relations ++ path.nodes).map(variableMap)
+      val returnClause = "delete " + (matcherVariables ++ variables).mkString(",")
+
+      QueryConfig(path, Query(s"$queryPattern ${optionalMatchers.mkString(" ")} $returnClause", parameters))
     }
   }
 
@@ -373,7 +396,7 @@ class QueryBuilder {
     }.reverse
   }
 
-  protected def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
+  protected def checkChanges(allChanges: Seq[GraphChange], deleteItems: Seq[Item], deletePaths: Seq[Path], addPaths: Seq[Path], addLocalPaths: Seq[Path], addRelations: Seq[Relation]): Option[String] = {
     val illegalChange = allChanges.find(!_.isValid)
     if(illegalChange.isDefined)
       return Some("Found invalid graph change: " + illegalChange.get)
@@ -394,6 +417,16 @@ class QueryBuilder {
       return Some("Cannot delete start- or endnode of a new relation: " + deleteItems.mkString(","))
     }
 
+    // each path can only be deleted as a whole, there is no defined way to match partial paths.
+    val incompletePath = deletePaths.find { path =>
+      val pathItems = path.nodes ++ path.relations
+      val intersection = deleteItems.intersect(pathItems)
+      pathItems.length != intersection.length
+    }
+
+    if (incompletePath.isDefined)
+      return Some("Cannot partially match paths, will not delete parts of a path: " + incompletePath.get)
+
     None
   }
 
@@ -402,22 +435,50 @@ class QueryBuilder {
 
     val changes = filterGraphChanges(graphChanges)
 
-    // gather deletion changes
     val deleteItems = changes.collect { case DeleteItem(i) => i }
-    val (independentDeleteItems, dependentDeleteRelations) = {
-      // translate origin of delete items. merge nodes and relations can be
-      // matched via their merge properties, so we can delete them like match
-      // items.
-      deleteItems.foreach { item =>
-        item.origin = item.origin match {
-          case Merge(merge, _) => Match(merge)
-          case other           => other
-        }
-      }
 
-      val deleteNodes = deleteItems.collect { case n: Node => n }
+    // gather content changes
+    val contentChanges = changes.collect { case c: GraphContentChange => c }
+
+    // gather path changes, we ignore all paths that reference deleted items
+    val (deletePaths, addPaths) = changes.collect { case AddPath(p) => p }.partition(p => deleteItems.intersect(p.allNodes ++ p.relations).nonEmpty)
+    val (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths) = {
+      val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
+      val (addLocalProducePaths, addLocalRelationPaths) = addLocalPaths.partition(p => p.nodes.nonEmpty)
+
+      (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths)
+    }
+
+    // all add-relation and add-node changes that are already included in paths need to be ignored,
+    // as they are handled when adding the paths itself
+    val addRelations = changes.collect { case AddItem(r: Relation) => r }.filterNot(addPaths.flatMap(_.relations).toSet)
+    val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
+    val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
+
+    // translate origin of delete items. merge nodes and relations can be
+    // matched via their merge properties, so we can delete them like match
+    // items.
+    deleteItems.foreach( item => item.origin = item.origin match {
+        case Merge(merge, _) => Match(merge)
+        case other           => other
+    })
+
+    deletePaths.foreach( item => item.origin = item.origin match {
+        case Merge(merge, _) => Match(merge)
+        case other           => other
+    })
+
+    checkChanges(changes, deleteItems, deletePaths, addPaths, addLocalProducePaths, addRelations) match {
+      case Some(err) => return Left(err)
+      case None      =>
+    }
+
+    // gather delete changes
+    val (independentDeleteItems, dependentDeleteRelations) = {
+      val filteredDeleteItems = deleteItems.filterNot(deletePaths.flatMap(p => p.nodes ++ p.relations).toSet)
+      val deleteNodes = filteredDeleteItems.collect { case n: Node => n }
       val filteredDeleteNodes = deleteNodes.filter(i => !i.origin.isLocal || i.origin.kind == Match.kind)
-      val deleteRelations = deleteItems.collect { case r:Relation => r }.filter { relation =>
+      val deleteRelations = filteredDeleteItems.collect { case r:Relation => r }.filter { relation =>
         // deleting a node deletes all connected relations, thus relation
         // deletion is already handled if the start- or endnode is deleted.
         // create relation can be ignored
@@ -435,28 +496,7 @@ class QueryBuilder {
       (filteredDeleteNodes ++ deleteNonLocalRelations, deleteLocalRelations)
     }
 
-    // gather content changes
-    val contentChanges = changes.collect { case c: GraphContentChange => c }
-
-    // gather path changes, we ignore all paths that reference deleted items
-    val addPaths = changes.collect { case AddPath(p) => p }.filterNot(p => deleteItems.intersect(p.allNodes ++ p.relations).nonEmpty)
-    val (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths) = {
-      val (addLocalPaths, addNonLocalPaths) = addPaths.partition(p => p.allNodes.diff(p.nodes).exists(_.origin.isLocal))
-      val (addLocalProducePaths, addLocalRelationPaths) = addLocalPaths.partition(p => p.nodes.nonEmpty)
-
-      (addLocalProducePaths, addLocalRelationPaths, addNonLocalPaths)
-    }
-
-    // all add-relation and add-node changes that are already included in paths need to be ignored,
-    // as they are handled when adding the paths itself
-    val addRelations = changes.collect { case AddItem(r: Relation) => r }.filterNot(addPaths.flatMap(_.relations).toSet)
-    val (addLocalRelations, addNonLocalRelations) = addRelations.partition(r => r.startNode.origin.isLocal || r.endNode.origin.isLocal)
-    val addNodes = changes.collect { case AddItem(n: Node) => n }.filterNot(addPaths.flatMap(_.nodes).toSet)
-
-    checkChanges(changes, deleteItems, addPaths, addLocalProducePaths, addRelations) match {
-      case Some(err) => return Left(err)
-      case None      =>
-    }
+    val filteredDeletePaths = deletePaths.filter(p => !p.origin.isLocal || p.origin.kind == Match.kind)
 
     // independent changes that do not dependent on the results of any other
     // change request and can be sent in one request
@@ -489,10 +529,12 @@ class QueryBuilder {
       val addLocalRelationQueries = gen.addRelationsToQueries(addLocalRelations) _
       val addLocalRelationPathQueries = gen.addPathsToQueries(addLocalRelationPaths) _
       val deleteQueries = gen.deletionToQueries(dependentDeleteRelations) _
+      val deletePathQueries = gen.deletionPathsToQueries(filteredDeletePaths) _
 
       () => addLocalRelationQueries() ++
         addLocalRelationPathQueries() ++
-        deleteQueries()
+        deleteQueries() ++
+        deletePathQueries()
     }
 
     Right(

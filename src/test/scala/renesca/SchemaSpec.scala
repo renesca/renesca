@@ -25,8 +25,9 @@ class SchemaSpec extends Specification with Mockito {
       val labels = TheNode.labels
     }
 
-    class TheRelation(val startNode: TheNode, val rawItem: raw.Relation, val endNode: TheNode)
-      extends Relation[TheNode, TheNode]
+    class TheRelation(val startNode: Node, val rawItem: raw.Relation, val endNode: Node)
+      extends Relation[Node, Node]
+
 
     class StartHyperRelation(val startNode: TheNode, val rawItem: raw.Relation, val endNode: TheHyperRelation)
       extends Relation[TheNode, TheHyperRelation]
@@ -51,12 +52,12 @@ class SchemaSpec extends Specification with Mockito {
       }
     }
 
-    object TheRelation extends RelationFactory[TheNode, TheRelation, TheNode] {
+    object TheRelation extends RelationFactory[Node, TheRelation, Node] {
       override def relationType: RelationType = "peter"
       override def wrap(relation: raw.Relation): TheRelation = {
         new TheRelation(TheNode.wrap(relation.startNode), relation, TheNode.wrap(relation.endNode))
       }
-      def apply(startNode: TheNode, endNode: TheNode) = {
+      def apply(startNode: Node, endNode: Node) = {
         new TheRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
       }
     }
@@ -399,6 +400,19 @@ class SchemaSpec extends Specification with Mockito {
     relation.graph mustEqual node.relationsAs(StartHyperRelation).head.endNode.graph
     node.graph mustEqual node.relationsAs(TheHyperRelation).head.startNodeOpt.get.graph
     node2.graph mustEqual node.relationsAs(TheHyperRelation).head.endNodeOpt.get.graph
+  }
+
+  "recursively add start- and endnode of relation" in {
+    val schema = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val hyperrelation = TheHyperRelation(node, node2)
+    val node3 = TheNode()
+    val relation = TheRelation(hyperrelation, node3)
+    schema.add(relation)
+
+    schema.graph.nodes must contain(exactly(node.rawItem, node2.rawItem, hyperrelation.rawItem, node3.rawItem))
+    Seq(node, node2, hyperrelation, node3).map(_.graph).distinct must contain(exactly(schema.graph))
   }
 }
 

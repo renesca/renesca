@@ -38,13 +38,17 @@ trait Graph extends Filter {
     schemaItems.foreach {
       case hyperRelation: HyperRelation[_, _, _, _, _] =>
         graph.nodes += hyperRelation.rawItem
-        hyperRelation.startRelationOpt.foreach(graph.relations += _.rawItem)
-        hyperRelation.endRelationOpt.foreach(graph.relations += _.rawItem)
-        hyperRelation.rawPath.foreach(graph += _)
         hyperRelation.graphOption = Some(graph)
+        hyperRelation.startRelationOpt.foreach(add(_))
+        hyperRelation.endRelationOpt.foreach(add(_))
+        hyperRelation.rawPath.foreach(graph += _)
 
       case relation: Relation[_, _] =>
         graph.relations += relation.rawItem
+        if (relation.startNode.graph != graph)
+          add(relation.startNode)
+        if (relation.endNode.graph != graph)
+          add(relation.endNode)
 
       case schemaNode: Node =>
         graph.nodes += schemaNode.rawItem

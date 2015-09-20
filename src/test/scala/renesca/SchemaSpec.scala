@@ -28,6 +28,8 @@ class SchemaSpec extends Specification with Mockito {
     class TheRelation(val startNode: Node, val rawItem: raw.Relation, val endNode: Node)
       extends Relation[Node, Node]
 
+    class TheOtherRelation(val startNode: TheHyperRelation, val rawItem: raw.Relation, val endNode: TheNode)
+      extends Relation[TheHyperRelation, TheNode]
 
     class StartHyperRelation(val startNode: TheNode, val rawItem: raw.Relation, val endNode: TheHyperRelation)
       extends Relation[TheNode, TheHyperRelation]
@@ -59,6 +61,16 @@ class SchemaSpec extends Specification with Mockito {
       }
       def apply(startNode: Node, endNode: Node) = {
         new TheRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
+      }
+    }
+
+    object TheOtherRelation extends RelationFactory[TheHyperRelation, TheOtherRelation, TheNode] {
+      override def relationType: RelationType = "hans"
+      override def wrap(relation: raw.Relation): TheOtherRelation = {
+        new TheOtherRelation(TheHyperRelation.wrap(relation.startNode), relation, TheNode.wrap(relation.endNode))
+      }
+      def apply(startNode: TheHyperRelation, endNode: TheNode) = {
+        new TheOtherRelation(startNode, raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem), endNode)
       }
     }
 
@@ -414,5 +426,33 @@ class SchemaSpec extends Specification with Mockito {
     schema.graph.nodes must contain(exactly(node.rawItem, node2.rawItem, hyperrelation.rawItem, node3.rawItem))
     Seq(node, node2, hyperrelation, node3).map(_.graph).distinct must contain(exactly(schema.graph))
   }
+
+  "hyperrelation keeps start- and endnode if wrapped with relation" in {
+    val schema = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val hyperrelation = TheHyperRelation(node, node2)
+    val node3 = TheNode()
+    val relation = TheOtherRelation(hyperrelation, node3)
+    schema.add(relation)
+
+    val conHyper = node3.inRelationsAs(TheOtherRelation).head.startNode
+    conHyper.startNodeOpt.get.rawItem mustEqual node.rawItem
+    conHyper.endNodeOpt.get.rawItem mustEqual node2.rawItem
+  }.pendingUntilFixed
+
+  "hyperrelation keeps start- and endnode if wrapped as neighbour" in {
+    val schema = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val hyperrelation = TheHyperRelation(node, node2)
+    val node3 = TheNode()
+    val relation = TheOtherRelation(hyperrelation, node3)
+    schema.add(relation)
+
+    val conHyper = node3.neighboursAs(TheHyperRelation).head
+    conHyper.startNodeOpt.get.rawItem mustEqual node.rawItem
+    conHyper.endNodeOpt.get.rawItem mustEqual node2.rawItem
+  }.pendingUntilFixed
 }
 

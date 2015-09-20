@@ -15,7 +15,12 @@ trait Filter {
 
   def filterRelations[START <: Node, RELATION <: Relation[START, END], END <: Node]
   (relations: Seq[raw.Relation], relationFactory: RelationFactory[START, RELATION, END]): Seq[RELATION] = {
-    relations.filter(_.relationType == relationFactory.relationType).map(relationFactory.wrap)
+    relations.filter(_.relationType == relationFactory.relationType).map { rel =>
+      val schemaRel = relationFactory.wrap(rel)
+      schemaRel.startNode.graphOption = Some(graph)
+      schemaRel.endNode.graphOption = Some(graph)
+      schemaRel
+    }
   }
 
   def filterHyperRelations[
@@ -36,6 +41,8 @@ trait Filter {
       else
         hyperRelationFactory.wrap(startRelation.get, node, endRelation.get)
       schemaNode.graphOption = Some(graph)
+      schemaNode.startNodeOpt.foreach(_.graphOption = Some(graph))
+      schemaNode.endNodeOpt.foreach(_.graphOption = Some(graph))
       schemaNode
     }
   }

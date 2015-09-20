@@ -372,5 +372,33 @@ class SchemaSpec extends Specification with Mockito {
     relation.equals(relation2) mustEqual false
     relation.equals("hi") mustEqual false
   }
+
+  "keep graph when wrapping relation" in {
+    val schema = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheRelation(node, node2)
+    schema.add(node, node2, relation)
+
+    node.graph mustEqual schema.graph
+    node2.graph mustEqual schema.graph
+    node.graph mustEqual node.relationsAs(TheRelation).head.startNode.graph
+    node2.graph mustEqual node.relationsAs(TheRelation).head.endNode.graph
+  }
+
+  "keep graph when wrapping hyperrelation" in {
+    val schema = new TheGraph
+    val node = TheNode()
+    val node2 = TheNode()
+    val relation = TheHyperRelation(node, node2)
+    schema.add(node, node2, relation)
+
+    node.graph mustEqual schema.graph
+    node2.graph mustEqual schema.graph
+    relation.graph mustEqual schema.graph
+    relation.graph mustEqual node.relationsAs(StartHyperRelation).head.endNode.graph
+    node.graph mustEqual node.relationsAs(TheHyperRelation).head.startNodeOpt.get.graph
+    node2.graph mustEqual node.relationsAs(TheHyperRelation).head.endNodeOpt.get.graph
+  }
 }
 

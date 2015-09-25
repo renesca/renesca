@@ -9,12 +9,15 @@ import scala.collection.mutable
 
 case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Either[String, () => Any] = (graph: Graph, table: Table) => Right(() => ()))
 
-class QueryGenerator {
-  def randomVariable = "V" + java.util.UUID.randomUUID().toString.replace("-", "")
+class QueryPatterns(resolvedItems: mutable.Map[Item,Origin]) {
+  private var variableCounter = 0
+  def randomVariable = {
+    val variable = "V" + variableCounter
+    variableCounter += 1
+    variable
+  }
 
-  protected val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
-
-  protected def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
+  def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
     val remainingProperties = properties.filterKeys(!selection.contains(_))
     val selectedProperties = properties.filterKeys(selection.contains(_))
     val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"${ variable }_${ k }"), v) }
@@ -25,7 +28,7 @@ class QueryGenerator {
 
   //TODO should limit number of matches for merge and match to 1!
   // match/merge ... with variable limit 1 ...
-  protected def nodePattern(node: Node, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
+  def nodePattern(node: Node, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     val labels = node.labels.map(label => s":`$label`").mkString
     resolvedItems.getOrElse(node, node.origin) match {
@@ -52,7 +55,7 @@ class QueryGenerator {
     }
   }
 
-  protected def relationPattern(relation: Relation, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
+  def relationPattern(relation: Relation, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
     val variable = randomVariable
     resolvedItems.getOrElse(relation, relation.origin) match {
       case Id(id)                =>
@@ -78,12 +81,12 @@ class QueryGenerator {
     }
   }
 
-  protected def queryNode(node: Node) = {
+  def queryNode(node: Node) = {
     val (keyword, query, postfix, parameters, variable) = nodePattern(node)
     Query(s"$keyword $query $postfix return $variable", parameters)
   }
 
-  protected def queryRelationPattern(relation: Relation, forDeletion: Boolean = false) = {
+  def queryRelationPattern(relation: Relation, forDeletion: Boolean = false) = {
     if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
       throw new Exception("Start node in relation is still local: " + relation)
     if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
@@ -96,12 +99,12 @@ class QueryGenerator {
     (s"$startKeyword $startQuery $startPostfix $endKeyword $endQuery $endPostfix $keyword ($startVariable)-$query->($endVariable) $postfix", variable, startParameters ++ parameters ++ endParameters)
   }
 
-  protected def queryRelation(relation: Relation) = {
+  def queryRelation(relation: Relation) = {
     val (queryPattern, variable, params) = queryRelationPattern(relation)
     Query(s"$queryPattern return $variable", params)
   }
 
-  private def queryPathPattern(path: Path, forDeletion: Boolean = false) = {
+  def queryPathPattern(path: Path, forDeletion: Boolean = false) = {
     val variableMap = mutable.LinkedHashMap.empty[Item, String]
 
     // first match all non-path nodes
@@ -148,7 +151,7 @@ class QueryGenerator {
     (s"$nodeQuery $pathQuery", parameters, variableMap)
   }
 
-  private def queryPath(path: Path) = {
+  def queryPath(path: Path) = {
     val (queryPattern, parameters, variableMap) = queryPathPattern(path)
     val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }.toMap
 
@@ -161,6 +164,10 @@ class QueryGenerator {
 
     (Query(s"$queryPattern $returnClause", parameters), reverseVariableMap)
   }
+}
+
+class QueryGenerator {
+  val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
 
   def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
     contentChanges.groupBy(_.item).map {
@@ -192,7 +199,8 @@ class QueryGenerator {
           case _: Relation => true
         }
 
-        val variable = randomVariable
+        val qPatterns = new QueryPatterns(resolvedItems)
+        val variable = qPatterns.randomVariable
         val matcher = if(isRelation) s"match ()-[$variable]->()" else s"match ($variable)"
         val propertyRemove = propertyRemovals.map(r => s"remove $variable.`$r`").mkString(" ")
         val labelAdd = labelAdditions.map(a => s"set $variable:`$a`").mkString(" ")
@@ -210,29 +218,33 @@ class QueryGenerator {
   }
 
   def deletionToQueries(deleteItems: Seq[Item])() = {
-    deleteItems.map {
-      case n: Node =>
-        val (keyword, query, postfix, parameters, variable) = nodePattern(n, forDeletion = true)
-        val optionalVariable = randomVariable
-        QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
-      case r: Relation =>
-        //TODO: invalidate Id origin of deleted item?
-        if (!r.origin.isLocal) { // if not local we can match by id and have a simpler query
-          val (keyword, query, postfix, parameters, variable) = relationPattern(r,  forDeletion =true)
-          QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
-        } else {
-          val (queryPattern, variable, params) = queryRelationPattern(r, forDeletion = true)
-          QueryConfig(r, Query(s"$queryPattern delete $variable", params))
-        }
+    deleteItems.map { item =>
+      val qPatterns = new QueryPatterns(resolvedItems)
+      item match {
+        case n: Node =>
+          val (keyword, query, postfix, parameters, variable) = qPatterns.nodePattern(n, forDeletion = true)
+          val optionalVariable = qPatterns.randomVariable
+          QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
+        case r: Relation =>
+          //TODO: invalidate Id origin of deleted item?
+          if (!r.origin.isLocal) { // if not local we can match by id and have a simpler query
+            val (keyword, query, postfix, parameters, variable) = qPatterns.relationPattern(r,  forDeletion =true)
+            QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
+          } else {
+            val (queryPattern, variable, params) = qPatterns.queryRelationPattern(r, forDeletion = true)
+            QueryConfig(r, Query(s"$queryPattern delete $variable", params))
+          }
+      }
     }
   }
 
   def deletionPathsToQueries(deletePaths: Seq[Path])() = {
     deletePaths.map { path =>
-      val (queryPattern, parameters, variableMap) = queryPathPattern(path, forDeletion = true)
+      val qPatterns = new QueryPatterns(resolvedItems)
+      val (queryPattern, parameters, variableMap) = qPatterns.queryPathPattern(path, forDeletion = true)
 
       val (optionalMatchers, matcherVariables) = path.nodes.map { n =>
-        val optionalVariable = randomVariable
+        val optionalVariable = qPatterns.randomVariable
         val variable = variableMap(n)
         (s"optional match ($variable)-[$optionalVariable]-()", optionalVariable)
       }.unzip
@@ -246,7 +258,8 @@ class QueryGenerator {
 
   def addPathsToQueries(addPaths: Seq[Path])() = {
     addPaths.map(path => {
-      val (query, reverseVariableMap) = queryPath(path)
+      val qPatterns = new QueryPatterns(resolvedItems)
+      val (query, reverseVariableMap) = qPatterns.queryPath(path)
 
       QueryConfig(path, query, (graph: Graph, table: Table) => {
         if(table.rows.size > 1)
@@ -281,7 +294,8 @@ class QueryGenerator {
 
   def addRelationsToQueries(addRelations: Seq[Relation])() = {
     addRelations.map(relation => {
-      val query = queryRelation(relation)
+      val qPatterns = new QueryPatterns(resolvedItems)
+      val query = qPatterns.queryRelation(relation)
 
       QueryConfig(relation, query, (graph: Graph, table: Table) => {
         if(graph.relations.size > 1)
@@ -301,7 +315,8 @@ class QueryGenerator {
 
   def addNodesToQueries(addNodes: Seq[Node])() = {
     addNodes.map(node => {
-      val query = queryNode(node)
+      val qPatterns = new QueryPatterns(resolvedItems)
+      val query = qPatterns.queryNode(node)
 
       QueryConfig(node, query, (graph: Graph, table: Table) => {
         if(graph.nodes.size > 1)

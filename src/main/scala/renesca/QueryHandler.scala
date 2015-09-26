@@ -74,7 +74,7 @@ trait QueryInterface {
 
   def validateSchemaGraph(schemaGraph: schema.Graph): Option[String] = {
     val changes = schemaGraph.graph.changes.collect { case c: GraphItemChange => c.item }.toSet
-    val items = (schemaGraph.nodes ++ schemaGraph.abstractRelations).filter(changes contains _.rawItem)
+    val items = (schemaGraph.nodes ++ schemaGraph.relations).filter(changes contains _.rawItem)
     validateSchemaItems(items)
   }
 

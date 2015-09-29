@@ -51,5 +51,13 @@ class NodeLabelsSpec extends Specification with Mockito {
 
       A.labels.empty must beEmpty
     }
+
+    "clear" in new MockNode {
+      A.labels ++= Set(Label("POST"),Label("TIMESTAMP"),Label("CONNECTABLE"),Label("EXPOSEDNODE"),Label("UUIDNODE"),Label("HIDEABLE"))
+
+      A.labels.clear()
+
+      A.labels must beEmpty
+    }
   }
 }

@@ -56,5 +56,10 @@ class Nodes private(
     this
   }
 
+  override def clear() = {
+    localChanges ++= buffer.map(DeleteItem(_))
+    super.clear()
+  }
+
   override def clone() = super.clone().asInstanceOf[Nodes]
 }

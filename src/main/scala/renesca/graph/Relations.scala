@@ -56,6 +56,11 @@ class Relations private(
     this
   }
 
+  override def clear() = {
+    localChanges ++= buffer.map(DeleteItem(_))
+    super.clear()
+  }
+
   override def clone() = {
     val clone = super.clone().asInstanceOf[Relations]
     clone.graph = graph

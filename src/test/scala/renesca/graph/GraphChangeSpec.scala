@@ -119,6 +119,19 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
+    "emit change when clearing nodes" in {
+      val A = Node(1)
+      val graph = Graph(List(A), Nil)
+
+      graph.nodes.clear()
+
+      graph.nodes must beEmpty
+
+      graph.nodes.localChanges must contain(exactly(
+        DeleteItem(A).asInstanceOf[GraphChange]
+      ))
+    }
+
     "emit changes when deleting node with relations from nodes" in {
       val A = Node(1)
       val B = Node(2)
@@ -142,6 +155,21 @@ class GraphChangeSpec extends Specification with Mockito {
       val graph = Graph(List(A, B), List(ArB))
 
       graph.relations -= ArB
+
+      graph.changes must contain(exactly(
+        DeleteItem(ArB).asInstanceOf[GraphChange]
+      ))
+    }
+
+    "emit change when clearing relations" in {
+      val A = Node(1)
+      val B = Node(2)
+      val ArB = Relation(3, A, B, "r")
+      val graph = Graph(List(A, B), List(ArB))
+
+      graph.relations.clear()
+
+      graph.relations must beEmpty
 
       graph.changes must contain(exactly(
         DeleteItem(ArB).asInstanceOf[GraphChange]

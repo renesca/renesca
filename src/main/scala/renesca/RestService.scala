@@ -19,7 +19,7 @@ case class TransactionId(id: String) {
   override def toString = id
 }
 
-class RestService(val server: String, credentials: Option[BasicHttpCredentials] = None, implicit val timeout: Timeout = Timeout(10.seconds)) {
+class RestService(val server: String, credentials: Option[BasicHttpCredentials] = None, implicit val timeout: Timeout = Timeout(60.seconds)) {
   // http://spray.io/documentation/1.2.2/spray-can/http-client/request-level/
   // http://spray.io/documentation/1.2.2/spray-client/
   implicit val actorSystem: ActorSystem = ActorSystem()

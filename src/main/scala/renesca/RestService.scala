@@ -32,6 +32,8 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
 
   private def awaitResponse(request: HttpRequest): HttpResponse = Await.result(pipeline(request), timeout.duration)
 
+  private def buildUri(path: String) = Uri(s"$server$path")
+
   private def buildHttpPostRequest(path: String, jsonRequest: json.Request): HttpRequest = {
     val headers = new mutable.ListBuffer[HttpHeader]()
     //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
@@ -43,7 +45,7 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
     headers += RawHeader("X-Stream", "true")
 
     Post(
-      uri = Uri(s"$server$path"),
+      uri = buildUri(path),
       content = jsonRequest
     ).withHeaders(headers.toList)
   }
@@ -93,7 +95,8 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
 
   def rollbackTransaction(id: TransactionId) {
     // we don't wait for a response here
-    pipeline(HttpRequest(DELETE, s"http://localhost:7474/db/data/transaction/$id"))
+    val path = s"/db/data/transaction/$id"
+    pipeline(HttpRequest(DELETE, buildUri(path)))
   }
 
   override def toString = s"RestService($server${ if(credentials.isDefined) " with credentials" else "" }, $timeout)"

@@ -5,7 +5,7 @@ name := "renesca"
 
 
 // also change the version in README.md
-version := "0.3.2-8"
+version := "0.3.2-9"
 
 scalaVersion := "2.11.7"
 

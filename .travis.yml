@@ -37,7 +37,7 @@ before_install:
 - tar -xzvf neo4j-community-$NEO4J_VERSION-unix.tar.gz
 - echo "org.neo4j.server.transaction.timeout=6" >> neo4j-community-$NEO4J_VERSION/conf/neo4j-server.properties
 #- echo "dbms.security.authorization_enabled=false" >> neo4j-community-$NEO4J_VERSION/conf/neo4j-server.properties
-- JAVA_HOME=$(jdk_switcher home oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
+- JAVA_HOME=$(jdk_switcher home oraclejdk8) neo4j-community-$NEO4J_VERSION/bin/neo4j start
 # change neo4j password
 - sleep 3 && curl -H 'Content-Type:application/json' -H 'Authorization:Basic bmVvNGo6bmVvNGo=' -d '{"password":"testingpw"}' http://localhost:7474/user/neo4j/password
 - openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out

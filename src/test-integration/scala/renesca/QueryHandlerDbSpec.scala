@@ -11,7 +11,7 @@ import renesca.table.Table
 class QueryHandlerDbSpec extends IntegrationSpecification {
 
   def resultNode: Node = {
-    val resultGraph = db.queryGraph("match n return n")
+    val resultGraph = db.queryGraph("match (n) return n")
     resultGraph.nodes.head
   }
 
@@ -54,7 +54,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
     "query table" in {
       db.query("create (n {a:1}),(m {a:2})")
-      val table = db.queryTable("match x return x.a order by x.a")
+      val table = db.queryTable("match (x) return x.a order by x.a")
 
       table mustEqual Table(
         columns = List("x.a"),
@@ -127,7 +127,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes -= node
       db.persistChanges(graph).isDefined mustEqual false
 
-      val resultGraph = db.queryGraph("match n return n")
+      val resultGraph = db.queryGraph("match (n) return n")
       resultGraph.nodes must beEmpty
     }
 
@@ -144,7 +144,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph2.nodes -= del
       db.persistChanges(graph2).isDefined mustEqual false
 
-      val resultGraph = db.queryGraph("match n return n")
+      val resultGraph = db.queryGraph("match (n) return n")
       resultGraph.nodes.size mustEqual 1
       resultGraph.nodes.head.labels mustEqual Set(Label("BEER"))
     }
@@ -169,7 +169,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
       val reducedGraph = db.queryGraph(Query(
         "match (m)-[r:INTERNAL]->(n) where id(m) = {mid} and id(n) = {nid} return n,r,m",
-        Map("mid" -> m.origin.asInstanceOf[Id].id, "nid" -> n.origin.asInstanceOf[Id].id)))
+        Map("mid" -> m.origin.asInstanceOf[Id].id, "nid" -> n.origin.asInstanceOf[Id].id)
+      ))
 
       reducedGraph.nodes must haveSize(2) // m, n
       reducedGraph.relations must haveSize(1) // r
@@ -827,7 +828,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
     "order by in query returns ordered nodes in graph" in {
       val g = Graph.empty
-      for(i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
+      for (i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
         g.nodes += Node.create(properties = Map("i" -> i))
       db.persistChanges(g)
 
@@ -839,7 +840,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val g = Graph.empty
       val n = Node.create(List("A"))
       g.nodes += n
-      for(i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
+      for (i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
         g.relations += Relation.create(n, "r", Node.create(properties = Map("i" -> i)))
       db.persistChanges(g)
 
@@ -849,4 +850,3 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     }
   }
 }
-

@@ -25,6 +25,7 @@ env:
     # test across multiple versions of Neo4j:
     - NEO4J_VERSION="2.3.3"
     - NEO4J_VERSION="2.2.1"
+    - NEO4J_VERSION="3.0.3"
     # - NEO4J_VERSION="2.1.7" # does not isolate transactions
     # - NEO4J_VERSION="2.0.4" # does not support property += {...}
   global:

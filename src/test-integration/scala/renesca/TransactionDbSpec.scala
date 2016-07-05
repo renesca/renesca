@@ -61,6 +61,21 @@ class TransactionDbSpec extends IntegrationSpecification {
       result.nodes must contain(second)
     }
 
+    "property change with enclosing syntax" in {
+      var node: Node = null
+      db.transaction { tx =>
+        tx.query("create (n)")
+        val graph = tx.queryGraph("match (n) return n")
+        node = graph.nodes.head
+        node.properties("tut es?") = "ja"
+        tx.persistChanges(graph)
+      }
+
+      val result = db.queryGraph("match (n) return n")
+      result.nodes.head.properties("tut es?") mustEqual "ja"
+    }
+
+
     "Persist graph changes in transaction" in {
       val transaction = db.newTransaction()
 

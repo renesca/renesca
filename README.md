@@ -6,6 +6,13 @@ Query and modify subgraphs from a Neo4j REST database with Scala.
 
 Also have a look at [renesca-magic](https://github.com/renesca/renesca-magic), which generates code for typesafe graph database schemas based on renesca.
 
+## Academic Article
+There is also an academic article about renesca and renesca-magic: [An Open-Source Object-Graph-Mapping Framework for Neo4j and Scala: Renesca](https://link.springer.com/chapter/10.1007/978-3-319-45507-5_14). Feel free to use these libraries in any of your projects. If you use them in an academic setting, we'd appreciate if you cite this article.
+
+> Dietze, F., Karoff, J., Calero Valdez, A. , Ziefle, M., Greven, C., & Schroeder, U. (2016, August).
+> An Open-Source Object-Graph-Mapping Framework for Neo4j and Scala: Renesca.
+> *In International Conference on Availability, Reliability, and Security* (pp. 204-218). Springer International Publishing.
+
 ## Concepts
 ### Work with graphs instead of lists
 Earlier we tried to interact with graph databases as if they were relational databases. This meant working with lists of query results. As Neo4J gives us full blown graphs as query results, we now take the whole thing and provide a graph to interact with. In the rare cases where the query result is not a graph, it can also be interpreted as a table.

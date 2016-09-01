@@ -75,11 +75,6 @@ scalacOptions ++= Seq(
 //,"-Xdisable-assertions", "-optimize"
 )
 
-// support source folders for version specific code
-unmanagedSourceDirectories in Compile <+= (sourceDirectory in Compile, scalaBinaryVersion) {
-  (s, v) => s / ("scala_" + v)
-}
-
 initialCommands in console := """
 import renesca.graph._
 import renesca.parameter._

@@ -116,6 +116,7 @@ object Main extends App {
         Map("name" -> "hippo")) // Cypher query parameters
     ).nodes.head
     hippo.properties("nose") = true
+    tx.persistChanges(hippo)
   }
 
   db.transaction { tx =>

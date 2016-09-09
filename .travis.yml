@@ -11,6 +11,9 @@ before_cache:
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
+  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/logs/*
+  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/data/databases/graph.db/*
+  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/run/neo4j.pid
 
 scala:
 - 2.11.8
@@ -25,8 +28,9 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION test-integration:test # integration tests need a running neo4j instance
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
+- $HOME/neo4j/neo4j-community-$NEO4J_VERSION/bin/neo4j stop
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
-# fix jdk and neo4j version but release for each scala version separately
+# pin jdk and neo4j version but release for each scala version separately
 - test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.2.1' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take an arbitrary fixed combination from build matrix for each scala version and publish
 env:
   matrix:

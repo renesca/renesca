@@ -11,9 +11,9 @@ before_cache:
   # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
-  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/logs/*
-  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/data/databases/graph.db/*
-  - rm $HOME/neo4j/neo4j-community-$NEO4J_VERSION/run/neo4j.pid
+  - rm -rf $HOME/neo4j/neo4j-community-$NEO4J_VERSION/logs/*
+  - rm -rf $HOME/neo4j/neo4j-community-$NEO4J_VERSION/data/databases/graph.db/*
+  - rm -rf $HOME/neo4j/neo4j-community-$NEO4J_VERSION/run/neo4j.pid
 
 scala:
 - 2.11.8

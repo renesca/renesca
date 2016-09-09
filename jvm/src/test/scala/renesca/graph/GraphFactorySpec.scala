@@ -42,7 +42,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create empty graph" in {
       val jsonGraph = json.Graph()
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
 
       graph.nodes must beEmpty
       graph.relations must beEmpty
@@ -51,7 +51,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create graph with single empty node" in {
       val jsonGraph = json.Graph(List(json.Node("1744")))
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.origin mustEqual Id(1744)
@@ -62,7 +62,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create graph with single node with labels" in {
       val jsonGraph = json.Graph(List(json.Node("1744", labels = List("hopfen", "malz"))))
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.labels mustEqual mutable.Set(Label("hopfen"), Label("malz"))
@@ -71,7 +71,7 @@ class GraphFactorySpec extends Specification with Mockito {
     "create graph with single node with properties" in {
       val jsonGraph = json.Graph(List(json.Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.properties mustEqual mutable.Map("biene" -> "honig", "bier" -> 1516)
@@ -83,7 +83,7 @@ class GraphFactorySpec extends Specification with Mockito {
         relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst"))
       )
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
 
       graph.nodes must have size 2
       graph.relations must have size 1
@@ -102,7 +102,7 @@ class GraphFactorySpec extends Specification with Mockito {
           properties = Map("ki" -> "wäl", "freitag" -> 13L)))
       )
 
-      val graph = Graph(jsonGraph)
+      val graph = json.GraphFactory(jsonGraph)
       val relation = graph.relations.head
 
       relation.properties mustEqual mutable.Map("ki" -> "wäl", "freitag" -> 13)
@@ -113,4 +113,3 @@ class GraphFactorySpec extends Specification with Mockito {
     Graph.empty.isEmpty mustEqual true
   }
 }
-

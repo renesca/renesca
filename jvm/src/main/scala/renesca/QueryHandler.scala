@@ -25,7 +25,7 @@ trait QueryInterface {
   def queryWholeGraph: Graph
   def queryGraph(query: Query): Graph
   def queryTable(query: Query): Table
-  def queryGraphAndTable(query: Query): (Graph,Table)
+  def queryGraphAndTable(query: Query): (Graph, Table)
   def queryGraphs(queries: Query*): Seq[Graph]
   def queryTables(queries: Query*): Seq[Table]
   def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
@@ -33,7 +33,7 @@ trait QueryInterface {
 
   def queryGraph(statement: String, parameters: ParameterMap = Map.empty): Graph = queryGraph(Query(statement, parameters))
   def queryTable(statement: String, parameters: ParameterMap = Map.empty): Table = queryTable(Query(statement, parameters))
-  def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): (Graph,Table) = queryGraphAndTable(Query(statement, parameters))
+  def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): (Graph, Table) = queryGraphAndTable(Query(statement, parameters))
   def query(statement: String, parameters: ParameterMap = Map.empty): Unit = query(Query(statement, parameters))
 
   def persistChanges(graph: Graph): Option[String]
@@ -41,7 +41,7 @@ trait QueryInterface {
   def persistChanges(schemaGraph: schema.Graph): Option[String] = {
     validateSchemaGraph(schemaGraph) match {
       case Some(err) => Some(err)
-      case None      => persistChanges(schemaGraph.graph)
+      case None => persistChanges(schemaGraph.graph)
     }
   }
 
@@ -55,7 +55,7 @@ trait QueryInterface {
     val allItems = item :: items.toList
     validateSchemaItems(allItems) match {
       case Some(err) => Some(err)
-      case None      =>
+      case None =>
         val schemaGraph = new schema.Graph {
           // the schema graph methods will never be called,
           // but we use the implementation of the add function,
@@ -81,12 +81,12 @@ trait QueryInterface {
   def validateSchemaItems(items: Iterable[schema.Item]): Option[String] = {
     val validations = items.map { item =>
       item.validate match {
-        case Some(err) => Some(s"Validation for item '${ item.rawItem }' failed: $err")
-        case None      => None
+        case Some(err) => Some(s"Validation for item '${item.rawItem}' failed: $err")
+        case None => None
       }
     }.flatten
 
-    if(validations.isEmpty)
+    if (validations.isEmpty)
       None
     else
       Some(validations.mkString(","))
@@ -99,7 +99,7 @@ trait QueryHandler extends QueryInterface {
   override def queryWholeGraph: Graph = queryGraph("match (n) optional match (n)-[r]-() return n,r")
   override def queryGraph(query: Query): Graph = queryGraphs(query).head
   override def queryTable(query: Query): Table = queryTables(query).head
-  override def queryGraphAndTable(query: Query): (Graph,Table) = queryGraphsAndTables(query).head
+  override def queryGraphAndTable(query: Query): (Graph, Table) = queryGraphsAndTables(query).head
 
   override def queryGraphs(queries: Query*): Seq[Graph] = {
     val results = executeQueries(queries, List("graph"))
@@ -121,10 +121,10 @@ trait QueryHandler extends QueryInterface {
   //TODO: persist changes should ONLY work on transactions!
   def persistChanges(graph: Graph): Option[String] = {
     builder.generateQueries(graph.changes) match {
-      case Left(msg)      => Some(msg)
+      case Left(msg) => Some(msg)
       case Right(queries) =>
         val failure = builder.applyQueries(queries, queryGraphsAndTables)
-        if(failure.isEmpty)
+        if (failure.isEmpty)
           graph.clearChanges()
 
         failure
@@ -140,11 +140,11 @@ trait QueryHandler extends QueryInterface {
 
   protected def extractGraphs(results: Seq[json.Result]): Seq[Graph] = {
     val allJsonGraphs: Seq[List[json.Graph]] = results.map(_.data.flatMap(_.graph))
-    allJsonGraphs.map(_.map(Graph(_)).fold(Graph.empty)(_ merge _))
+    allJsonGraphs.map(_.map(json.GraphFactory(_)).fold(Graph.empty)(_ merge _))
   }
 
   protected def extractTables(results: Seq[json.Result]): Seq[Table] = {
-    results.map(r => Table(r))
+    results.map(r => json.TableFactory(r))
   }
 
   protected def buildJsonRequest(queries: Seq[Query], resultDataContents: List[String]): json.Request = {
@@ -153,7 +153,7 @@ trait QueryHandler extends QueryInterface {
 
   protected def exceptionFromErrors(jsonResponse: json.Response): Option[RuntimeException] = {
     jsonResponse.errors match {
-      case Nil    => None
+      case Nil => None
       case errors =>
         val message = errors.map {
           case json.Error(code, msg) => s"$code\n$msg"
@@ -166,7 +166,7 @@ trait QueryHandler extends QueryInterface {
   protected def handleError(exceptions: Option[Exception]): Unit
 }
 
-class Transaction extends QueryHandler {thisTransaction =>
+class Transaction extends QueryHandler { thisTransaction =>
 
   var restService: RestService = null //TODO: inject
 
@@ -176,16 +176,15 @@ class Transaction extends QueryHandler {thisTransaction =>
   def isValid = valid
   def invalidate() { valid = false }
   private def throwIfNotValid() {
-    if(!valid)
+    if (!valid)
       throw new RuntimeException("Transaction is not valid anymore.")
   }
-
 
   override protected def queryService(jsonRequest: json.Request): json.Response = {
     throwIfNotValid()
     id match {
       case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
-      case None                =>
+      case None =>
         val (transactionId, jsonResponse) = restService.openTransaction(jsonRequest)
         id = Some(transactionId)
         jsonResponse
@@ -193,7 +192,7 @@ class Transaction extends QueryHandler {thisTransaction =>
   }
 
   protected def handleError(exceptions: Option[Exception]) {
-    for(exception <- exceptions) {
+    for (exception <- exceptions) {
       rollback()
       throw exception
     }
@@ -202,7 +201,7 @@ class Transaction extends QueryHandler {thisTransaction =>
   def rollback() = {
     id match {
       case Some(transactionId) => restService.rollbackTransaction(transactionId)
-      case None                =>
+      case None =>
     }
     invalidate()
   }
@@ -217,7 +216,7 @@ class Transaction extends QueryHandler {thisTransaction =>
 
     def apply() {
       throwIfNotValid()
-      for(transactionId <- id) {
+      for (transactionId <- id) {
         val jsonResponse = restService.commitTransaction(transactionId)
         handleError(exceptionFromErrors(jsonResponse))
       }
@@ -230,7 +229,7 @@ class Transaction extends QueryHandler {thisTransaction =>
       throwIfNotValid()
       val jsonResponse = id match {
         case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
-        case None                => restService.singleRequest(jsonRequest)
+        case None => restService.singleRequest(jsonRequest)
       }
 
       invalidate()
@@ -249,7 +248,6 @@ class Transaction extends QueryHandler {thisTransaction =>
       })
     }
 
-
     override protected def handleError(exceptions: Option[Exception]) = thisTransaction.handleError(exceptions)
   }
 
@@ -260,7 +258,7 @@ class DbService extends QueryHandler {
   var restService: RestService = null //TODO: inject
 
   protected def handleError(exceptions: Option[Exception]) {
-    for(exception <- exceptions)
+    for (exception <- exceptions)
       throw exception
   }
 
@@ -285,7 +283,7 @@ class DbService extends QueryHandler {
     }
 
     // if there was a request and transacion is not done yet
-    if(tx.id.isDefined && tx.isValid) tx.commit()
+    if (tx.id.isDefined && tx.isValid) tx.commit()
 
     result
   }

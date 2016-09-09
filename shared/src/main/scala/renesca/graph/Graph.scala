@@ -1,7 +1,5 @@
 package renesca.graph
 
-import renesca.json
-
 import scala.collection.mutable
 
 object Graph {
@@ -10,28 +8,6 @@ object Graph {
     graph.nodes ++= nodes
     graph.relations ++= relations
     graph
-  }
-
-  private[renesca] def apply(jsonGraph: json.Graph): Graph = {
-    val nodes: List[Node] = jsonGraph.nodes.map { case json.Node(id, labels, properties) =>
-      Node(Id(id.toLong), labels.map(Label.apply), properties)
-    }
-
-    val idToNode: Map[String, Node] = nodes.flatMap(node => node.origin match {
-      case Id(id) => Map(id.toString -> node)
-      case _      => Map.empty[String, Node]
-    }).toMap
-
-    val relations: List[Relation] = jsonGraph.relationships.map {
-      case json.Relationship(id, relationshipType, startNode, endNode, properties) =>
-        Relation(Id(id.toLong),
-          idToNode(startNode),
-          idToNode(endNode),
-          RelationType(relationshipType),
-          properties)
-    }
-
-    apply(nodes, relations)
   }
 
   def empty = apply(Nil, Nil)
@@ -88,7 +64,7 @@ class Graph private[graph] {
   def isEmpty = nodes.isEmpty
   def nonEmpty = nodes.nonEmpty
 
-  override def toString = s"Graph(nodes:(${ nodes.mkString(", ") }), relations:(${ relations.mkString(", ") }))"
+  override def toString = s"Graph(nodes:(${nodes.mkString(", ")}), relations:(${relations.mkString(", ")}))"
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Graph]
 
@@ -99,7 +75,7 @@ class Graph private[graph] {
       (that canEqual this) &&
         this.nodes.toSet == that.nodes.toSet &&
         this.relations.toSet == that.relations.toSet
-    case _           => false
+    case _ => false
   }
 
   override def hashCode(): Int = {
@@ -109,4 +85,3 @@ class Graph private[graph] {
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
-

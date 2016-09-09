@@ -57,7 +57,7 @@ class TableSpec extends Specification with Mockito {
     }
 
     "create Table from json classes" in {
-      val table = Table(json.Result(List("x", "y", "z"), List(
+      val table = json.TableFactory(json.Result(List("x", "y", "z"), List(
         json.Data(row = Some(ArrayParameterValue(List(1, 2, 3)))),
         json.Data(row = Some(ArrayParameterValue(List(4, 5, 6))))
       )))

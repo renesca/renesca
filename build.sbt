@@ -1,4 +1,3 @@
-//TODO: scalaxy-streams
 //TODO: https://github.com/lihaoyi/acyclic
 
 name := "renesca"
@@ -37,11 +36,16 @@ lazy val renesca = crossProject.in(file("."))
     // Scoverage
     scalacOptions in Test ++= Seq("-Yrangepos"),
 
+    // scalaxy (faster collection operations)
+    scalacOptions += "-Xplugin-require:scalaxy-streams",
+    scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
+    scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
+    autoCompilerPlugins := true,
+    addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4"),
+
     // publishing
     pgpSecretRing := file("local.secring.gpg"),
-
     pgpPublicRing := file("local.pubring.gpg"),
-
     organization := "com.github.renesca",
 
     pomExtra := {

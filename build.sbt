@@ -7,7 +7,7 @@ version in ThisBuild := "1.0.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.11.8"
 
-crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.11.8")
 
 lazy val root = project.in(file(".")).
   aggregate(renescaJS, renescaJVM).

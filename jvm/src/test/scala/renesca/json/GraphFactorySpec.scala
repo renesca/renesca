@@ -1,13 +1,13 @@
-package renesca.graph
+package renesca.json
 
 import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.json
-import renesca.json.Relationship
 import renesca.parameter.implicits._
+import renesca.graph
+import renesca.graph.{Id, Label, RelationType}
 
 import scala.collection.mutable
 
@@ -15,6 +15,7 @@ import scala.collection.mutable
 class GraphFactorySpec extends Specification with Mockito {
 
   trait ExampleGraph extends Scope {
+    import renesca.graph._
     // A<--B
     //  \_7
     val A = Node(1)
@@ -40,18 +41,18 @@ class GraphFactorySpec extends Specification with Mockito {
 
   "Graph from JSON factory" should {
     "create empty graph" in {
-      val jsonGraph = json.Graph()
+      val jsonGraph = Graph()
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
 
       graph.nodes must beEmpty
       graph.relations must beEmpty
     }
 
     "create graph with single empty node" in {
-      val jsonGraph = json.Graph(List(json.Node("1744")))
+      val jsonGraph = Graph(List(Node("1744")))
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.origin mustEqual Id(1744)
@@ -60,30 +61,30 @@ class GraphFactorySpec extends Specification with Mockito {
     }
 
     "create graph with single node with labels" in {
-      val jsonGraph = json.Graph(List(json.Node("1744", labels = List("hopfen", "malz"))))
+      val jsonGraph = Graph(List(Node("1744", labels = List("hopfen", "malz"))))
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.labels mustEqual mutable.Set(Label("hopfen"), Label("malz"))
     }
 
     "create graph with single node with properties" in {
-      val jsonGraph = json.Graph(List(json.Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
+      val jsonGraph = Graph(List(Node("1744", labels = Nil, properties = Map("biene" -> "honig", "bier" -> 1516L))))
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
       node.properties mustEqual mutable.Map("biene" -> "honig", "bier" -> 1516)
     }
 
     "create graph with relations containing nodes" in {
-      val jsonGraph = json.Graph(
-        nodes = List(json.Node("1744"), json.Node("1516")),
+      val jsonGraph = Graph(
+        nodes = List(Node("1744"), Node("1516")),
         relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst"))
       )
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
 
       graph.nodes must have size 2
       graph.relations must have size 1
@@ -96,13 +97,13 @@ class GraphFactorySpec extends Specification with Mockito {
     }
 
     "create graph with relation with properties" in {
-      val jsonGraph = json.Graph(
-        nodes = List(json.Node("1744"), json.Node("1516")),
+      val jsonGraph = Graph(
+        nodes = List(Node("1744"), Node("1516")),
         relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst",
           properties = Map("ki" -> "wäl", "freitag" -> 13L)))
       )
 
-      val graph = json.GraphFactory(jsonGraph)
+      val graph = GraphFactory(jsonGraph)
       val relation = graph.relations.head
 
       relation.properties mustEqual mutable.Map("ki" -> "wäl", "freitag" -> 13)
@@ -110,6 +111,6 @@ class GraphFactorySpec extends Specification with Mockito {
   }
 
   "create empty graph" in {
-    Graph.empty.isEmpty mustEqual true
+    graph.Graph.empty.isEmpty mustEqual true
   }
 }

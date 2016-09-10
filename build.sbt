@@ -17,26 +17,23 @@ lazy val root = project.in(file(".")).
     publishLocal := {}
   )
 
-lazy val IntegrationTest = config("test-integration") extend (Test)
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
-  .settings(
-    scalaSource in IntegrationTest := baseDirectory.value / "src/test-integration/scala",
-    parallelExecution in IntegrationTest := false,
-    fork in IntegrationTest := false
-  )
+  .settings(Defaults.itSettings: _*)
   .settings(sonatypeSettings: _*)
-  .settings(
-    name := "renesca",
+  .jvmSettings(
     libraryDependencies ++= (
       "io.spray" %% "spray-client" % "1.3.3" ::
       "io.spray" %% "spray-json" % "1.3.2" ::
       "com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
-      "org.specs2" %% "specs2-core" % "3.8.4" % "test,test-integration" ::
+      "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
       ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
-      "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "test,test-integration" ::
+      "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
       Nil
-    ),
+    )
+  )
+  .settings(
+    name := "renesca",
     // Scoverage
     scalacOptions in Test ++= Seq("-Yrangepos"),
 
@@ -107,8 +104,6 @@ lazy val renesca = crossProject.in(file("."))
       Nil
     )
   )
-  .jvmSettings()
-  .jsSettings()
 
 lazy val renescaJVM = renesca.jvm
 lazy val renescaJS = renesca.js

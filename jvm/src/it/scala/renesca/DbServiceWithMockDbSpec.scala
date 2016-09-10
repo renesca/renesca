@@ -23,7 +23,7 @@ class DbServiceWithMockDbSpec extends HttpMockSpecification {
       when(Query("some statement")).thenRespond(jsonGraph)
 
       val resultGraph = dbService.queryGraph(Query("some statement"))
-      resultGraph must equalTo(Graph(jsonGraph))
+      resultGraph must equalTo(json.GraphFactory(jsonGraph))
     }.pendingUntilFixed("stopped working after update to specs 3.6.3")
 
     "for list of queries in graphQuery return list of graphs" in todo

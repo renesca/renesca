@@ -16,15 +16,21 @@ lazy val root = project.in(file(".")).
     publishLocal := {}
   )
 
+val akkaVersion = "2.4.10"
+
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings: _*)
   .settings(sonatypeSettings: _*)
   .jvmSettings(
     libraryDependencies ++= (
-      "io.spray" %% "spray-client" % "1.3.3" ::
-      "io.spray" %% "spray-json" % "1.3.2" ::
-      "com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
+      //"io.spray" %% "spray-client" % "1.3.3" ::
+      //"io.spray" %% "spray-json" % "1.3.2" ::
+      //"com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
+      "com.typesafe.akka" %% "akka-http-core" % akkaVersion ::
+      "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion ::
+      "com.typesafe.akka" % "akka-http-spray-json-experimental_2.11" % akkaVersion ::
       "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
       ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
       "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::

@@ -1,19 +1,34 @@
 package renesca
 
-import akka.actor.ActorSystem
-import akka.util.Timeout
-import renesca.json.protocols.RequestJsonProtocol._
-import renesca.json.protocols.ResponseJsonProtocol._
-import spray.client.pipelining._
-import spray.http.HttpHeaders.{Authorization, Location, RawHeader}
-import spray.http.HttpMethods._
-import spray.http.{HttpRequest, _}
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
+import akka.http.scaladsl.marshalling.{Marshal}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials, Location, RawHeader}
+import akka.util.{Timeout}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import akka.http.scaladsl.unmarshalling.{Unmarshal}
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.stream.ActorMaterializer
+import akka.actor.ActorSystem
+import SprayJsonSupport._
+
+/**
+  * Notes:
+  *
+  * This code was changed convert it from Spray to Akka HTTP, it is mostly consistent with the previous version
+  * except for the error handling which is not consistent as I am not sure how to make the same error handling using
+  * the Akka http API code as it used to use the Spray code.
+  *
+  * Blocking is evil.
+  * Await.result should be changed so that we return a Future[_] rather than blocking to wait for a response then
+  * in code calling this we should deal with Future[_]'s.
+  *
+  * actorSystem: ActorSystem and materializer should be implicit parameters as we may not want to have a completely
+  * independent ActorSystem here, we may want to use the globally used ActorSystem from within the program.
+  */
 
 case class TransactionId(id: String) {
   override def toString = id
@@ -25,16 +40,18 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
   implicit val actorSystem: ActorSystem = ActorSystem()
 
   // dispatcher provides execution context
-
   import actorSystem.dispatcher
 
-  val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
+  implicit val materializer = ActorMaterializer()
+  val http = Http()
+
+  def pipeline(r: HttpRequest) = http.singleRequest(r)
 
   private def awaitResponse(request: HttpRequest): HttpResponse = Await.result(pipeline(request), timeout.duration)
 
   private def buildUri(path: String) = Uri(s"$server$path")
 
-  private def buildHttpPostRequest(path: String, jsonRequest: json.Request): HttpRequest = {
+  private def buildHttpPostRequest(path: String, jsonRequest: renesca.json.Request): Future[HttpResponse] = {
     val headers = new mutable.ListBuffer[HttpHeader]()
     //TODO: Accept: application/json; charset=UTF-8 - is this necessary?
     // val accept:MediaRange = `application/json`// withCharset `UTF-8`
@@ -44,21 +61,33 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
     // http://neo4j.com/docs/2.2.3/rest-api-streaming.html
     headers += RawHeader("X-Stream", "true")
 
-    Post(
-      uri = buildUri(path),
-      content = jsonRequest
-    ).withHeaders(headers.toList)
+    import SprayJsonSupport._
+    import renesca.json.protocols.RequestJsonProtocol._
+
+    Marshal(jsonRequest).to[RequestEntity].map( (e) => {
+      HttpRequest(
+        method = HttpMethods.POST,
+        uri = buildUri(path),
+        headers = headers.toList,
+        entity = e
+      )
+    }).flatMap(pipeline)
   }
 
   private def awaitResponse(path: String, jsonRequest: json.Request): (List[HttpHeader], json.Response) = {
-    val httpRequest = buildHttpPostRequest(path, jsonRequest)
-    val httpResponse = awaitResponse(httpRequest)
-    val jsonResponse: json.Response = httpResponse.entity.as[json.Response] match {
-      case Right(json)                => json
-      case Left(deserializationError) => throw new RuntimeException(s"Deserialization Error: $deserializationError\n\n${ httpResponse.entity.asString }")
-    }
-    //TODO: error handling
-    (httpResponse.headers, jsonResponse)
+    val httpResponse = buildHttpPostRequest(path, jsonRequest)
+    import renesca.json.protocols.ResponseJsonProtocol._
+
+    val responseFuture = for (response <- httpResponse;
+                              // You can Unmarshal to a [String] if you want to see the JSON result
+                              jsonResponse <- Unmarshal(response.entity).to[json.Response]) yield (response.headers, jsonResponse)
+
+    // Note the error handling is not consistent with the previous Spray code
+    // case Left(deserializationError) => throw new RuntimeException(s"Deserialization Error: $deserializationError\n\n${ httpResponse.entity.asString }")
+
+    // @todo Blocking is evil, return Future[_] rather than doing this
+    val response = Await.result(responseFuture, timeout.duration)
+    (response._1.toList, response._2)
   }
 
   def singleRequest(jsonRequest: json.Request): json.Response = {
@@ -96,7 +125,7 @@ class RestService(val server: String, credentials: Option[BasicHttpCredentials] 
   def rollbackTransaction(id: TransactionId) {
     // we don't wait for a response here
     val path = s"/db/data/transaction/$id"
-    pipeline(HttpRequest(DELETE, buildUri(path)))
+    pipeline(HttpRequest(HttpMethods.DELETE, buildUri(path)))
   }
 
   override def toString = s"RestService($server${ if(credentials.isDefined) " with credentials" else "" }, $timeout)"

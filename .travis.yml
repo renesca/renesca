@@ -30,7 +30,9 @@ after_success:
 - $HOME/neo4j/neo4j-community-$NEO4J_VERSION/bin/neo4j stop
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
 # pin jdk and neo4j version but release for each scala version separately
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.3.7' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take an arbitrary fixed combination from build matrix for each scala version and publish
+# take an arbitrary fixed combination from build matrix for each scala version and publish
+# multi-line script?
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.3.7' && openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out local.credentials.sbt -d && openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg -d && openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg -d && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease
 env:
   matrix:
     # test across multiple versions of Neo4j:
@@ -44,9 +46,3 @@ env:
     - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=
 before_install:
 - JAVA_HOME=$(jdk_switcher home oraclejdk8) ./travis_setup_neo4j.sh
-- openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
-  local.credentials.sbt -d
-- openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg
-  -d
-- openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg
-  -d

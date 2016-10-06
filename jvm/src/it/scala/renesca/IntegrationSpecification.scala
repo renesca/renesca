@@ -1,10 +1,10 @@
 package renesca
 
+import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.util.Timeout
 import org.specs2.execute.{AsResult, Result, ResultExecution, Skipped}
 import org.specs2.mutable.Specification
 import org.specs2.specification._
-import spray.http.BasicHttpCredentials
 
 import scala.concurrent.duration._
 

@@ -39,7 +39,7 @@ lazy val renesca = crossProject.in(file("."))
   )
   .settings(
     name := "renesca",
-    // Scoverage
+    // Specs2
     scalacOptions in Test ++= Seq("-Yrangepos"),
 
     // scalaxy (faster collection operations)

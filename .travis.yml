@@ -18,10 +18,7 @@ before_cache:
 scala:
 - 2.11.8
 jdk:
-- oraclejdk7
 - oraclejdk8
-# - openjdk6 # httpmocks do not work with java6
-# - openjdk7
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage renescaJVM/test
 - sbt ++$TRAVIS_SCALA_VERSION renescaJVM/it:test # integration tests need a running neo4j instance

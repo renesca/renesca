@@ -2,340 +2,9 @@ package renesca
 
 import renesca.graph._
 import renesca.parameter._
-import renesca.parameter.implicits._
-import renesca.table.Table
 
 import scala.collection.mutable
-
-case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Either[String, () => Any] = (graph: Graph, table: Table) => Right(() => ()))
-
-class QueryPatterns(resolvedItems: mutable.Map[Item,Origin]) {
-  private var variableCounter = 0
-  def randomVariable = {
-    val variable = "V" + variableCounter
-    variableCounter += 1
-    variable
-  }
-
-  def selectLiteralMap(variable: String, properties: Properties, selection: Set[PropertyKey]) = {
-    val remainingProperties = properties.filterKeys(!selection.contains(_))
-    val selectedProperties = properties.filterKeys(selection.contains(_))
-    val parameterMap = selectedProperties.toMap.map { case (k, v) => (PropertyKey(s"${ variable }_${ k }"), v) }
-    val literalMap = selectedProperties.map { case (k, _) => s"$k: {${ variable }_${ k }}" }
-    val literalMapMatcher = if(literalMap.isEmpty) "" else literalMap.mkString("{", ",", "}")
-    (literalMapMatcher, remainingProperties, parameterMap)
-  }
-
-  //TODO should limit number of matches for merge and match to 1!
-  // match/merge ... with variable limit 1 ...
-  def nodePattern(node: Node, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
-    val variable = randomVariable
-    val labels = node.labels.map(label => s":`$label`").mkString
-    resolvedItems.getOrElse(node, node.origin) match {
-      case Id(id)                =>
-        ("match", s"($variable)", s"where id($variable) = {${ variable }_nodeId}", Map(s"${ variable }_nodeId" -> id), variable)
-      case Create()              =>
-        ("create", s"($variable $labels {${ variable }_properties})", "", Map(s"${ variable }_properties" -> node.properties.toMap), variable)
-      case Merge(merge, onMatch) =>
-        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, merge.toSet)
-        val onMatchProperties = remainingProperties.filterKeys(onMatch contains _)
-        ("merge", s"($variable $labels $mergeLiteralMap)", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
-          parameterMap ++ Map(s"${ variable }_onCreateProperties" -> remainingProperties.toMap, s"${ variable }_onMatchProperties" -> onMatchProperties.toMap),
-          variable)
-      case Match(matches)        =>
-        val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, node.properties, matches)
-        val (propertySetter, propertyMap) = if (forDeletion || remainingProperties.isEmpty)
-          ("", Map.empty)
-        else
-          (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
-
-        ("match", s"($variable $labels $matchLiteralMap)", propertySetter,
-          parameterMap ++ propertyMap,
-          variable)
-    }
-  }
-
-  def relationPattern(relation: Relation, forDeletion: Boolean = false): (String, String, String, ParameterMap, String) = {
-    val variable = randomVariable
-    resolvedItems.getOrElse(relation, relation.origin) match {
-      case Id(id)                =>
-        ("match", s"[$variable]", s"where id($variable) = {${ variable }_relationId}", Map(s"${ variable }_relationId" -> id), variable)
-      case Create()              =>
-        ("create", s"[$variable :`${ relation.relationType }` {${ variable }_properties}]", "", Map(s"${ variable }_properties" -> relation.properties.toMap), variable)
-      case Merge(merge, onMatch) =>
-        val (mergeLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, merge)
-        val onMatchProperties = remainingProperties.filterKeys(onMatch)
-        ("merge", s"[$variable :`${ relation.relationType }` $mergeLiteralMap]", s"on create set $variable += {${ variable }_onCreateProperties} on match set $variable += {${ variable }_onMatchProperties}",
-          parameterMap ++ Map(s"${ variable }_onCreateProperties" -> remainingProperties.toMap, s"${ variable }_onMatchProperties" -> onMatchProperties.toMap),
-          variable)
-      case Match(matches)        =>
-        val (matchLiteralMap, remainingProperties, parameterMap) = selectLiteralMap(variable, relation.properties, matches)
-        val (propertySetter, propertyMap) = if (forDeletion || remainingProperties.isEmpty)
-          ("", Map.empty)
-        else
-          (s"set $variable += {${ variable }_properties}", Map(s"${ variable }_properties" -> remainingProperties.toMap))
-
-        ("match", s"[$variable :`${ relation.relationType }` $matchLiteralMap]", propertySetter,
-          parameterMap ++ propertyMap,
-          variable)
-    }
-  }
-
-  def queryNode(node: Node) = {
-    val (keyword, query, postfix, parameters, variable) = nodePattern(node)
-    Query(s"$keyword $query $postfix return $variable", parameters)
-  }
-
-  def queryRelationPattern(relation: Relation, forDeletion: Boolean = false) = {
-    if(resolvedItems.getOrElse(relation.startNode, relation.startNode.origin).isLocal)
-      throw new Exception("Start node in relation is still local: " + relation)
-    if(resolvedItems.getOrElse(relation.endNode, relation.endNode.origin).isLocal)
-      throw new Exception("End node in relation is still local: " + relation)
-
-    val (startKeyword, startQuery, startPostfix, startParameters, startVariable) = nodePattern(relation.startNode, forDeletion)
-    val (endKeyword, endQuery, endPostfix, endParameters, endVariable) = nodePattern(relation.endNode, forDeletion)
-    val (keyword, query, postfix, parameters, variable) = relationPattern(relation, forDeletion)
-
-    (s"$startKeyword $startQuery $startPostfix $endKeyword $endQuery $endPostfix $keyword ($startVariable)-$query->($endVariable) $postfix", variable, startParameters ++ parameters ++ endParameters)
-  }
-
-  def queryRelation(relation: Relation) = {
-    val (queryPattern, variable, params) = queryRelationPattern(relation)
-    Query(s"$queryPattern return $variable", params)
-  }
-
-  def queryPathPattern(path: Path, forDeletion: Boolean = false) = {
-    val variableMap = mutable.LinkedHashMap.empty[Item, String]
-
-    // first match all non-path nodes
-    val boundNodes = path.relations.flatMap(r => Seq(r.startNode, r.endNode)).distinct diff path.nodes
-    if(boundNodes.exists(n => resolvedItems.getOrElse(n, n.origin).isLocal))
-      throw new Exception("Bound node on path is still local: " + path)
-
-    val (nodeQueries, nodeParameters) = boundNodes.map(node => {
-      val (keyword, query, postfix, parameters, variable) = nodePattern(node, forDeletion)
-      variableMap += node -> variable
-      (s"$keyword $query $postfix", parameters.toMap)
-    }).unzip
-
-    val nodeQuery = nodeQueries.mkString(" ")
-
-    // now the actual path can matched/merged/created
-    val (pathQuery, pathParameters) = {
-      val (pathQueries, pathSetters, pathParameters) = path.relations.zipWithIndex.map { case (relation, i) =>
-        // a path assures that the start node was already matched by the previous relation (if there is one)
-        val (_, startQuery, startSetter, startParameters, startVariable) = if(i == 0)
-                                                                             variableMap.get(relation.startNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.startNode, forDeletion))
-                                                                           else
-                                                                             ("", "", "", Map.empty, variableMap(relation.startNode))
-        val (_, endQuery, endSetter, endParameters, endVariable) = variableMap.get(relation.endNode).map(variable => ("", s"($variable)", "", Map.empty, variable)).getOrElse(nodePattern(relation.endNode, forDeletion))
-        val (_, relQuery, relSetter, relParameters, relVariable) = relationPattern(relation, forDeletion)
-        variableMap ++= Seq(relation.startNode -> startVariable, relation.endNode -> endVariable, relation -> relVariable)
-
-        (s"$startQuery-$relQuery->$endQuery",
-          s"$startSetter $endSetter $relSetter",
-          startParameters ++ endParameters ++ relParameters)
-      }.unzip3
-
-      val parameters = pathParameters.flatten.toMap
-      val pathQuery = s"""${ pathQueries.mkString(" ") } ${ pathSetters.mkString(" ") }"""
-      (path.origin match {
-        case Create()    => s"create $pathQuery"
-        case Match(_)    => s"match $pathQuery"
-        case Merge(_, _) => s"merge $pathQuery"
-      }, parameters)
-    }
-
-    val parameters = (nodeParameters.flatten ++ pathParameters).toMap
-
-    (s"$nodeQuery $pathQuery", parameters, variableMap)
-  }
-
-  def queryPath(path: Path) = {
-    val (queryPattern, parameters, variableMap) = queryPathPattern(path)
-    val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }.toMap
-
-    val returnClause = "return " + variableMap.map {
-      case (k, variable) => k match {
-        case _: Node     => s"{id: id($variable), properties: $variable, labels: labels($variable)} as $variable"
-        case _: Relation => s"{id: id($variable), properties: $variable} as $variable"
-      }
-    }.mkString(",")
-
-    (Query(s"$queryPattern $returnClause", parameters), reverseVariableMap)
-  }
-}
-
-class QueryGenerator {
-  val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
-
-  def contentChangesToQueries(contentChanges: Seq[GraphContentChange])() = {
-    contentChanges.groupBy(_.item).map {
-      case (item, changes) =>
-        if(item.origin.isLocal)
-          throw new Exception("Trying to edit local item: " + item)
-
-        val propertyAdditions: mutable.Map[PropertyKey, ParameterValue] = mutable.Map.empty
-        val propertyRemovals: mutable.Set[PropertyKey] = mutable.Set.empty
-        val labelAdditions: mutable.Set[Label] = mutable.Set.empty
-        val labelRemovals: mutable.Set[Label] = mutable.Set.empty
-        changes.foreach {
-          case SetProperty(_, key, value) =>
-            propertyRemovals -= key
-            propertyAdditions += key -> value
-          case RemoveProperty(_, key)     =>
-            propertyRemovals += key
-            propertyAdditions -= key
-          case SetLabel(_, label)         =>
-            labelRemovals -= label
-            labelAdditions += label
-          case RemoveLabel(_, label)      =>
-            labelRemovals += label
-            labelAdditions -= label
-        }
-
-        val isRelation = item match {
-          case _: Node     => false
-          case _: Relation => true
-        }
-
-        val qPatterns = new QueryPatterns(resolvedItems)
-        val variable = qPatterns.randomVariable
-        val matcher = if(isRelation) s"match ()-[$variable]->()" else s"match ($variable)"
-        val propertyRemove = propertyRemovals.map(r => s"remove $variable.`$r`").mkString(" ")
-        val labelAdd = labelAdditions.map(a => s"set $variable:`$a`").mkString(" ")
-        val labelRemove = labelRemovals.map(r => s"remove $variable:`$r`").mkString(" ")
-        val setters = s"set $variable += {${ variable }_propertyAdditions} $propertyRemove $labelAdd $labelRemove"
-        val setterMap = Map(s"${ variable }_propertyAdditions" -> propertyAdditions.toMap)
-
-        val query = Query(
-          s"$matcher where id($variable) = {${ variable }_itemId} $setters",
-          Map(s"${ variable }_itemId" -> item.origin.asInstanceOf[Id].id) ++ setterMap
-        )
-
-        QueryConfig(item, query)
-    }.toSeq
-  }
-
-  def deletionToQueries(deleteItems: Seq[Item])() = {
-    deleteItems.map { item =>
-      val qPatterns = new QueryPatterns(resolvedItems)
-      item match {
-        case n: Node =>
-          val (keyword, query, postfix, parameters, variable) = qPatterns.nodePattern(n, forDeletion = true)
-          val optionalVariable = qPatterns.randomVariable
-          QueryConfig(n, Query(s"$keyword $query $postfix optional match ($variable)-[$optionalVariable]-() delete $optionalVariable, $variable", parameters))
-        case r: Relation =>
-          //TODO: invalidate Id origin of deleted item?
-          if (!r.origin.isLocal) { // if not local we can match by id and have a simpler query
-            val (keyword, query, postfix, parameters, variable) = qPatterns.relationPattern(r,  forDeletion =true)
-            QueryConfig(r, Query(s"$keyword ()-$query-() $postfix delete $variable", parameters))
-          } else {
-            val (queryPattern, variable, params) = qPatterns.queryRelationPattern(r, forDeletion = true)
-            QueryConfig(r, Query(s"$queryPattern delete $variable", params))
-          }
-      }
-    }
-  }
-
-  def deletionPathsToQueries(deletePaths: Seq[Path])() = {
-    deletePaths.map { path =>
-      val qPatterns = new QueryPatterns(resolvedItems)
-      val (queryPattern, parameters, variableMap) = qPatterns.queryPathPattern(path, forDeletion = true)
-
-      val (optionalMatchers, matcherVariables) = path.nodes.map { n =>
-        val optionalVariable = qPatterns.randomVariable
-        val variable = variableMap(n)
-        (s"optional match ($variable)-[$optionalVariable]-()", optionalVariable)
-      }.unzip
-
-      val variables = (path.relations ++ path.nodes).map(variableMap)
-      val returnClause = "delete " + (matcherVariables ++ variables).mkString(",")
-
-      QueryConfig(path, Query(s"$queryPattern ${optionalMatchers.mkString(" ")} $returnClause", parameters))
-    }
-  }
-
-  def addPathsToQueries(addPaths: Seq[Path])() = {
-    addPaths.map(path => {
-      val qPatterns = new QueryPatterns(resolvedItems)
-      val (query, reverseVariableMap) = qPatterns.queryPath(path)
-
-      QueryConfig(path, query, (graph: Graph, table: Table) => {
-        if(table.rows.size > 1)
-          Left("More than one query result for path: " + path)
-        else
-          table.rows.headOption.map(row => {
-            table.columns.foreach(col => {
-              val item = reverseVariableMap(col)
-              val map = row(col).asInstanceOf[MapParameterValue].value
-              resolvedItems += item -> Id(map("id").asInstanceOf[LongPropertyValue].value)
-            })
-            Right(() => {
-              table.columns.foreach(col => {
-                val item = reverseVariableMap(col)
-                val map = row(col).asInstanceOf[MapParameterValue].value
-                // TODO: without casts?
-                item.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-                item.properties.clear()
-                item.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-                item match {
-                  case n: Node =>
-                    n.labels.clear()
-                    n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
-                  case _       =>
-                }
-              })
-            })
-          }).getOrElse(Left("Query result is missing desired path: " + path))
-      })
-    })
-  }
-
-  def addRelationsToQueries(addRelations: Seq[Relation])() = {
-    addRelations.map(relation => {
-      val qPatterns = new QueryPatterns(resolvedItems)
-      val query = qPatterns.queryRelation(relation)
-
-      QueryConfig(relation, query, (graph: Graph, table: Table) => {
-        if(graph.relations.size > 1)
-          Left("More than one query result for relation: " + relation)
-        else
-          graph.relations.headOption.map(dbRelation => {
-            resolvedItems += relation -> dbRelation.origin
-            Right(() => {
-              relation.properties.clear()
-              relation.properties ++= dbRelation.properties
-              relation.origin = dbRelation.origin
-            })
-          }).getOrElse(Left("Query result is missing desired relation: " + relation))
-      })
-    })
-  }
-
-  def addNodesToQueries(addNodes: Seq[Node])() = {
-    addNodes.map(node => {
-      val qPatterns = new QueryPatterns(resolvedItems)
-      val query = qPatterns.queryNode(node)
-
-      QueryConfig(node, query, (graph: Graph, table: Table) => {
-        if(graph.nodes.size > 1)
-          Left("More than one query result for node: " + node)
-        else
-          graph.nodes.headOption.map(dbNode => {
-            resolvedItems += node -> dbNode.origin
-            Right(() => {
-              node.properties.clear()
-              node.labels.clear()
-              node.properties ++= dbNode.properties
-              node.labels ++= dbNode.labels
-              node.origin = dbNode.origin
-            })
-          }).getOrElse(Left("Query result is missing desired node: " + node))
-      })
-    })
-  }
-}
+import org.neo4j.driver.v1.Record
 
 class PathDependencyGraph(paths: Set[Path]) {
   private val resolved: mutable.ArrayBuffer[Path] = mutable.ArrayBuffer.empty
@@ -377,6 +46,10 @@ class PathDependencyGraph(paths: Set[Path]) {
 }
 
 class QueryBuilder {
+  import scala.concurrent.{Future, Await}
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration.Duration
+  import util.{Success, Failure}
 
   protected def newQueryGenerator = new QueryGenerator
 
@@ -559,14 +232,20 @@ class QueryBuilder {
     )
   }
 
-  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Seq[(Graph, Table)]): Option[String] = {
+  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: Query => Future[Seq[Record]]): Option[String] = {
     val handles = queryRequests.view.flatMap(getter => {
       val configs = getter()
       if (configs.isEmpty)
         Seq.empty
       else {
         val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-        queryHandler(queries).zip(callbacks).view.map { case ((g, t), f) => f(g, t) }
+        val futureRecords = Future.sequence(queries.map(queryHandler))
+        //TODO: do not await
+        Await.ready(futureRecords, Duration.Inf).value.get match {
+          case Success(recordsList) =>
+            recordsList.zip(callbacks).view.map { case (records, cb) => cb(records) }
+          case Failure(e) => ???
+        }
       }
     })
 

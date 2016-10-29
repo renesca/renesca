@@ -1,6 +1,5 @@
 package renesca.graph
 
-
 import renesca.NonBacktickName
 import renesca.parameter.{PropertyKey, PropertyMap}
 

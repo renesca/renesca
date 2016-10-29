@@ -27,6 +27,7 @@ lazy val renesca = crossProject.in(file("."))
       //"io.spray" %% "spray-client" % "1.3.3" ::
       //"io.spray" %% "spray-json" % "1.3.2" ::
       //"com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
+      "org.neo4j.driver" % "neo4j-java-driver" % "1.0.6" ::
       "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
       "com.typesafe.akka" %% "akka-http-core" % akkaVersion ::
       "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion ::

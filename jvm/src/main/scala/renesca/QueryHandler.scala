@@ -99,31 +99,8 @@ trait QueryInterface {
 class QueryHandler extends QueryInterface {
   val builder = new QueryBuilder
 
-  private def recordsToGraph(records: Seq[Record]): Graph = {
-    import scala.collection.JavaConversions._
-
-    val nodes = records.flatMap(_.values collect {
-      case n: neo4j.Node =>
-        val labels = n.labels map (s => Label(s))
-        val properties = n.asMap.map { case (k,v) => PropertyKey(k) -> v}
-        Node(Id(n.id), labels, properties.toMap)
-    })
-
-    //TODO: more efficient
-    val edges = records.flatMap(_.values collect {
-      case r: neo4j.Relationship =>
-        val relType = RelationType(r.`type`)
-        val properties = r.asMap.map { case (k,v) => PropertyKey(k) -> v}
-        val startNode = nodes.find(_.origin.asInstanceOf[Id].id == r.startNodeId).get
-        val endNode = nodes.find(_.origin.asInstanceOf[Id].id == r.endNodeId).get
-        Relation(r.id, startNode, endNode, relType, properties.toMap)
-    })
-
-     Graph(nodes, edges)
-  }
-
   override def queryGraph(query: Query)(implicit runner: StatementRunner): Future[Graph] = {
-    queryRecords(query) map recordsToGraph
+    queryRecords(query) map Neo4jTranslation.recordsToGraph
   }
 
   override def queryRecords(query: Query)(implicit runner: StatementRunner): Future[Seq[Record]] = Future {

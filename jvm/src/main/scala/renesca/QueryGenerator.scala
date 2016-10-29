@@ -6,7 +6,7 @@ import renesca.parameter._
 import scala.collection.mutable
 import org.neo4j.driver.v1.Record
 
-case class QueryConfig(item: SubGraph, query: Query, callback: Seq[Record] => Either[String, () => Any] = (_: Seq[Record]) => Right(() => ()))
+case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Seq[Record]) => Either[String, () => Any] = (_: Graph, _: Seq[Record]) => Right(() => ()))
 
 class QueryGenerator {
   val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
@@ -99,38 +99,38 @@ class QueryGenerator {
   }
 
   def addPathsToQueries(addPaths: Seq[Path])() = {
+    import scala.collection.JavaConversions._
+
     addPaths.map(path => {
       val qPatterns = new QueryPatterns(resolvedItems)
       val QueryPath(query, reverseVariableMap) = qPatterns.queryPath(path)
 
-      QueryConfig(path, query, (records: Seq[Record]) => {
-        ???
-        // if(table.rows.size > 1)
-        //   Left("More than one query result for path: " + path)
-        // else
-        //   table.rows.headOption.map(row => {
-        //     table.columns.foreach(col => {
-        //       val item = reverseVariableMap(col)
-        //       val map = row(col).asInstanceOf[MapParameterValue].value
-        //       resolvedItems += item -> Id(map("id").asInstanceOf[LongPropertyValue].value)
-        //     })
-        //     Right(() => {
-        //       table.columns.foreach(col => {
-        //         val item = reverseVariableMap(col)
-        //         val map = row(col).asInstanceOf[MapParameterValue].value
-        //         // TODO: without casts?
-        //         item.origin = Id(map("id").asInstanceOf[LongPropertyValue].value)
-        //         item.properties.clear()
-        //         item.properties ++= map("properties").asInstanceOf[MapParameterValue].value.asInstanceOf[PropertyMap]
-        //         item match {
-        //           case n: Node =>
-        //             n.labels.clear()
-        //             n.labels ++= map("labels").asInstanceOf[ArrayParameterValue].value.asInstanceOf[Seq[StringPropertyValue]].map(l => Label(l.value))
-        //           case _       =>
-        //         }
-        //       })
-        //     })
-        //   }).getOrElse(Left("Query result is missing desired path: " + path))
+      QueryConfig(path, query, (graph: Graph, records: Seq[Record]) => {
+        if(records.size > 1)
+          Left("More than one query result for path: " + path)
+        else
+          records.headOption.map(record => {
+            record.fields.foreach(pair => {
+              val item = reverseVariableMap(pair.key)
+              resolvedItems += item -> Id(pair.value.asEntity.id)
+            })
+            Right(() => {
+              record.fields.foreach(pair => {
+                val item = reverseVariableMap(pair.key)
+                // TODO: without casts?
+                val entity = pair.value.asEntity
+                item.origin = Id(entity.id)
+                item.properties.clear()
+                item.properties ++= Neo4jTranslation.properties(entity)
+                item match {
+                  case n: Node =>
+                    n.labels.clear()
+                    n.labels ++= Neo4jTranslation.labels(pair.value.asNode)
+                  case _       =>
+                }
+              })
+            })
+          }).getOrElse(Left("Query result is missing desired path: " + path))
       })
     })
   }
@@ -140,19 +140,18 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryRelation(relation)
 
-      QueryConfig(relation, query, (records: Seq[Record]) => {
-        ???
-        // if(graph.relations.size > 1)
-        //   Left("More than one query result for relation: " + relation)
-        // else
-        //   graph.relations.headOption.map(dbRelation => {
-        //     resolvedItems += relation -> dbRelation.origin
-        //     Right(() => {
-        //       relation.properties.clear()
-        //       relation.properties ++= dbRelation.properties
-        //       relation.origin = dbRelation.origin
-        //     })
-        //   }).getOrElse(Left("Query result is missing desired relation: " + relation))
+      QueryConfig(relation, query, (graph: Graph, records: Seq[Record]) => {
+        if(records.size > 1)
+          Left("More than one query result for relation: " + relation)
+        else
+          graph.relations.headOption.map(dbRelation => {
+            resolvedItems += relation -> dbRelation.origin
+            Right(() => {
+              relation.properties.clear()
+              relation.properties ++= dbRelation.properties
+              relation.origin = dbRelation.origin
+            })
+          }).getOrElse(Left("Query result is missing desired relation: " + relation))
       })
     })
   }
@@ -162,21 +161,20 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryNode(node)
 
-      QueryConfig(node, query, (records: Seq[Record]) => {
-        ???
-        // if(graph.nodes.size > 1)
-        //   Left("More than one query result for node: " + node)
-        // else
-        //   graph.nodes.headOption.map(dbNode => {
-        //     resolvedItems += node -> dbNode.origin
-        //     Right(() => {
-        //       node.properties.clear()
-        //       node.labels.clear()
-        //       node.properties ++= dbNode.properties
-        //       node.labels ++= dbNode.labels
-        //       node.origin = dbNode.origin
-        //     })
-        //   }).getOrElse(Left("Query result is missing desired node: " + node))
+      QueryConfig(node, query, (graph: Graph, records: Seq[Record]) => {
+        if (records.size > 1)
+          Left("More than one query result for node: " + node)
+        else
+          graph.nodes.headOption.map(dbNode => {
+            resolvedItems += node -> dbNode.origin
+            Right(() => {
+              node.properties.clear()
+              node.labels.clear()
+              node.properties ++= dbNode.properties
+              node.labels ++= dbNode.labels
+              node.origin = dbNode.origin
+            })
+          }).getOrElse(Left("Query result is missing desired node: " + node))
       })
     })
   }

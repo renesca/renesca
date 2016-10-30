@@ -6,7 +6,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.graph.Id._
-import renesca.parameter.implicits._
+import renesca.parameter._
 
 @RunWith(classOf[JUnitRunner])
 class RelationSpec extends Specification with Mockito {

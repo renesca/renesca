@@ -4,11 +4,29 @@ import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import renesca.parameter.StringPropertyValue
-import renesca.parameter.implicits._
+import renesca.parameter._
 
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
+
+  object SetProperty {
+    //TODO: unboxed to boxed?
+    def apply(item: Item, key: PropertyKey, value: Int): SetProperty = SetProperty(item, key, value : java.lang.Integer)
+    def apply(item: Item, key: PropertyKey, value: Long): SetProperty = SetProperty(item, key, value : java.lang.Long)
+    def apply(item: Item, key: PropertyKey, value: Boolean): SetProperty = SetProperty(item, key, value : java.lang.Boolean)
+    def apply(item: Item, key: PropertyKey, value: String): SetProperty = SetProperty(item, key, value : java.lang.String)
+    def apply(item: Item, key: PropertyKey, value: Double): SetProperty = SetProperty(item, key, value : java.lang.Double)
+  }
+
+  implicit class StringlyProperties(props: Properties) {
+    def +=(keyValue: (String, String)): Properties = {
+      props += PropertyKey(keyValue._1) -> (keyValue._2 : java.lang.String)
+    }
+
+    def -=(key: String): Properties = {
+      props -= PropertyKey(key)
+    }
+  }
 
   "GraphChange" should {
     "fail when emitting AddItem/AddPath with non local item" in {
@@ -372,7 +390,7 @@ class GraphChangeSpec extends Specification with Mockito {
       relation.properties -= "key"
 
       relation.changes must contain(
-        SetProperty(relation, "key", StringPropertyValue("value")).asInstanceOf[GraphChange],
+        SetProperty(relation, "key", "value").asInstanceOf[GraphChange],
         RemoveProperty(relation, "key").asInstanceOf[GraphChange]
       ).inOrder
     }

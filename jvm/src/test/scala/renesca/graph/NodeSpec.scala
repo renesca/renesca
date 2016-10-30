@@ -5,8 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.parameter.implicits._
-import renesca.parameter.{PropertyValue, StringPropertyValue}
+import renesca.parameter._
 
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {
@@ -15,10 +14,10 @@ class NodeSpec extends Specification with Mockito {
 
     "create Node with labels and properties" in {
       val label = mock[Label]
-      val A = Node(1, labels = List(label), properties = Map("key" -> "value"))
+      val A = Node(1, labels = List(label), properties = ParameterMap("key" -> "value"))
 
       A.labels must contain(exactly(label))
-      A.properties must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+      A.properties must contain(exactly(PropertyKey("key") -> "value".asInstanceOf[AnyRef]))
     }
 
     "pass on node to labels-Set and properties-Map" in {

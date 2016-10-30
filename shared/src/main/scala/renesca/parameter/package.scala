@@ -12,10 +12,12 @@ package object parameter {
   case class PropertyKey(name: String) extends NonBacktickName
 
   object ParameterMap {
-    def apply(tuples: (String, ParameterValue)*): ParameterMap = {
-      Map(tuples.map { case (k,v) => PropertyKey(k) -> v }: _*)
+    def apply(tuples: (String, Any)*): ParameterMap = {
+      Map(tuples.map { case (k,v) => PropertyKey(k) -> v.asInstanceOf[AnyRef] }: _*) //TODO: unboxed to boxed?
     }
 
     def empty = Map.empty[PropertyKey, ParameterValue]
   }
+
+  implicit def stringToPropertyKey(s: String): PropertyKey = PropertyKey(s)
 }

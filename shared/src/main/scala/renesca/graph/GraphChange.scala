@@ -23,6 +23,14 @@ sealed trait GraphContentChange extends GraphItemChange {
 }
 
 case class SetProperty(item: Item, key: PropertyKey, value: PropertyValue) extends GraphContentChange
+object SetProperty {
+  //TODO: unboxed to boxed?
+  def apply(item: Item, key: PropertyKey, value: Int): SetProperty = new SetProperty(item, key, value : java.lang.Integer)
+  def apply(item: Item, key: PropertyKey, value: Long): SetProperty = new SetProperty(item, key, value : java.lang.Long)
+  def apply(item: Item, key: PropertyKey, value: Boolean): SetProperty = new SetProperty(item, key, value : java.lang.Boolean)
+  def apply(item: Item, key: PropertyKey, value: String): SetProperty = new SetProperty(item, key, value : java.lang.String)
+  def apply(item: Item, key: PropertyKey, value: Double): SetProperty = new SetProperty(item, key, value : java.lang.Double)
+}
 
 case class RemoveProperty(item: Item, key: PropertyKey) extends GraphContentChange
 

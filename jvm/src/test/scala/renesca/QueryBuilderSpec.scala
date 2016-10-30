@@ -11,15 +11,6 @@ import renesca.parameter._
 class QueryBuilderSpec extends Specification with Mockito {
   sequential
 
-  object SetProperty {
-    //TODO: unboxed to boxed?
-    def apply(item: Item, key: PropertyKey, value: Int): SetProperty = SetProperty(item, key, value : java.lang.Integer)
-    def apply(item: Item, key: PropertyKey, value: Long): SetProperty = SetProperty(item, key, value : java.lang.Long)
-    def apply(item: Item, key: PropertyKey, value: Boolean): SetProperty = SetProperty(item, key, value : java.lang.Boolean)
-    def apply(item: Item, key: PropertyKey, value: String): SetProperty = SetProperty(item, key, value : java.lang.String)
-    def apply(item: Item, key: PropertyKey, value: Double): SetProperty = SetProperty(item, key, value : java.lang.Double)
-  }
-
   class FakeQueryBuilder(results: Seq[(Graph, Map[Item,String])]) extends QueryBuilder {
     import scala.concurrent.Future
     import scala.concurrent.ExecutionContext.Implicits.global

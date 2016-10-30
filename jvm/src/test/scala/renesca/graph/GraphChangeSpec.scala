@@ -9,15 +9,6 @@ import renesca.parameter._
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
 
-  object SetProperty {
-    //TODO: unboxed to boxed?
-    def apply(item: Item, key: PropertyKey, value: Int): SetProperty = SetProperty(item, key, value : java.lang.Integer)
-    def apply(item: Item, key: PropertyKey, value: Long): SetProperty = SetProperty(item, key, value : java.lang.Long)
-    def apply(item: Item, key: PropertyKey, value: Boolean): SetProperty = SetProperty(item, key, value : java.lang.Boolean)
-    def apply(item: Item, key: PropertyKey, value: String): SetProperty = SetProperty(item, key, value : java.lang.String)
-    def apply(item: Item, key: PropertyKey, value: Double): SetProperty = SetProperty(item, key, value : java.lang.Double)
-  }
-
   implicit class StringlyProperties(props: Properties) {
     def +=(keyValue: (String, String)): Properties = {
       props += PropertyKey(keyValue._1) -> (keyValue._2 : java.lang.String)

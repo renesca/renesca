@@ -1,6 +1,7 @@
 package renesca
 
 import scala.collection.mutable
+import scala.collection.breakOut
 
 package object parameter {
   type ParameterValue = AnyRef
@@ -12,8 +13,11 @@ package object parameter {
   case class PropertyKey(name: String) extends NonBacktickName
 
   object ParameterMap {
+    @inline private final def box(x: Any): AnyRef = x.asInstanceOf[AnyRef]
     def apply(tuples: (String, Any)*): ParameterMap = {
-      Map(tuples.map { case (k,v) => PropertyKey(k) -> v.asInstanceOf[AnyRef] }: _*) //TODO: unboxed to boxed?
+      tuples.map {
+        case (k, v) => PropertyKey(k) -> box(v)
+      }(breakOut[Seq[(String, Any)], (PropertyKey, AnyRef), Map[PropertyKey, AnyRef]])
     }
 
     def empty = Map.empty[PropertyKey, ParameterValue]

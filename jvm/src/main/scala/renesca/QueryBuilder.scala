@@ -243,7 +243,7 @@ class QueryBuilder {
         //TODO: do not await
         Await.ready(futureRecords, Duration.Inf).value.get match {
           case Success(recordsList) =>
-            recordsList.zip(callbacks).view.map { case (records, cb) => cb(Neo4jTranslation.recordsToGraph(records), records) }
+            recordsList.zip(callbacks).view.map { case (records, cb) => cb(records) }
           case Failure(e) => Seq(Left(s"Query failed: $e"))
         }
       }

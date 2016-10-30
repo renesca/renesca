@@ -6,7 +6,7 @@ import renesca.parameter._
 import scala.collection.mutable
 import org.neo4j.driver.v1.Record
 
-case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Seq[Record]) => Either[String, () => Any] = (_: Graph, _: Seq[Record]) => Right(() => ()))
+case class QueryConfig(item: SubGraph, query: Query, callback: Seq[Record] => Either[String, () => Any] = (_: Seq[Record]) => Right(() => ()))
 
 class QueryGenerator {
   val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
@@ -105,7 +105,7 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val QueryPath(query, reverseVariableMap) = qPatterns.queryPath(path)
 
-      QueryConfig(path, query, (graph: Graph, records: Seq[Record]) => {
+      QueryConfig(path, query, (records: Seq[Record]) => {
         if(records.size > 1)
           Left("More than one query result for path: " + path)
         else
@@ -140,8 +140,9 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryRelation(relation)
 
-      QueryConfig(relation, query, (graph: Graph, records: Seq[Record]) => {
-        if(records.size > 1)
+      QueryConfig(relation, query, (records: Seq[Record]) => {
+        val graph = Neo4jTranslation.recordsToGraph(records)
+        if(graph.relations.size > 1)
           Left("More than one query result for relation: " + relation)
         else
           graph.relations.headOption.map(dbRelation => {
@@ -161,8 +162,9 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryNode(node)
 
-      QueryConfig(node, query, (graph: Graph, records: Seq[Record]) => {
-        if (records.size > 1)
+      QueryConfig(node, query, (records: Seq[Record]) => {
+        val graph = Neo4jTranslation.recordsToGraph(records)
+        if (graph.nodes.size > 1)
           Left("More than one query result for node: " + node)
         else
           graph.nodes.headOption.map(dbNode => {

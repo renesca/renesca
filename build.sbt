@@ -4,9 +4,7 @@ name := "renesca"
 
 // also change the version in README.md
 version in ThisBuild := "1.0.0-SNAPSHOT"
-
 scalaVersion in ThisBuild := "2.11.8"
-
 crossScalaVersions in ThisBuild := Seq("2.11.8")
 
 lazy val root = project.in(file(".")).
@@ -28,13 +26,13 @@ lazy val renesca = crossProject.in(file("."))
       //"io.spray" %% "spray-json" % "1.3.2" ::
       //"com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
       "org.neo4j.driver" % "neo4j-java-driver" % "1.0.6" ::
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
-      "com.typesafe.akka" %% "akka-http-core" % akkaVersion ::
-      "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion ::
-      "com.typesafe.akka" % "akka-http-spray-json-experimental_2.11" % akkaVersion ::
+      // "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
+      // "com.typesafe.akka" %% "akka-http-core" % akkaVersion ::
+      // "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion ::
+      // "com.typesafe.akka" % "akka-http-spray-json-experimental_2.11" % akkaVersion ::
       "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
-      ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
-      "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
+      // ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
+      // "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
       Nil
     )
   )

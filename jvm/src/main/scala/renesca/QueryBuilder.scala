@@ -4,7 +4,6 @@ import renesca.graph._
 import renesca.parameter._
 
 import scala.collection.mutable
-import org.neo4j.driver.v1.Record
 
 class PathDependencyGraph(paths: Set[Path]) {
   private val resolved: mutable.ArrayBuffer[Path] = mutable.ArrayBuffer.empty
@@ -232,18 +231,20 @@ class QueryBuilder {
     )
   }
 
-  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: Query => Future[Seq[Record]]): Option[String] = {
+  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: Query => Future[(Graph,Map[Item,String])]): Option[String] = {
     val handles = queryRequests.view.flatMap(getter => {
       val configs = getter()
       if (configs.isEmpty)
         Seq.empty
       else {
         val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-        val futureRecords = Future.sequence(queries.map(queryHandler))
+        val futureGraphs = Future.sequence(queries.map(queryHandler))
         //TODO: do not await
-        Await.ready(futureRecords, Duration.Inf).value.get match {
-          case Success(recordsList) =>
-            recordsList.zip(callbacks).view.map { case (records, cb) => cb(records) }
+        Await.ready(futureGraphs, Duration.Inf).value.get match {
+          case Success(graphs) =>
+            graphs.zip(callbacks).view.map {
+              case ((graph, variableMapping), cb) => cb(graph, variableMapping)
+            }
           case Failure(e) => Seq(Left(s"Query failed: $e"))
         }
       }

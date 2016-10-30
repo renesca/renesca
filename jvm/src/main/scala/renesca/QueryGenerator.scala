@@ -4,9 +4,8 @@ import renesca.graph._
 import renesca.parameter._
 
 import scala.collection.mutable
-import org.neo4j.driver.v1.Record
 
-case class QueryConfig(item: SubGraph, query: Query, callback: Seq[Record] => Either[String, () => Any] = (_: Seq[Record]) => Right(() => ()))
+case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Map[Item, String]) => Either[String, () => Any] = (_: Graph, _: Map[Item,String]) => Right(() => ()))
 
 class QueryGenerator {
   val resolvedItems: mutable.Map[Item,Origin] = mutable.Map.empty
@@ -105,32 +104,31 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val QueryPath(query, reverseVariableMap) = qPatterns.queryPath(path)
 
-      QueryConfig(path, query, (records: Seq[Record]) => {
-        if(records.size > 1)
-          Left("More than one query result for path: " + path)
+      QueryConfig(path, query, (graph: Graph, variableMapping: Map[Item, String]) => {
+        val items = graph.nodes ++ graph.relations
+        if(items.size != (path.allNodes ++ path.relations).size)
+          Left(s"Unexpected number of query results '${items.size}' for path: $path")
         else
-          records.headOption.map(record => {
-            record.fields.foreach(pair => {
-              val item = reverseVariableMap(pair.key)
-              resolvedItems += item -> Id(pair.value.asEntity.id)
-            })
-            Right(() => {
-              record.fields.foreach(pair => {
-                val item = reverseVariableMap(pair.key)
-                // TODO: without casts?
-                val entity = pair.value.asEntity
-                item.origin = Id(entity.id)
-                item.properties.clear()
-                item.properties ++= Neo4jTranslation.properties(entity)
-                item match {
-                  case n: Node =>
-                    n.labels.clear()
-                    n.labels ++= Neo4jTranslation.labels(pair.value.asNode)
-                  case _       =>
-                }
-              })
-            })
-          }).getOrElse(Left("Query result is missing desired path: " + path))
+          items.foreach { newItem =>
+            val varName = variableMapping(newItem)
+            val item = reverseVariableMap(varName)
+            resolvedItems += item -> newItem.origin
+          }
+          Right(() => {
+            items.foreach { newItem =>
+              val varName = variableMapping(newItem)
+              val item = reverseVariableMap(varName)
+              item.origin = newItem.origin
+              item.properties.clear()
+              item.properties ++= newItem.properties
+              item match {
+                case n: Node =>
+                  n.labels.clear()
+                  n.labels ++= newItem.asInstanceOf[Node].labels
+                case _       =>
+              }
+            }
+          })
       })
     })
   }
@@ -140,8 +138,7 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryRelation(relation)
 
-      QueryConfig(relation, query, (records: Seq[Record]) => {
-        val graph = Neo4jTranslation.recordsToGraph(records)
+      QueryConfig(relation, query, (graph: Graph, variableMapping: Map[Item, String]) => {
         if(graph.relations.size > 1)
           Left("More than one query result for relation: " + relation)
         else
@@ -162,8 +159,7 @@ class QueryGenerator {
       val qPatterns = new QueryPatterns(resolvedItems)
       val query = qPatterns.queryNode(node)
 
-      QueryConfig(node, query, (records: Seq[Record]) => {
-        val graph = Neo4jTranslation.recordsToGraph(records)
+      QueryConfig(node, query, (graph: Graph, variableMapping: Map[Item, String]) => {
         if (graph.nodes.size > 1)
           Left("More than one query result for node: " + node)
         else

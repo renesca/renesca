@@ -100,7 +100,7 @@ class QueryHandler extends QueryInterface {
   val builder = new QueryBuilder
 
   override def queryGraph(query: Query)(implicit runner: StatementRunner): Future[Graph] = {
-    queryRecords(query) map Neo4jTranslation.recordsToGraph
+    queryRecords(query) map (records => Neo4jTranslation.recordsToGraph(records)._1)
   }
 
   override def queryRecords(query: Query)(implicit runner: StatementRunner): Future[Seq[Record]] = Future {
@@ -117,7 +117,7 @@ class QueryHandler extends QueryInterface {
     builder.generateQueries(graph.changes) match {
       case Left(msg) => Some(msg)
       case Right(queries) =>
-        val failure = builder.applyQueries(queries, queryRecords)
+        val failure = builder.applyQueries(queries, query => queryRecords(query).map(Neo4jTranslation.recordsToGraph))
         if (failure.isEmpty)
           graph.clearChanges()
 

@@ -30,9 +30,6 @@ lazy val renesca = crossProject.in(file("."))
       "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
       "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion ::
       "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion ::
-      "io.circe" %% "circe-core" % circeVersion ::
-      "io.circe" %% "circe-generic" % circeVersion ::
-      "io.circe" %% "circe-parser" % circeVersion ::
       "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
       ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
       "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
@@ -55,6 +52,13 @@ lazy val renesca = crossProject.in(file("."))
     pgpSecretRing := file("local.secring.gpg"),
     pgpPublicRing := file("local.pubring.gpg"),
     organization := "com.github.renesca",
+
+    libraryDependencies ++= (
+      "io.circe" %% "circe-core" % circeVersion ::
+      "io.circe" %% "circe-generic" % circeVersion ::
+      "io.circe" %% "circe-parser" % circeVersion ::
+      Nil
+    ),
 
     pomExtra := {
       <url>https://github.com/renesca/renesca</url>

@@ -1,5 +1,5 @@
 package renesca.json
-import renesca.PropertyMap
+import renesca._
 
 import io.circe.Json
 

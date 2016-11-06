@@ -10,14 +10,6 @@ import concurrent.{Future, ExecutionContext}
 
 case class QueryConfig(item: SubGraph, query: Query, callback: (Graph, Table) => Either[String, () => Any] = (graph: Graph, table: Table) => Right(() => ()))
 
-object implicits {
-
-  implicit val propertyKeyEncoder = new KeyEncoder[PropertyKey] {
-    override def apply(pKey: PropertyKey): String = ""//pKey.name
-  }
-}
-import implicits._
-
 class QueryPatterns(resolvedItems: mutable.Map[Item, Origin]) {
   private var variableCounter = 0
   def randomVariable = {

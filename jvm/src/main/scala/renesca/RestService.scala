@@ -13,6 +13,8 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
 
+import cats.syntax.either._
+
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 // TODO: type alias / value class
@@ -61,7 +63,7 @@ class RestService(
       r <- httpResponse;
       strResponse <- Unmarshal(r.entity).to[String]
     ) yield {
-      val response = decode[renesca.json.Response](strResponse).valueOr { e => throw e }
+      val response = decode[json.Response](strResponse).valueOr(e => throw e)
       val headers = r.headers
       (headers, response)
     }

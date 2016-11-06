@@ -17,6 +17,13 @@ package object renesca {
     override def hashCode = name.hashCode
   }
 
+  implicit val propertyKeyEncoder = new KeyEncoder[PropertyKey] {
+    override def apply(pKey: PropertyKey): String = pKey.name
+  }
+  implicit val propertyKeyDecoder = new KeyDecoder[PropertyKey] {
+    override def apply(str: String): Option[PropertyKey] = Some(PropertyKey(str))
+  }
+
   type PropertyValue = Json
   type PropertyMap = Map[PropertyKey, PropertyValue]
   type MutablePropertyMap = mutable.Map[PropertyKey, PropertyValue]

@@ -19,10 +19,13 @@ package object renesca {
     }
   }
 
-  implicit val propertyKeyEncoder = new KeyEncoder[NonBacktickName] {
-    override def apply(pKey: NonBacktickName): String = pKey.name
+  implicit val nonBacktickEncoder: Encoder[NonBacktickName] = Encoder.encodeString.contramap[NonBacktickName](nbn => nbn.name)
+  implicit val nonBacktickDecoder: Decoder[NonBacktickName] = Decoder.decodeString.emap(str => Right(NonBacktickName(str)))
+
+  implicit val nonBacktickKeyEncoder = new KeyEncoder[NonBacktickName] {
+    override def apply(nbn: NonBacktickName): String = nbn.name
   }
-  implicit val propertyKeyDecoder = new KeyDecoder[NonBacktickName] {
+  implicit val nonBacktickKeyDecoder = new KeyDecoder[NonBacktickName] {
     override def apply(str: String): Option[NonBacktickName] = Some(NonBacktickName(str))
   }
 

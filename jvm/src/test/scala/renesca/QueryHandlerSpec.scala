@@ -6,11 +6,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.graph._
-import renesca.json.protocols.ResponseJsonProtocol._
-import renesca.parameter.implicits._
-import renesca.parameter.{ArrayParameterValue, NullPropertyValue, ParameterValue}
 import renesca.table.Table
-import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerSpec extends Specification with Mockito {

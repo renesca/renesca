@@ -3,7 +3,6 @@ package renesca
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.graph.{Label, RelationType}
 
 @RunWith(classOf[JUnitRunner])
 class DistinctBufferSpec extends Specification {

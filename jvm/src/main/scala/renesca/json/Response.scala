@@ -34,7 +34,7 @@ object GraphFactory {
   def apply(jsonGraph: json.Graph): graph.Graph = {
     val nodes: List[graph.Node] = jsonGraph.nodes.map {
       case json.Node(id, labels, properties) =>
-        graph.Node(graph.Id(id.toLong), labels.map(graph.Label.apply), properties)
+        graph.Node(graph.Id(id.toLong), labels.map(Label.apply), properties)
     }
 
     val idToNode: Map[String, graph.Node] = nodes.flatMap(node => node.origin match {
@@ -48,7 +48,7 @@ object GraphFactory {
           graph.Id(id.toLong),
           idToNode(startNode),
           idToNode(endNode),
-          graph.RelationType(relationshipType),
+          RelationType(relationshipType),
           properties
         )
     }

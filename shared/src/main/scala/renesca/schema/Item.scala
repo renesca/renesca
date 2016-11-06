@@ -4,6 +4,7 @@ package renesca.schema
 // This allows to create a Relation between a Node and a HyperRelation.
 
 import renesca.{graph => raw}
+import renesca.{RelationType,Label}
 
 //TODO: sealed trait Item and AbstractRelation?
 trait Item {
@@ -21,8 +22,8 @@ trait Item {
 }
 
 trait Node extends Item with Filter {
-  val label: raw.Label
-  val labels: Set[raw.Label]
+  val label: Label
+  val labels: Set[Label]
   def rawItem: raw.Node
   private[schema] var graphOption: Option[raw.Graph] = None
   private val emptyGraph = raw.Graph.empty
@@ -100,7 +101,7 @@ trait Relation[+START <: Node, +END <: Node] extends AbstractRelation[START, END
   def startNodeOpt = Some(startNode)
   def endNodeOpt = Some(endNode)
   def rawItem: raw.Relation
-  def relationType: raw.RelationType = rawItem.relationType
+  def relationType: RelationType = rawItem.relationType
 }
 
 trait HyperRelation[

@@ -2,15 +2,6 @@ package renesca.graph
 
 import renesca._
 
-class Label private(val name: String) extends AnyVal
-object Label {
-  implicit def StringToLabel(name: String): Label = apply(name)
-  def apply(s: String): Label = {
-    require(!s.contains("`"), "Backticks are not allowed in label names")
-    new Label(s)
-  }
-}
-
 object Node {
   private[renesca] def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
     new Node(id, labels, properties)

@@ -3,11 +3,11 @@ package renesca.schema
 // Traits for Factories to create either local items or instances of existing ones.
 
 import renesca.{graph => raw}
-import renesca.RelationType
+import renesca.{Label,RelationType}
 
 trait NodeFactory[+T <: Node] {
-  def label: raw.Label
-  def labels: Set[raw.Label]
+  def label: Label
+  def labels: Set[Label]
   def wrap(node: raw.Node): T
 }
 

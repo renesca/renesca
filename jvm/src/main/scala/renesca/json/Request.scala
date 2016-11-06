@@ -2,6 +2,7 @@ package renesca.json
 // TODO: move out of json package
 
 import io.circe.Json
+import renesca.ParameterMap
 
 case class Request(
   statements: List[Statement] = Nil
@@ -9,7 +10,7 @@ case class Request(
 
 case class Statement(
   statement: String,
-  parameters: Option[Map[String, Json]] = None,
+  parameters: Option[ParameterMap] = None,
   resultDataContents: Option[List[String]] = None
 )
 

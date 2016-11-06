@@ -1,6 +1,6 @@
 package renesca.graph
 
-import renesca.{PropertyKey, PropertyValue}
+import renesca.{Label,PropertyKey, PropertyValue}
 
 sealed trait GraphChange {
   def isValid: Boolean

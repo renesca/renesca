@@ -1,7 +1,7 @@
 package renesca.graph
 
 import renesca.NonBacktickName
-import renesca.parameter.{PropertyKey, PropertyMap}
+import renesca.{PropertyKey, PropertyMap}
 
 import scala.collection.mutable
 
@@ -9,6 +9,7 @@ object Label {
   implicit def StringToLabel(name: String): Label = Label(name)
 }
 
+//TODO: value class?
 case class Label(name: String) extends NonBacktickName
 
 object Node {
@@ -32,11 +33,11 @@ object Node {
   }
 }
 
-class Node private[graph](
-                           var origin: Origin,
-                           initialLabels: Traversable[Label] = Nil,
-                           initialProperties: PropertyMap = Map.empty
-                           ) extends Item {
+class Node private[graph] (
+  var origin: Origin,
+  initialLabels: Traversable[Label] = Nil,
+  initialProperties: PropertyMap = Map.empty
+) extends Item {
 
   val labels = new NodeLabels(this, mutable.HashSet(initialLabels.toSeq: _*))
   val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))
@@ -57,11 +58,10 @@ class Node private[graph](
 
   override def equals(other: Any): Boolean = other match {
     case that: Node => (that canEqual this) && this.origin == that.origin
-    case _          => false
+    case _ => false
   }
 
   override def hashCode: Int = origin.hashCode
 
-  override def toString = s"(${ origin }${ labels.map(":" + _.name).mkString })"
+  override def toString = s"(${origin}${labels.map(":" + _.name).mkString})"
 }
-

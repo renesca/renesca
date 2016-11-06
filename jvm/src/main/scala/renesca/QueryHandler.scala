@@ -11,9 +11,11 @@ package renesca
 //  persist     - save a modified graph to the database
 
 import renesca.graph._
-import renesca.parameter._
 import renesca.schema.{AbstractRelation, HyperRelation}
 import renesca.table.Table
+import io.circe.Json
+import concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Query {
   implicit def stringToQuery(statement: String): Query = Query(statement)
@@ -22,39 +24,39 @@ object Query {
 case class Query(statement: String, parameters: ParameterMap = Map.empty)
 
 trait QueryInterface {
-  def queryWholeGraph: Graph
-  def queryGraph(query: Query): Graph
-  def queryTable(query: Query): Table
-  def queryGraphAndTable(query: Query): (Graph, Table)
-  def queryGraphs(queries: Query*): Seq[Graph]
-  def queryTables(queries: Query*): Seq[Table]
-  def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)]
+  def queryWholeGraph: Future[Graph]
+  def queryGraph(query: Query): Future[Graph]
+  def queryTable(query: Query): Future[Table]
+  def queryGraphAndTable(query: Query): Future[(Graph, Table)]
+  def queryGraphs(queries: Query*): Future[Seq[Graph]]
+  def queryTables(queries: Query*): Future[Seq[Table]]
+  def queryGraphsAndTables(queries: Query*): Future[Seq[(Graph, Table)]]
   def query(queries: Query*): Unit
 
-  def queryGraph(statement: String, parameters: ParameterMap = Map.empty): Graph = queryGraph(Query(statement, parameters))
-  def queryTable(statement: String, parameters: ParameterMap = Map.empty): Table = queryTable(Query(statement, parameters))
-  def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): (Graph, Table) = queryGraphAndTable(Query(statement, parameters))
+  def queryGraph(statement: String, parameters: ParameterMap = Map.empty): Future[Graph] = queryGraph(Query(statement, parameters))
+  def queryTable(statement: String, parameters: ParameterMap = Map.empty): Future[Table] = queryTable(Query(statement, parameters))
+  def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): Future[(Graph, Table)] = queryGraphAndTable(Query(statement, parameters))
   def query(statement: String, parameters: ParameterMap = Map.empty): Unit = query(Query(statement, parameters))
 
-  def persistChanges(graph: Graph): Option[String]
+  def persistChanges(graph: Graph): Future[Option[String]] //TODO: encode error in Future
 
-  def persistChanges(schemaGraph: schema.Graph): Option[String] = {
+  def persistChanges(schemaGraph: schema.Graph): Future[Option[String]] = {
     validateSchemaGraph(schemaGraph) match {
-      case Some(err) => Some(err)
+      case Some(err) => Future.failed(new Exception(err))
       case None => persistChanges(schemaGraph.graph)
     }
   }
 
-  def persistChanges(item: Item, items: Item*): Option[String] = {
+  def persistChanges(item: Item, items: Item*): Future[Option[String]] = {
     val allItems = item :: items.toList
     val graph = Graph(allItems.collect { case n: Node => n }, allItems.collect { case r: Relation => r })
     persistChanges(graph)
   }
 
-  def persistChanges(item: schema.Item, items: schema.Item*): Option[String] = {
+  def persistChanges(item: schema.Item, items: schema.Item*): Future[Option[String]] = {
     val allItems = item :: items.toList
     validateSchemaItems(allItems) match {
-      case Some(err) => Some(err)
+      case Some(err) => Future.failed(new Exception(err))
       case None =>
         val schemaGraph = new schema.Graph {
           // the schema graph methods will never be called,
@@ -96,46 +98,48 @@ trait QueryInterface {
 trait QueryHandler extends QueryInterface {
   val builder = new QueryBuilder
 
-  override def queryWholeGraph: Graph = queryGraph("match (n) optional match (n)-[r]-() return n,r")
-  override def queryGraph(query: Query): Graph = queryGraphs(query).head
-  override def queryTable(query: Query): Table = queryTables(query).head
-  override def queryGraphAndTable(query: Query): (Graph, Table) = queryGraphsAndTables(query).head
+  override def queryWholeGraph: Future[Graph] = queryGraph("match (n) optional match (n)-[r]-() return n,r")
+  override def queryGraph(query: Query): Future[Graph] = queryGraphs(query).map(_.head)
+  override def queryTable(query: Query): Future[Table] = queryTables(query).map(_.head)
+  override def queryGraphAndTable(query: Query): Future[(Graph, Table)] = queryGraphsAndTables(query).map(_.head)
 
-  override def queryGraphs(queries: Query*): Seq[Graph] = {
+  override def queryGraphs(queries: Query*): Future[Seq[Graph]] = {
     val results = executeQueries(queries, List("graph"))
-    extractGraphs(results)
+    results map extractGraphs
   }
 
-  override def queryTables(queries: Query*): Seq[Table] = {
+  override def queryTables(queries: Query*): Future[Seq[Table]] = {
     val results = executeQueries(queries, List("row"))
-    extractTables(results)
+    results map extractTables
   }
 
-  override def queryGraphsAndTables(queries: Query*): Seq[(Graph, Table)] = {
+  override def queryGraphsAndTables(queries: Query*): Future[Seq[(Graph, Table)]] = {
     val results = executeQueries(queries, List("row", "graph"))
-    extractGraphs(results) zip extractTables(results)
+    results map (r => extractGraphs(r) zip extractTables(r))
   }
 
   def query(queries: Query*) { executeQueries(queries, Nil) }
 
   //TODO: persist changes should ONLY work on transactions!
-  def persistChanges(graph: Graph): Option[String] = {
+  def persistChanges(graph: Graph): Future[Option[String]] = {
     builder.generateQueries(graph.changes) match {
-      case Left(msg) => Some(msg)
+      case Left(msg) => Future.failed(new Exception(msg))
       case Right(queries) =>
-        val failure = builder.applyQueries(queries, queryGraphsAndTables)
-        if (failure.isEmpty)
-          graph.clearChanges()
+        for (failure <- builder.applyQueries(queries, queryGraphsAndTables)) yield {
+          if (failure.isEmpty)
+            graph.clearChanges()
 
-        failure
+          failure
+        }
     }
   }
 
-  protected def executeQueries(queries: Seq[Query], resultDataContents: List[String]): List[json.Result] = {
+  protected def executeQueries(queries: Seq[Query], resultDataContents: List[String]): Future[List[json.Result]] = {
     val jsonRequest = buildJsonRequest(queries, resultDataContents)
-    val jsonResponse = queryService(jsonRequest)
-    handleError(exceptionFromErrors(jsonResponse))
-    jsonResponse.results
+    for (
+      jsonResponse <- queryService(jsonRequest);
+      e <- handleError(exceptionFromErrors(jsonResponse))
+    ) yield jsonResponse.results
   }
 
   protected def extractGraphs(results: Seq[json.Result]): Seq[Graph] = {
@@ -162,8 +166,8 @@ trait QueryHandler extends QueryInterface {
     }
   }
 
-  protected def queryService(jsonRequest: json.Request): json.Response
-  protected def handleError(exceptions: Option[Exception]): Unit
+  protected def queryService(jsonRequest: json.Request): Future[json.Response]
+  protected def handleError(exceptions: Option[Exception]): Future[Int] //TODO: consistent error handling, Future[Unit] does not work, using Int as placeholder right now
 }
 
 class Transaction extends QueryHandler { thisTransaction =>
@@ -180,22 +184,23 @@ class Transaction extends QueryHandler { thisTransaction =>
       throw new RuntimeException("Transaction is not valid anymore.")
   }
 
-  override protected def queryService(jsonRequest: json.Request): json.Response = {
+  override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {
     throwIfNotValid()
     id match {
       case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
       case None =>
-        val (transactionId, jsonResponse) = restService.openTransaction(jsonRequest)
-        id = Some(transactionId)
-        jsonResponse
+        for ((transactionId, jsonResponse) <- restService.openTransaction(jsonRequest)) yield {
+          id = Some(transactionId)
+          jsonResponse
+        }
     }
   }
 
-  protected def handleError(exceptions: Option[Exception]) {
-    for (exception <- exceptions) {
+  protected def handleError(exceptions: Option[Exception]): Future[Int] = {
+    if (exceptions.isDefined) {
       rollback()
-      throw exception
-    }
+      Future.failed(exceptions.get)
+    } else Future.successful(0)
   }
 
   def rollback() = {
@@ -217,14 +222,13 @@ class Transaction extends QueryHandler { thisTransaction =>
     def apply() {
       throwIfNotValid()
       for (transactionId <- id) {
-        val jsonResponse = restService.commitTransaction(transactionId)
-        handleError(exceptionFromErrors(jsonResponse))
+        for (jsonResponse <- restService.commitTransaction(transactionId)) yield handleError(exceptionFromErrors(jsonResponse))
       }
 
       invalidate()
     }
 
-    override protected def queryService(jsonRequest: json.Request): json.Response = {
+    override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {
       // TODO: share code with this.Transaction.queryService
       throwIfNotValid()
       val jsonResponse = id match {
@@ -236,16 +240,18 @@ class Transaction extends QueryHandler { thisTransaction =>
       jsonResponse
     }
 
-    override def persistChanges(graph: Graph): Option[String] = {
+    override def persistChanges(graph: Graph): Future[Option[String]] = {
       //TODO: this solution can send one REST request more than needed, as the commit request does not do any changes
       val errorOpt = thisTransaction.persistChanges(graph)
-      errorOpt.map(error => {
-        rollback()
-        Some(error)
-      }).getOrElse({
-        apply() // commit
-        None
-      })
+      for (e <- errorOpt) yield {
+        e.map(error => {
+          rollback()
+          Some(error)
+        }).getOrElse({
+          apply() // commit
+          None
+        })
+      }
     }
 
     override protected def handleError(exceptions: Option[Exception]) = thisTransaction.handleError(exceptions)
@@ -257,12 +263,14 @@ class Transaction extends QueryHandler { thisTransaction =>
 class DbService extends QueryHandler {
   var restService: RestService = null //TODO: inject
 
-  protected def handleError(exceptions: Option[Exception]) {
-    for (exception <- exceptions)
-      throw exception
+  protected def handleError(exceptions: Option[Exception]): Future[Int] = {
+    if (exceptions.isDefined)
+      Future.failed(exceptions.get)
+    else
+      Future.successful(0)
   }
 
-  override protected def queryService(jsonRequest: json.Request): json.Response = {
+  override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {
     restService.singleRequest(jsonRequest)
   }
 

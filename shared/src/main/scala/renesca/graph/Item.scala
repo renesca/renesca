@@ -1,6 +1,6 @@
 package renesca.graph
 
-import renesca.parameter.PropertyKey
+import renesca.PropertyKey
 
 import scala.PartialFunction._
 

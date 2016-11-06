@@ -1,6 +1,6 @@
 package renesca.table
 
-import renesca.parameter.ParameterValue
+import renesca.ParameterValue
 
 object Table {
   def apply(columns: Seq[String], data: Traversable[Traversable[ParameterValue]]): Table = {

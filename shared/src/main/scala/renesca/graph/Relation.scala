@@ -1,8 +1,7 @@
 package renesca.graph
 
-
 import renesca.NonBacktickName
-import renesca.parameter.{PropertyKey, PropertyMap}
+import renesca.{PropertyKey, PropertyMap}
 
 import scala.collection.mutable
 
@@ -10,6 +9,7 @@ object RelationType {
   implicit def StringToRelationType(name: String): RelationType = RelationType(name)
 }
 
+//TODO: value class?
 case class RelationType(name: String) extends NonBacktickName
 
 object Relation {
@@ -29,30 +29,28 @@ object Relation {
   }
 }
 
-class Relation private[Relation](
-                                  var origin: Origin,
-                                  val startNode: Node,
-                                  val endNode: Node,
-                                  val relationType: RelationType,
-                                  initialProperties: PropertyMap = Map.empty
-                                  ) extends Item {
+class Relation private[Relation] (
+  var origin: Origin,
+  val startNode: Node,
+  val endNode: Node,
+  val relationType: RelationType,
+  initialProperties: PropertyMap = Map.empty
+) extends Item {
 
   val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))
 
   def changes: Seq[GraphChange] = properties.localChanges
 
-  def other(node: Node) = if(startNode == node) endNode else startNode
+  def other(node: Node) = if (startNode == node) endNode else startNode
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Relation]
 
   override def equals(other: Any): Boolean = other match {
     case that: Relation => (that canEqual this) && this.origin == that.origin
-    case _              => false
+    case _ => false
   }
 
   override def hashCode = origin.hashCode
 
-  override def toString = s"$startNode-[${ origin }:$relationType]->$endNode"
+  override def toString = s"$startNode-[${origin}:$relationType]->$endNode"
 }
-
-

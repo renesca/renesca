@@ -4,7 +4,6 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca.graph.{Label, RelationType}
-import renesca.parameter.PropertyKey
 
 @RunWith(classOf[JUnitRunner])
 class NonBacktickNameSpec extends Specification {

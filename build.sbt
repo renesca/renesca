@@ -1,4 +1,5 @@
 //TODO: https://github.com/lihaoyi/acyclic
+//TODO: wartremover
 
 name := "renesca"
 
@@ -16,7 +17,9 @@ lazy val root = project.in(file(".")).
     publishLocal := {}
   )
 
-val akkaVersion = "2.4.10"
+val akkaVersion = "2.4.12"
+val akkaHttpVersion = "2.4.11"
+val circeVersion = "0.6.0-RC1"
 
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
@@ -24,13 +27,12 @@ lazy val renesca = crossProject.in(file("."))
   .settings(sonatypeSettings: _*)
   .jvmSettings(
     libraryDependencies ++= (
-      //"io.spray" %% "spray-client" % "1.3.3" ::
-      //"io.spray" %% "spray-json" % "1.3.2" ::
-      //"com.typesafe.akka" %% "akka-actor" % "2.3.15" ::
       "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
-      "com.typesafe.akka" %% "akka-http-core" % akkaVersion ::
-      "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion ::
-      "com.typesafe.akka" % "akka-http-spray-json-experimental_2.11" % akkaVersion ::
+      "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion ::
+      "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion ::
+      "io.circe" %% "circe-core" % circeVersion ::
+      "io.circe" %% "circe-generic" % circeVersion ::
+      "io.circe" %% "circe-parser" % circeVersion ::
       "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
       ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
       "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
@@ -110,6 +112,7 @@ lazy val renesca = crossProject.in(file("."))
       "-feature" ::
       "-Yinline" :: "-Yinline-warnings" ::
       "-language:_" ::
+      // "-Xlog-implicits" ::
       //,"-Xdisable-assertions", "-optimize"
       Nil
     )

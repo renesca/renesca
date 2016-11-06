@@ -1,10 +1,7 @@
 package renesca.json
+import renesca.PropertyMap
 
-import renesca.parameter.{ArrayParameterValue, PropertyMap}
-import renesca.graph
-import renesca.table
-
-import renesca.json
+import io.circe.Json
 
 case class Response(
   commit: Option[String] = None,
@@ -13,14 +10,14 @@ case class Response(
   errors: List[Error] = Nil
 )
 
+case class Result(columns: List[String] = Nil, data: List[Data] = Nil)
 case class Transaction(expires: String)
-
 case class Error(code: String, message: String)
 
-case class Data(row: Option[ArrayParameterValue] = None, graph: Option[Graph] = None)
+case class Data(row: Option[List[Json]] = None, graph: Option[Graph] = None)
 
-case class Result(columns: List[String], data: List[Data])
-
+case class Graph(nodes: List[Node] = Nil, relationships: List[Relationship] = Nil)
+case class Node(id: String, labels: List[String] = Nil, properties: PropertyMap = Map.empty)
 case class Relationship(
   id: String,
   `type`: String,
@@ -29,11 +26,11 @@ case class Relationship(
   properties: PropertyMap = Map.empty
 )
 
-case class Node(id: String, labels: List[String] = Nil, properties: PropertyMap = Map.empty)
-
-case class Graph(nodes: List[Node] = Nil, relationships: List[Relationship] = Nil)
-
 object GraphFactory {
+  import renesca.graph
+  import renesca.table
+  import renesca.json
+
   def apply(jsonGraph: json.Graph): graph.Graph = {
     val nodes: List[graph.Node] = jsonGraph.nodes.map {
       case json.Node(id, labels, properties) =>
@@ -61,8 +58,11 @@ object GraphFactory {
 }
 
 object TableFactory {
+  import renesca.json
+  import renesca.table
+
   def apply(result: json.Result): table.Table = {
-    val data = result.data.flatMap { _.row.map(_.value) }
+    val data = result.data.flatMap { _.row }
     table.Table(result.columns, data)
   }
 }

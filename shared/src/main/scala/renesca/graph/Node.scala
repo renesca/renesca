@@ -1,16 +1,15 @@
 package renesca.graph
 
-import renesca.NonBacktickName
-import renesca.{PropertyKey, PropertyMap}
+import renesca._
 
-import scala.collection.mutable
-
+class Label private(val name: String) extends AnyVal
 object Label {
-  implicit def StringToLabel(name: String): Label = Label(name)
+  implicit def StringToLabel(name: String): Label = apply(name)
+  def apply(s: String): Label = {
+    require(!s.contains("`"), "Backticks are not allowed in label names")
+    new Label(s)
+  }
 }
-
-//TODO: value class?
-case class Label(name: String) extends NonBacktickName
 
 object Node {
   private[renesca] def apply(id: Id, labels: Traversable[Label] = Nil, properties: PropertyMap = Map.empty): Node = {
@@ -38,6 +37,7 @@ class Node private[graph] (
   initialLabels: Traversable[Label] = Nil,
   initialProperties: PropertyMap = Map.empty
 ) extends Item {
+  import scala.collection.mutable
 
   val labels = new NodeLabels(this, mutable.HashSet(initialLabels.toSeq: _*))
   val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))

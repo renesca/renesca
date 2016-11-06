@@ -1,16 +1,6 @@
 package renesca.graph
 
-import renesca.NonBacktickName
-import renesca.{PropertyKey, PropertyMap}
-
-import scala.collection.mutable
-
-object RelationType {
-  implicit def StringToRelationType(name: String): RelationType = RelationType(name)
-}
-
-//TODO: value class?
-case class RelationType(name: String) extends NonBacktickName
+import renesca._
 
 object Relation {
   private[renesca] def apply(id: Id, start: Node, end: Node, relationType: RelationType, properties: PropertyMap = Map.empty) = {
@@ -36,6 +26,7 @@ class Relation private[Relation] (
   val relationType: RelationType,
   initialProperties: PropertyMap = Map.empty
 ) extends Item {
+  import scala.collection.mutable
 
   val properties = new Properties(this, mutable.Map(initialProperties.toSeq: _*))
 

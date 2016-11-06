@@ -17,8 +17,7 @@ import cats.syntax.either._
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-// TODO: type alias / value class
-case class TransactionId(id: String) {
+case class TransactionId(id: String) extends AnyVal {
   override def toString = id
 }
 // implicit val actorSystem: ActorSystem = ActorSystem()

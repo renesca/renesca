@@ -8,6 +8,12 @@ import org.specs2.specification.Scope
 import renesca.graph._
 import renesca.table.Table
 
+import concurrent.{Await, Future}
+import concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerSpec extends Specification with Mockito {
 
@@ -18,9 +24,9 @@ class QueryHandlerSpec extends Specification with Mockito {
     var graphs: Seq[Graph] = null
 
     def respond(response: String): Unit = {
-      def jsonResponse = response.parseJson.convertTo[json.Response]
-      dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
-      graphs = dbService.queryGraphs(Query(""))
+      def jsonResponse = decode[json.Response](response).right.get
+      dbService.restService.singleRequest(any[json.Request]) returns Future { jsonResponse }
+      graphs = Await.result(dbService.queryGraphs(Query("")), Duration.Inf)
     }
   }
 

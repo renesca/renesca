@@ -5,6 +5,7 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
+import renesca.Label
 
 @RunWith(classOf[JUnitRunner])
 class NodeLabelsSpec extends Specification with Mockito {
@@ -53,7 +54,7 @@ class NodeLabelsSpec extends Specification with Mockito {
     }
 
     "clear" in new MockNode {
-      A.labels ++= Set(Label("POST"),Label("TIMESTAMP"),Label("CONNECTABLE"),Label("EXPOSEDNODE"),Label("UUIDNODE"),Label("HIDEABLE"))
+      A.labels ++= Set(Label("POST"), Label("TIMESTAMP"), Label("CONNECTABLE"), Label("EXPOSEDNODE"), Label("UUIDNODE"), Label("HIDEABLE"))
 
       A.labels.clear()
 

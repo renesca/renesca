@@ -5,14 +5,21 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.parameter.implicits._
 import renesca.graph
-import renesca.graph.{Id, Label, RelationType}
+import renesca.graph.Id
+import renesca._
 
 import scala.collection.mutable
 
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+
 @RunWith(classOf[JUnitRunner])
 class GraphFactorySpec extends Specification with Mockito {
+
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   trait ExampleGraph extends Scope {
     import renesca.graph._

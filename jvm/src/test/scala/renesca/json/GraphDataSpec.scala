@@ -4,8 +4,8 @@ import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.protocols.ResponseJsonProtocol._
-import spray.json._
+
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 @RunWith(classOf[JUnitRunner])
 class GraphDataSpec extends Specification with Mockito {
@@ -17,7 +17,7 @@ class GraphDataSpec extends Specification with Mockito {
           "relationships" : []
         }
                  """
-      val graphData = json.parseJson.convertTo[Graph]
+      val graphData = decode[Graph](json)
       graphData mustEqual Graph()
     }
 
@@ -36,7 +36,7 @@ class GraphDataSpec extends Specification with Mockito {
     			 "relationships" : []
 			 }
                  			 """
-      val graphData = json.parseJson.convertTo[Graph]
+      val graphData = decode[Graph](json)
       graphData mustEqual Graph(List(Node("1"), Node("2")))
     }
 
@@ -61,7 +61,7 @@ class GraphDataSpec extends Specification with Mockito {
             }]
 			 }
                  			 """
-      val graphData = json.parseJson.convertTo[Graph]
+      val graphData = decode[Graph](json)
       graphData mustEqual Graph(List(Node("1"), Node("2")), List(Relationship("9", "HAS", "1", "2")))
     }
 

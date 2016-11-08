@@ -4,17 +4,22 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import renesca._
 import renesca.json
-import renesca.parameter.implicits._
-import renesca.parameter.{ArrayParameterValue, ParameterValue}
 
 @RunWith(classOf[JUnitRunner])
 class TableFactorySpec extends Specification with Mockito {
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
+
   "Table" should {
     "create Table from json classes" in {
       val table = json.TableFactory(json.Result(List("x", "y", "z"), List(
-        json.Data(row = Some(ArrayParameterValue(List(1, 2, 3)))),
-        json.Data(row = Some(ArrayParameterValue(List(4, 5, 6))))
+        json.Data(row = Some(List(1, 2, 3))),
+        json.Data(row = Some(List(4, 5, 6)))
       )))
 
       table.columns mustEqual List("x", "y", "z")

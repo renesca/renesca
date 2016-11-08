@@ -5,11 +5,16 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.parameter.implicits._
-import renesca.parameter.{PropertyValue, StringPropertyValue}
+import renesca._
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 @RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {
+
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   "Node" should {
 
@@ -18,7 +23,7 @@ class NodeSpec extends Specification with Mockito {
       val A = Node(1, labels = List(label), properties = Map("key" -> "value"))
 
       A.labels must contain(exactly(label))
-      A.properties must contain(exactly("key" -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+      A.properties must contain(exactly(NonBacktickName("key") -> "value".asJson))
     }
 
     "pass on node to labels-Set and properties-Map" in {
@@ -120,4 +125,3 @@ class NodeSpec extends Specification with Mockito {
     }
   }
 }
-

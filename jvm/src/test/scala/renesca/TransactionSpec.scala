@@ -5,9 +5,11 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import renesca.graph.Graph
+import concurrent.Future
 
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
+
   val statement = "match n return n"
   val jsonRequest = json.Request(List(json.Statement(statement, List("graph"))))
   val jsonRequestWithoutResult = json.Request(List(json.Statement(statement)))
@@ -18,7 +20,8 @@ class TransactionSpec extends Specification with Mockito {
   val jsonResponseWithError = json.Response(
     errors = List(json.Error(
       "Neo.ClientError.Statement.InvalidSyntax",
-      "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"))
+      "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"
+    ))
   )
   val transactionResponse = (TransactionId("1"), jsonResponse)
 
@@ -26,12 +29,12 @@ class TransactionSpec extends Specification with Mockito {
     val tx = new Transaction
     tx.restService = mock[RestService].smart
 
-    tx.restService.singleRequest(jsonRequest) returns jsonResponse
-    tx.restService.openTransaction(jsonRequest) returns transactionResponse
-    tx.restService.openTransaction(jsonRequestWithoutResult) returns transactionResponse
-    tx.restService.resumeTransaction(TransactionId("1"), jsonRequest) returns jsonResponse
-    tx.restService.resumeTransaction(TransactionId("1"), jsonRequestWithoutResult) returns jsonResponse
-    tx.restService.commitTransaction(any, any) returns json.Response()
+    tx.restService.singleRequest(jsonRequest) returns Future.successful(jsonResponse)
+    tx.restService.openTransaction(jsonRequest) returns Future.successful(transactionResponse)
+    tx.restService.openTransaction(jsonRequestWithoutResult) returns Future.successful(transactionResponse)
+    tx.restService.resumeTransaction(TransactionId("1"), jsonRequest) returns Future.successful(jsonResponse)
+    tx.restService.resumeTransaction(TransactionId("1"), jsonRequestWithoutResult) returns Future.successful(jsonResponse)
+    tx.restService.commitTransaction(any, any) returns Future.successful(json.Response())
 
     tx
   }
@@ -100,7 +103,7 @@ class TransactionSpec extends Specification with Mockito {
   "error in transaction rollbacks transaction and throws exception" in {
     val tx = new Transaction
     tx.restService = mock[RestService]
-    tx.restService.openTransaction(jsonRequest) returns ((TransactionId("1"), jsonResponseWithError))
+    tx.restService.openTransaction(jsonRequest) returns Future.successful((TransactionId("1"), jsonResponseWithError))
 
     tx.queryGraph(statement) must throwA[RuntimeException]
 
@@ -145,10 +148,10 @@ class TransactionSpec extends Specification with Mockito {
     class MehTransaction extends Transaction {
       override val builder = mock[QueryBuilder]
       builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Some("meh")
+      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.failed(new Exception("meh"))
       override def rollback() = rollbacked += 1
-      override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-      override protected def handleError(exceptions: Option[Exception]) {}
+      override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+      override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
     }
 
     //      val transaction = spy(new MehTransaction)
@@ -170,9 +173,9 @@ class TransactionSpec extends Specification with Mockito {
     class MehTransaction extends Transaction {
       override val builder = mock[QueryBuilder]
       builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-      override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-      override protected def handleError(exceptions: Option[Exception]) {}
+      builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+      override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+      override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
 
       override val commit = new CommitTransaction {
         override def apply() = committed += 1
@@ -186,9 +189,8 @@ class TransactionSpec extends Specification with Mockito {
 
     val result = transaction.commit.persistChanges(graph)
 
-    result mustEqual None
+    result mustEqual Future.successful(Unit)
     there was one(graph).clearChanges()
     committed mustEqual 1
   }
 }
-

@@ -4,7 +4,6 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import renesca.graph.{Label, RelationType}
 import renesca.schema._
 import renesca.{graph => raw}
 
@@ -312,7 +311,7 @@ class SchemaSpec extends Specification with Mockito {
 
   "set graph in filterNodes" in {
     val g = mock[raw.Graph]
-    val filter = new Filter {override val graph = g }
+    val filter = new Filter { override val graph = g }
     val node = TheNode()
     val filtered = filter.filterNodes(Seq(node.rawItem), TheNode)
     filtered.head.graph mustEqual g
@@ -320,7 +319,7 @@ class SchemaSpec extends Specification with Mockito {
 
   "set graph in filterHyperRelations" in {
     val g = mock[raw.Graph]
-    val filter = new Filter {override val graph = g }
+    val filter = new Filter { override val graph = g }
     val node = TheHyperRelation()
     val filtered = filter.filterHyperRelations(Seq(node.rawItem), Nil, TheHyperRelation)
     filtered.head.graph mustEqual g
@@ -455,4 +454,3 @@ class SchemaSpec extends Specification with Mockito {
     conHyper.endNodeOpt.get.rawItem mustEqual node2.rawItem
   }.pendingUntilFixed
 }
-

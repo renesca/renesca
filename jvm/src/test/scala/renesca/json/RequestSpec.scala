@@ -4,78 +4,86 @@ import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
-import renesca.json.protocols.RequestJsonProtocol._
-import renesca.parameter.implicits._
-import spray.json._
+import renesca._
+
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import cats.syntax.either._
 
 @RunWith(classOf[JUnitRunner])
 class RequestSpec extends Specification with Mockito {
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
+
   "Request" can {
     "be empty" in {
-      val jsonAst =
+      val jsonAst = parse(
         """
         {
           "statements" : []
         }
-        """.parseJson
+        """
+      ).toOption.get
 
-      Request().toJson mustEqual jsonAst
+      Request().asJson mustEqual jsonAst
     }
 
     "contain a statement" in {
-      val jsonAst = """
+      val jsonAst = parse("""
       {
         "statements" : [ {
           "statement" : "CREATE (n) RETURN id(n)"
         } ]
-      }""".parseJson
+      }""").toOption.get
 
-      Request(List(Statement("CREATE (n) RETURN id(n)"))).toJson mustEqual jsonAst
+      Request(List(Statement("CREATE (n) RETURN id(n)"))).asJson mustEqual jsonAst
     }
 
     "contain two statements" in {
-      val jsonAst = """
+      val jsonAst = parse("""
       {
         "statements" : [
           {"statement" : "CREATE (n) RETURN id(n)"},
           {"statement" : "CREATE (n) RETURN n"}
          ]
-      }""".parseJson
+      }""").toOption.get
 
       Request(List(
         Statement("CREATE (n) RETURN id(n)"),
-        Statement("CREATE (n) RETURN n"))
-      ).toJson mustEqual jsonAst
+        Statement("CREATE (n) RETURN n")
+      )).asJson mustEqual jsonAst
     }
 
     "contain statement with parameters (string literal)" in {
-      val jsonAst = """
+      val jsonAst = parse("""
       {
         "statements" : [ {
           "statement" : "MATCH (n) WHERE n.name = { name } RETURN n",
           "parameters" : {"name" : "Glaab"}
         } ]
-      }""".parseJson
+      }""").toOption.get
 
       Request(List(Statement(
         statement = "MATCH (n) WHERE n.name = { name } RETURN n",
-        parameters = Some(Map("name" -> "Glaab")))
-      )).toJson mustEqual jsonAst
+        parameters = Some(Map("name" -> "Glaab"))
+      ))).asJson mustEqual jsonAst
     }
 
     "contain statement with result data contents" in {
-      val jsonAst = """
+      val jsonAst = parse("""
       {
         "statements" : [ {
           "statement" : "CREATE (n) RETURN n",
           "resultDataContents" : [ "row", "graph" ]
         } ]
-      }""".parseJson
+      }""").toOption.get
 
-      Request(List(Statement("CREATE (n) RETURN n",
-        resultDataContents = Some(List("row", "graph"))))).toJson mustEqual jsonAst
+      Request(List(Statement(
+        "CREATE (n) RETURN n",
+        resultDataContents = Some(List("row", "graph"))
+      ))).asJson mustEqual jsonAst
     }
   }
 
 }
-

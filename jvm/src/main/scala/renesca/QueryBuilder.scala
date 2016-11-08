@@ -229,7 +229,7 @@ class QueryBuilder {
     )
   }
 
-  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Future[Seq[(Graph, Table)]]): Future[Option[String]] = {
+  def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]], queryHandler: (Seq[Query]) => Future[Seq[(Graph, Table)]]): Future[Unit] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     implicit class SeqExtension[A](s: Seq[A]) {
       def foldLeftToFuture[B](initial: B)(f: (B, A) => Future[B])(implicit ec: ExecutionContext): Future[B] =

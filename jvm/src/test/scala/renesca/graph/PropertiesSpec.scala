@@ -5,11 +5,17 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
-import renesca.parameter.implicits._
-import renesca.parameter.{PropertyKey, PropertyValue, StringPropertyValue}
+import renesca._
+
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 @RunWith(classOf[JUnitRunner])
 class PropertiesSpec extends Specification with Mockito {
+
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   trait MockNode extends Scope {
     val A = Node(1)
@@ -45,7 +51,7 @@ class PropertiesSpec extends Specification with Mockito {
     "provide iterator" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties.iterator must contain(exactly(PropertyKey("key") -> StringPropertyValue("value").asInstanceOf[PropertyValue]))
+      A.properties.iterator must contain(exactly(PropertyKey("key") -> "value".asJson))
     }
 
     "provide empty" in new MockNode {

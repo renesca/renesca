@@ -19,7 +19,7 @@ lazy val root = project.in(file(".")).
 
 val akkaVersion = "2.4.12"
 val akkaHttpVersion = "2.4.11"
-val circeVersion = "0.6.0-RC1"
+val cStringPropertyValueirceVersion = "0.6.0-RC1"
 
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
@@ -42,11 +42,11 @@ lazy val renesca = crossProject.in(file("."))
     scalacOptions in Test ++= Seq("-Yrangepos"),
 
     // scalaxy (faster collection operations)
-    scalacOptions += "-Xplugin-require:scalaxy-streams",
-    scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
-    scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
-    autoCompilerPlugins := true,
-    addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4"),
+    // scalacOptions += "-Xplugin-require:scalaxy-streams",
+    // scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
+    // scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
+    // autoCompilerPlugins := true,
+    // addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4"),
 
     // publishing
     pgpSecretRing := file("local.secring.gpg"),

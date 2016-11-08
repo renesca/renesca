@@ -13,9 +13,14 @@ import concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import cats.syntax.either._
 
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerSpec extends Specification with Mockito {
+
+  implicit def intToJson(x: Int) = x.asJson
+  implicit def stringToJson(x: String) = x.asJson
+  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
 
   trait GraphQuery extends Scope {
     val dbService = new DbService
@@ -24,8 +29,8 @@ class QueryHandlerSpec extends Specification with Mockito {
     var graphs: Seq[Graph] = null
 
     def respond(response: String): Unit = {
-      def jsonResponse = decode[json.Response](response).right.get
-      dbService.restService.singleRequest(any[json.Request]) returns Future { jsonResponse }
+      def jsonResponse = decode[json.Response](response).toOption.get
+      dbService.restService.singleRequest(any[json.Request]) returns Future.successful(jsonResponse)
       graphs = Await.result(dbService.queryGraphs(Query("")), Duration.Inf)
     }
   }
@@ -43,8 +48,8 @@ class QueryHandlerSpec extends Specification with Mockito {
   "QueryHandler" should {
     "clear changes after persisting raw graph" in {
       val queryHandler = new QueryHandler() {
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val graph = mock[Graph]
@@ -59,8 +64,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Left("meh")
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val graph = mock[Graph]
@@ -76,9 +81,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Some("muh")
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.failed(new Exception("muh"))
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val graph = mock[Graph]
@@ -86,7 +91,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
       val result = queryHandler.persistChanges(graph)
 
-      result mustEqual Some("muh")
+      result mustEqual Future.failed(new Exception("muh"))
       there was no(graph).clearChanges()
     }
 
@@ -94,9 +99,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val schemaGraph = new schema.Graph {
@@ -118,9 +123,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val schemaNode = new schema.Node {
@@ -150,9 +155,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val node = Node(1)
@@ -166,9 +171,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val schemaNode = new schema.Node {
@@ -187,9 +192,9 @@ class QueryHandlerSpec extends Specification with Mockito {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
-        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns None
-        override protected def queryService(jsonRequest: json.Request): json.Response = json.Response()
-        override protected def handleError(exceptions: Option[Exception]) {}
+        builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.successful(Unit)
+        override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
+        override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
       }
 
       val schemaNode = new schema.Node {
@@ -208,7 +213,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create no graph data as an empty graph" in new GraphQuery {
 
-      respond( """{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
+      respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
       graphs must haveSize(1)
       graphs.head.isEmpty mustEqual true
@@ -216,21 +221,19 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create an empty graph" in new GraphQuery {
 
-      respond( """
+      respond("""
           {
             "results": [{ "columns": [ ], "data": [{ "graph": { "nodes": [ ], "relationships": [ ] } }] }],
             "errors": [ ]
           } """)
 
-
       graphs must haveSize(1)
       graphs.head.isEmpty mustEqual true
     }
 
-
     "create a graph" in new GraphQuery {
 
-      respond( """
+      respond("""
        {
           "results": [
             {
@@ -255,7 +258,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create multiple graphs from multiple results" in new GraphQuery {
 
-      respond( """
+      respond("""
        {
           "results": [
             {
@@ -305,7 +308,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create a graph from multiple graph datas" in new GraphQuery {
 
-      respond( """
+      respond("""
        {
           "results": [
             {
@@ -347,7 +350,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
     "create a graph from multiple datas - allow data without graph data" in new GraphQuery {
 
-      respond( """
+      respond("""
         {
           "results": [
             {
@@ -382,22 +385,22 @@ class QueryHandlerSpec extends Specification with Mockito {
     var tables: Seq[Table] = null
 
     def respond(response: String): Unit = {
-      def jsonResponse = response.parseJson.convertTo[json.Response]
-      dbService.restService.singleRequest(any[json.Request]) returns jsonResponse
-      tables = dbService.queryTables(Query(""))
+      def jsonResponse = decode[json.Response](response).right.get
+      dbService.restService.singleRequest(any[json.Request]) returns Future.successful(jsonResponse)
+      tables = Await.result(dbService.queryTables(Query("")), Duration.Inf)
     }
   }
 
   "create no table data as an empty table" in new TableQuery {
 
-    respond( """{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
+    respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
     tables must haveSize(1)
     tables.head.isEmpty mustEqual true
   }
 
   "create a table" in new TableQuery {
-    respond( """
+    respond("""
     {
       "results": [
       {
@@ -417,14 +420,14 @@ class QueryHandlerSpec extends Specification with Mockito {
       columns = List("id", "n.a"),
       data = List(
         List[ParameterValue](620, 1),
-        List[ParameterValue](1089, ArrayParameterValue(List(1, 2, 3, 4, 2))),
-        List[ParameterValue](1093, NullPropertyValue)
+        List[ParameterValue](1089, List(1, 2, 3, 4, 2)),
+        List[ParameterValue](1093, Json.Null)
       )
     )
   }
 
   "create multiple graphs from multiple results" in new TableQuery {
-    respond( """
+    respond("""
     {
       "results": [
       {
@@ -450,8 +453,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       columns = List("id", "n.a"),
       data = List(
         List[ParameterValue](620, 1),
-        List[ParameterValue](1089, ArrayParameterValue(List(1, 2, 3, 4, 2))),
-        List[ParameterValue](1093, NullPropertyValue)
+        List[ParameterValue](1089, List(1, 2, 3, 4, 2)),
+        List[ParameterValue](1093, Json.Null)
       )
     )
     tables(1) mustEqual Table(
@@ -464,7 +467,7 @@ class QueryHandlerSpec extends Specification with Mockito {
 
   "create a table from multiple datas - ignore data without row data" in new TableQuery {
 
-    respond( """
+    respond("""
     {
       "results": [
       {
@@ -487,4 +490,3 @@ class QueryHandlerSpec extends Specification with Mockito {
     )
   }
 }
-

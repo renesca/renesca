@@ -19,7 +19,7 @@ lazy val root = project.in(file(".")).
 
 val akkaVersion = "2.4.12"
 val akkaHttpVersion = "2.4.11"
-val cStringPropertyValueirceVersion = "0.6.0-RC1"
+val circeVersion = "0.6.0-RC1"
 
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)

@@ -2,6 +2,7 @@ package object renesca {
 
   import collection.mutable
   import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+  import collection.breakOut
 
   type RelationType = NonBacktickName
   val RelationType = NonBacktickName
@@ -9,6 +10,8 @@ package object renesca {
   val Label = NonBacktickName
   type PropertyKey = NonBacktickName
   val PropertyKey = NonBacktickName
+  type ParameterKey = NonBacktickName
+  val ParameterKey = NonBacktickName
 
   class NonBacktickName private(val name: String) extends AnyVal
   object NonBacktickName {
@@ -30,15 +33,17 @@ package object renesca {
   }
 
   type ParameterValue = Json
-  type ParameterMap = Map[PropertyKey, ParameterValue]
+  type ParameterMap = Map[ParameterKey, ParameterValue]
 
   type PropertyValue = Json
   type PropertyMap = Map[PropertyKey, PropertyValue]
   type MutablePropertyMap = mutable.Map[PropertyKey, PropertyValue]
 
   object ParameterMap {
-    def apply(tuples: (String, ParameterValue)*): ParameterMap = Map(tuples.map { case (k,v) => PropertyKey(k) -> v }: _*)
-    def empty = Map.empty[PropertyKey, ParameterValue]
+    def apply(tuples: (String, ParameterValue)*): ParameterMap = {
+      tuples.map { case (k,v) => ParameterKey(k) -> v }(breakOut[Seq[(String,ParameterValue)], (ParameterKey, ParameterValue), Map[ParameterKey, ParameterValue]])
+    }
+    def empty = Map.empty[ParameterKey, ParameterValue]
   }
   val PropertyMap = ParameterMap
 }

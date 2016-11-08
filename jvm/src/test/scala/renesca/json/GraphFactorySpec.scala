@@ -16,8 +16,7 @@ import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 @RunWith(classOf[JUnitRunner])
 class GraphFactorySpec extends Specification with Mockito {
 
-  implicit def intToJson(x: Int) = x.asJson
-  implicit def stringToJson(x: String) = x.asJson
+  implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
@@ -82,7 +81,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = GraphFactory(jsonGraph)
       val node = graph.nodes.head
 
-      node.properties mustEqual mutable.Map("biene" -> "honig", "bier" -> 1516)
+      node.properties mustEqual PropertyMap("biene" -> "honig", "bier" -> 1516)
     }
 
     "create graph with relations containing nodes" in {
@@ -107,13 +106,13 @@ class GraphFactorySpec extends Specification with Mockito {
       val jsonGraph = Graph(
         nodes = List(Node("1744"), Node("1516")),
         relationships = List(Relationship("42", startNode = "1744", endNode = "1516", `type` = "wurst",
-          properties = Map("ki" -> "wäl", "freitag" -> 13L)))
+          properties = PropertyMap("ki" -> "wäl", "freitag" -> 13L)))
       )
 
       val graph = GraphFactory(jsonGraph)
       val relation = graph.relations.head
 
-      relation.properties mustEqual mutable.Map("ki" -> "wäl", "freitag" -> 13)
+      relation.properties mustEqual PropertyMap("ki" -> "wäl", "freitag" -> 13L)
     }
   }
 

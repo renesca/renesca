@@ -6,10 +6,8 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import renesca.graph._
 import renesca.table.Table
+import org.specs2.concurrent.ExecutionEnv
 
-import concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
@@ -21,6 +19,10 @@ class QueryBuilderSpec extends Specification with Mockito {
   implicit def toJson[T: Encoder](i: T): Json = i.asJson
 
   class FakeQueryBuilder(results: Seq[Seq[(Graph, Table)]]) extends QueryBuilder {
+    import concurrent.Future
+    import scala.concurrent.ExecutionContext.Implicits.global
+    import scala.concurrent.duration.Duration
+
     def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]]): Future[Unit] = {
       var idx = 0
       val future = applyQueries(queryRequests, queries => {
@@ -1561,7 +1563,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in {
+      "query result interpretation" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node.matches
         val c = Node(2)
@@ -1590,7 +1592,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual None
+        result must beEqualTo(()).await
         r1.origin mustEqual Id(3L)
         r2.origin mustEqual Id(4L)
         b.origin mustEqual Id(10L)

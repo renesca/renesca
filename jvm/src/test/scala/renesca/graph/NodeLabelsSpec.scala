@@ -1,19 +1,18 @@
 package renesca.graph
 
 import org.junit.runner.RunWith
-import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.Label
 
 @RunWith(classOf[JUnitRunner])
-class NodeLabelsSpec extends Specification with Mockito {
+class NodeLabelsSpec extends Specification {
 
   trait MockNode extends Scope {
     val A = Node(1)
 
-    val label = mock[Label]
+    val label = Label("some_label")
   }
 
   "NodeLabels" should {

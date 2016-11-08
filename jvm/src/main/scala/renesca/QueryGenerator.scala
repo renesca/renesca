@@ -49,11 +49,13 @@ class QueryGenerator {
         val labelAdd = labelAdditions.map(a => s"set $variable:`$a`").mkString(" ")
         val labelRemove = labelRemovals.map(r => s"remove $variable:`$r`").mkString(" ")
         val setters = s"set $variable += {${ variable }_propertyAdditions} $propertyRemove $labelAdd $labelRemove"
-        val setterMap = ParameterMap(s"${ variable }_propertyAdditions" -> propertyAdditions.toMap.asJson)
 
         val query = Query(
           s"$matcher where id($variable) = {${ variable }_itemId} $setters",
-          ParameterMap(s"${ variable }_itemId" -> item.origin.asInstanceOf[Id].id.asJson) ++ setterMap
+          ParameterMap(
+            s"${ variable }_itemId" -> item.origin.asInstanceOf[Id].id.asJson,
+            s"${ variable }_propertyAdditions" -> propertyAdditions.toMap.asJson
+          )
         )
 
         QueryConfig(item, query)

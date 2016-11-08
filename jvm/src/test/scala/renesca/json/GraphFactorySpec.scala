@@ -112,7 +112,7 @@ class GraphFactorySpec extends Specification with Mockito {
       val graph = GraphFactory(jsonGraph)
       val relation = graph.relations.head
 
-      relation.properties mustEqual PropertyMap("ki" -> "wäl", "freitag" -> 13L)
+      relation.properties mustEqual PropertyMap.mutable("ki" -> "wäl", "freitag" -> 13L)
     }
   }
 

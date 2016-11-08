@@ -19,8 +19,8 @@ class TableSpec extends Specification with Mockito {
       val columnToIndex = Map(("a", 0), ("b", 1))
       val row = Row(IndexedSeq(5, 6), columnToIndex)
 
-      row("a") mustEqual 5
-      row("b") mustEqual 6
+      row("a").asNumber.get mustEqual 5
+      row("b").asNumber.get mustEqual 6
     }
 
     "access rows by index" in {

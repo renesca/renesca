@@ -23,7 +23,7 @@ class NodeSpec extends Specification with Mockito {
          "properties" : {}
        } """
       val node = decode[Node](json)
-      node mustEqual Node("1")
+      node mustEqual Right(Node("1"))
     }
   }
   "have properties" in {
@@ -37,10 +37,10 @@ class NodeSpec extends Specification with Mockito {
          }
        } """
     val node = decode[Node](json)
-    node mustEqual Node("1", Nil, Map(
+    node mustEqual Right(Node("1", Nil, Map(
       "key" -> "value",
       "key2" -> "value2"
-    ))
+    )))
   }
 
   "have properties of different types" in {
@@ -54,10 +54,10 @@ class NodeSpec extends Specification with Mockito {
          }
        } """
     val node = decode[Node](json)
-    node mustEqual Node("1", Nil, Map(
+    node mustEqual Right(Node("1", Nil, Map(
       "key" -> "value",
       "key2" -> 1
-    ))
+    )))
   }
 
   "have labels" in {
@@ -68,6 +68,6 @@ class NodeSpec extends Specification with Mockito {
          "properties" : {}
        } """
     val node = decode[Node](json)
-    node mustEqual Node("1", List("bier", "1516"), Map.empty)
+    node mustEqual Right(Node("1", List("bier", "1516"), Map.empty))
   }
 }

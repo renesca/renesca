@@ -131,10 +131,10 @@ class QueryPatterns(resolvedItems: mutable.Map[Item,Origin]) {
       val (pathQueries, pathSetters, pathParameters) = path.relations.zipWithIndex.map { case (relation, i) =>
         // a path assures that the start node was already matched by the previous relation (if there is one)
         val NodePattern(_, startQuery, startSetter, startParameters, startVariable) = if(i == 0)
-                                                                             variableMap.get(relation.startNode).map(variable => ("", s"($variable)", "", ParameterMap.empty, variable)).getOrElse(nodePattern(relation.startNode, forDeletion))
+                                                                             variableMap.get(relation.startNode).map(variable => NodePattern("", s"($variable)", "", ParameterMap.empty, variable)).getOrElse(nodePattern(relation.startNode, forDeletion))
                                                                            else
                                                                              NodePattern("", "", "", ParameterMap.empty, variableMap(relation.startNode))
-        val NodePattern(_, endQuery, endSetter, endParameters, endVariable) = variableMap.get(relation.endNode).map(variable => ("", s"($variable)", "", ParameterMap.empty, variable)).getOrElse(nodePattern(relation.endNode, forDeletion))
+        val NodePattern(_, endQuery, endSetter, endParameters, endVariable) = variableMap.get(relation.endNode).map(variable => NodePattern("", s"($variable)", "", ParameterMap.empty, variable)).getOrElse(nodePattern(relation.endNode, forDeletion))
         val RelationPattern(_, relQuery, relSetter, relParameters, relVariable) = relationPattern(relation, forDeletion)
         variableMap ++= Seq(relation.startNode -> startVariable, relation.endNode -> endVariable, relation -> relVariable)
 

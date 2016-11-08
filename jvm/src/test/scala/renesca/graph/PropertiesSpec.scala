@@ -20,14 +20,13 @@ class PropertiesSpec extends Specification with Mockito {
   trait MockNode extends Scope {
     val A = Node(1)
     val graph = mock[Graph]
-    val label = mock[Label]
   }
 
   "Properties" should {
     "store property" in new MockNode {
       A.properties("key") = "value"
 
-      A.properties("key") mustEqual "value"
+      A.properties("key").asString mustEqual "value"
     }
 
     "remove property" in new MockNode {

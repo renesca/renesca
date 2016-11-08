@@ -312,7 +312,7 @@ class GraphChangeSpec extends Specification with Mockito {
     "emit change when setting label" in {
       val node = Node(1)
       val labels = new NodeLabels(node)
-      val label = mock[Label]
+      val label = Label("hans")
 
       labels += label
 
@@ -324,7 +324,7 @@ class GraphChangeSpec extends Specification with Mockito {
     "not emit change when setting label on local node" in {
       val node = Node.create
       val labels = new NodeLabels(node)
-      val label = mock[Label]
+      val label = Label("hans")
 
       labels += label
 
@@ -334,7 +334,7 @@ class GraphChangeSpec extends Specification with Mockito {
     "emit change when removing label" in {
       val node = Node(1)
       val labels = new NodeLabels(node)
-      val label = mock[Label]
+      val label = Label("hans")
 
       labels -= label
 

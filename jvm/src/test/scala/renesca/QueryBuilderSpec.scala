@@ -7,7 +7,8 @@ import org.specs2.runner.JUnitRunner
 import renesca.graph._
 import renesca.table.Table
 import org.specs2.concurrent.ExecutionEnv
-
+import org.specs2.matcher.{AnyMatchers, Matcher, StringMatchers}
+import scala.reflect.ClassTag
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
@@ -80,6 +81,14 @@ class QueryBuilderSpec extends Specification with Mockito {
       })
     }).filter(_.nonEmpty)
   }
+
+  def failMatcher(matcher: Matcher[String]) = throwA[Exception].like {
+    case e: Exception => matcher(createExpectable(e.getMessage))
+  }
+
+  def failQueries(s: String) = failMatcher(AnyMatchers.beEqualTo(s))
+  def failQueriesLike(s: String) = failMatcher(StringMatchers.matching(s.r))
+  val successQueries = beEqualTo(())
 
   "QueryBuilder" should {
     "have non-constant variables" in {
@@ -1522,7 +1531,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.left.get startsWith "Cannot partially match paths, will not delete parts of a path: "
       }
 
-      "query result interpretation should fail with no results" in {
+      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -1536,11 +1545,11 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("Query result is missing desired path: Path((1)-[Match(Set()):r]->(2))")
+        result must failQueries("Query result is missing desired path: Path((1)-[Match(Set()):r]->(2))").await
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in {
+      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -1559,7 +1568,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("More than one query result for path: Path((1)-[Match(Set()):r]->(2))")
+        result must failQueries("More than one query result for path: Path((1)-[Match(Set()):r]->(2))").await
         r.origin.isLocal mustEqual true
       }
 
@@ -1596,7 +1605,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r1.origin mustEqual Id(3L)
         r2.origin mustEqual Id(4L)
         b.origin mustEqual Id(10L)
-        r1.properties("a") mustEqual 1L
+        r1.properties("a").asNumber.flatMap(_.toLong).get mustEqual 1L
       }
     }
   }

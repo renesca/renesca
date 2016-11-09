@@ -239,13 +239,25 @@ class QueryBuilder {
         s.foldLeftToFuture(Seq[B]())((seq, item) => f(item).map(seq :+ _))
     }
 
-    val future = queryRequests.mapInSeries((f) => {
+    val future: Future[Seq[() => Any]] = queryRequests.mapInSeries((f) => {
       val configs = f()
-      if (configs.isEmpty) Future.successful(Seq.empty) else {
+      if (configs.isEmpty) Future.successful(() => ())
+      else {
         val (queries, callbacks) = configs.map(c => (c.query, c.callback)).unzip
-        for (q <- queryHandler(queries)) yield (q.zip(callbacks).map { case ((g, t), f) => f(g, t) })
+        for (q <- queryHandler(queries)) yield {
+          val cbs = q.zip(callbacks).map { case ((g, t), f) => f(g, t) } map {
+            case Left(err) => throw new Exception(err)
+            case Right(cb) => cb
+          }
+
+          () => cbs.foreach(_())
+        }
       }
     })
-    future.map((it) => None)
+
+    future.map { cbs =>
+      cbs.foreach(_())
+      None
+    }
   }
 }

@@ -19,7 +19,7 @@ class NodeSpec extends Specification with Mockito {
   "Node" should {
 
     "create Node with labels and properties" in {
-      val label = mock[Label]
+      val label = Label("dietrich")
       val A = Node(1, labels = List(label), properties = Map("key" -> "value"))
 
       A.labels must contain(exactly(label))

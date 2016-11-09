@@ -308,7 +308,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "query result interpretation should fail with no results" in {
+      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
         val node = Node.create
         val changes = Seq(
           AddItem(node)
@@ -318,11 +318,11 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("Query result is missing desired node: (Create())")
+        result must failQueries("Query result is missing desired node: (Create())").await
         node.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in {
+      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
         val a = Node.create
         val b = Node.matches
         val changes = Seq(
@@ -334,12 +334,12 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("More than one query result for node: (Match(Set()))")
+        result must failQueries("More than one query result for node: (Match(Set()))").await
         a.origin.isLocal mustEqual true
         b.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in {
+      "query result interpretation" in { implicit ee: ExecutionEnv =>
         val node = Node.matches(matches = Set("z"))
         val changes = Seq(
           AddItem(node)
@@ -349,7 +349,8 @@ class QueryBuilderSpec extends Specification with Mockito {
         val q = new FakeQueryBuilder(Seq(Seq((Graph(Set(n1)), Table(Seq.empty, Seq.empty)))))
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
-        result mustEqual None
+
+        result must successQueries.await
         node.origin mustEqual Id(1)
         node.labels must contain(exactly(Label("foo")))
         node.properties("a") mustEqual 1L
@@ -1601,7 +1602,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result must beEqualTo(()).await
+        result must successQueries.await
         r1.origin mustEqual Id(3L)
         r2.origin mustEqual Id(4L)
         b.origin mustEqual Id(10L)

@@ -22,7 +22,6 @@ class QueryBuilderSpec extends Specification with Mockito {
   class FakeQueryBuilder(results: Seq[Seq[(Graph, Table)]]) extends QueryBuilder {
     import concurrent.Future
     import scala.concurrent.ExecutionContext.Implicits.global
-    import scala.concurrent.duration.Duration
 
     def applyQueries(queryRequests: Seq[() => Seq[QueryConfig]]): Future[Unit] = {
       var idx = 0
@@ -353,7 +352,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result must successQueries.await
         node.origin mustEqual Id(1)
         node.labels must contain(exactly(Label("foo")))
-        node.properties("a") mustEqual 1L
+        node.properties("a").asNumber.flatMap(_.toLong).get mustEqual 1L
         node mustEqual n1
       }
     }
@@ -760,7 +759,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "query result interpretation should fail with no results" in {
+      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -772,11 +771,11 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("Query result is missing desired relation: (1)-[Match(Set()):r]->(2)")
+        result must failQueries("Query result is missing desired relation: (1)-[Match(Set()):r]->(2)").await
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in {
+      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node.create
         val r = Relation.matches(a, "r", b)
@@ -792,12 +791,12 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual Some("More than one query result for relation: (1)-[Match(Set()):r]->(Create())")
+        result must failQueries("More than one query result for relation: (1)-[Match(Set()):r]->(Create())").await
         b.origin.isLocal mustEqual true
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in {
+      "query result interpretation" in { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -810,9 +809,9 @@ class QueryBuilderSpec extends Specification with Mockito {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result mustEqual None
+        result must successQueries.await
         r.origin mustEqual Id(3)
-        r.properties("a") mustEqual 1L
+        r.properties("a").asNumber.flatMap(_.toLong).get mustEqual 1L
         r mustEqual r1
       }
     }

@@ -24,6 +24,7 @@ object Query {
 case class Query(statement: String, parameters: ParameterMap = Map.empty)
 
 trait QueryInterface {
+  // TODO: add traversal interface
   def queryWholeGraph: Future[Graph]
   def queryGraph(query: Query): Future[Graph]
   def queryTable(query: Query): Future[Table]
@@ -138,7 +139,7 @@ trait QueryHandler extends QueryInterface {
     val jsonRequest = buildJsonRequest(queries, resultDataContents)
     for (
       jsonResponse <- queryService(jsonRequest);
-      e <- handleError(exceptionFromErrors(jsonResponse))
+      _ <- handleError(exceptionFromErrors(jsonResponse))
     ) yield jsonResponse.results
   }
 
@@ -178,7 +179,7 @@ class Transaction extends QueryHandler { thisTransaction =>
 
   private var valid = true
   def isValid = valid
-  def invalidate() { valid = false }
+  def invalidate() { valid = false } // TODO: use promise?
   private def throwIfNotValid() {
     if (!valid)
       throw new RuntimeException("Transaction is not valid anymore.")
@@ -203,13 +204,14 @@ class Transaction extends QueryHandler { thisTransaction =>
     } else Future.successful(Unit)
   }
 
-  def rollback() = {
+  def rollback():Future[Unit] = {
     //TODO: return future
-    id match {
+    val f = id match {
       case Some(transactionId) => restService.rollbackTransaction(transactionId)
-      case None =>
+      case None => Future.failed(new Exception("Cannot rollback. No running transaction found."))
     }
     invalidate()
+    f
   }
 
   val commit = new CommitTransaction
@@ -275,7 +277,7 @@ class DbService extends QueryHandler {
     tx
   }
 
-  def transaction[T](code: Transaction => T): T = {
+  def transaction[T](code: Transaction => T): T = { //TODO: Future T?
     val tx = newTransaction
     val result = try {
       code(tx)

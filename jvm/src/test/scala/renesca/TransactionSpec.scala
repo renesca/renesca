@@ -149,7 +149,7 @@ class TransactionSpec extends Specification with Mockito {
       override val builder = mock[QueryBuilder]
       builder.generateQueries(Seq.empty) returns Right(Seq.empty)
       builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.failed(new Exception("meh"))
-      override def rollback() = rollbacked += 1
+      override def rollback() = {rollbacked += 1;Future.successful(Unit)}
       override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
       override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
     }

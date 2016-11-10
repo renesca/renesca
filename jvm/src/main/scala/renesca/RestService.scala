@@ -97,10 +97,9 @@ class RestService(
     for ((_, response) <- submitRequest(path, request)) yield response
   }
 
-  //TODO: Future for error handling?
-  def rollbackTransaction(id: TransactionId) {
+  def rollbackTransaction(id: TransactionId): Future[Unit] = {
     val path = s"/db/data/transaction/$id"
-    http.singleRequest(HttpRequest(HttpMethods.DELETE, Uri(s"$server$path")))
+    http.singleRequest(HttpRequest(HttpMethods.DELETE, Uri(s"$server$path"))).map(_ => ())
   }
 
   override def toString = s"RestService($server${if (credentials.isDefined) " with credentials" else ""})"

@@ -139,9 +139,9 @@ object Main extends App {
   }
   println()
   // loop prints:
-  //  dog	  0
-  //  snake	2
-  //  hippo	0
+  //  dog    0
+  //  snake  2
+  //  hippo  0
 
   val hungriest = animals.rows.maxBy(_.apply("eatcount").
     asInstanceOf[LongPropertyValue].value).

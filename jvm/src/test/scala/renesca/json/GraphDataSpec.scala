@@ -13,7 +13,6 @@ class GraphDataSpec extends Specification with Mockito {
   def decodeGraph(s: String): Graph = decode[Graph](s).toOption.get
 
   //TODO: use modern specs syntax: >> instead of can/in/should ...
-  //TODO: remove tabs from project
   "GraphData" can {
     "be empty" in {
       val json = """

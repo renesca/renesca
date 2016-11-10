@@ -46,14 +46,14 @@ class ResponseSpec extends Specification with Mockito {
 
     "contain data" in {
       val json = """
-    			 {
-    			 "results" : [ {
+           {
+           "results" : [ {
               "columns" : ["col1"],
               "data" : [{}]
             } ],
-    			 "errors" : [ ]
-    			 }
-                 			 """
+           "errors" : [ ]
+           }
+                        """
       val response = decode[Response](json).toOption.get
       response mustEqual Response(results = List(Result(List("col1"), List(Data()))))
     }
@@ -66,7 +66,7 @@ class ResponseSpec extends Specification with Mockito {
               "code" : "Neo.ClientError.Statement.InvalidSyntax",
               "message" : "Invalid input 'T': expected <init> (line 1, column 1)\n\"This is not a valid Cypher Statement.\"\n ^"
             } ]
-          }                 			 """
+          }                        """
       val response = decode[Response](json).toOption.get
       response mustEqual Response(errors = List(
         Error(
@@ -87,7 +87,7 @@ class ResponseSpec extends Specification with Mockito {
             "errors": [
 
             ]
-          }                 			 """
+          }                        """
       val response = decode[Response](json).toOption.get
       response mustEqual Response(
         commit = Some("http://localhost:7474/db/data/transaction/29/commit"),
@@ -182,7 +182,7 @@ class ResponseSpec extends Specification with Mockito {
               } ]
             } ],
             "errors" : [ ]
-          }          	 """
+          }             """
       val response = decode[Response](json).toOption.get
       response mustEqual Response(None, List(Result(
         List("bike", "p1", "p2"),

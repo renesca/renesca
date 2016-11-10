@@ -9,7 +9,7 @@ import renesca.graph._
 import renesca.table.Table
 
 import concurrent.{Await, Future}
-import concurrent.duration.Duration
+import concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
@@ -55,7 +55,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       val graph = mock[Graph]
       graph.changes returns Nil
 
-      queryHandler.persistChanges(graph)
+      val result = queryHandler.persistChanges(graph)
+      Await.ready(result, 10 seconds)
 
       there was one(graph).clearChanges()
     }
@@ -72,8 +73,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       graph.changes returns Nil
 
       val result = queryHandler.persistChanges(graph)
+      Await.result(result, 10 seconds) must throwAn[Exception](message = "meh")
 
-      result mustEqual Some("meh")
       there was no(graph).clearChanges()
     }
 
@@ -90,8 +91,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       graph.changes returns Nil
 
       val result = queryHandler.persistChanges(graph)
+      Await.result(result, 10 seconds) must throwAn[Exception](message = "muh")
 
-      result mustEqual Future.failed(new Exception("muh"))
       there was no(graph).clearChanges()
     }
 
@@ -113,7 +114,8 @@ class QueryHandlerSpec extends Specification with Mockito {
         def relations = Seq.empty
       }
 
-      queryHandler.persistChanges(schemaGraph)
+      val result = queryHandler.persistChanges(schemaGraph)
+      Await.ready(result, 10 seconds)
 
       there was one(queryHandler.builder).generateQueries(Seq.empty)
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
@@ -145,8 +147,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val failure = queryHandler.persistChanges(schemaGraph)
+      Await.result(failure, 10 seconds) must throwA[Exception](message = "Validation for item '(1)' failed: nope")
 
-      failure mustEqual Some("Validation for item '(1)' failed: nope")
       there was no(queryHandler.builder).generateQueries(Seq.empty)
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
@@ -161,7 +163,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val node = Node(1)
-      queryHandler.persistChanges(node)
+      val result = queryHandler.persistChanges(node)
+      Await.ready(result, 10 seconds)
 
       there was one(queryHandler.builder).generateQueries(Seq.empty)
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
@@ -205,8 +208,8 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val failure = queryHandler.persistChanges(schemaNode)
+      Await.result(failure, 10 seconds) must throwA[Exception](message = "Validation for item '(1)' failed: nope")
 
-      failure mustEqual Some("Validation for item '(1)' failed: nope")
       there was no(queryHandler.builder).generateQueries(Seq.empty)
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }

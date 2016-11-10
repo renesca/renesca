@@ -19,7 +19,7 @@ lazy val root = project.in(file(".")).
 
 val akkaVersion = "2.4.12"
 val akkaHttpVersion = "2.4.11"
-val circeVersion = "0.6.0-RC1"
+val circeVersion = "0.6.0"
 
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
@@ -30,7 +30,7 @@ lazy val renesca = crossProject.in(file("."))
       "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
       "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion ::
       "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion ::
-      "org.specs2" %% "specs2-core" % "3.8.4" % "it,test" ::
+      "org.specs2" %% "specs2-core" % "3.8.6" % "it,test" ::
       ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
       "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
       Nil

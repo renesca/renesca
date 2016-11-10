@@ -6,15 +6,15 @@ import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import renesca._
 
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import io.circe._, io.circe.generic.auto._, io.circe.syntax._
 import cats.syntax.either._
 
 @RunWith(classOf[JUnitRunner])
 class RequestSpec extends Specification with Mockito {
-  implicit def intToJson(x: Int) = x.asJson
-  implicit def stringToJson(x: String) = x.asJson
-  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
+  def parse(s: String): Json = parser.parse(s).toOption.get
+  def reparse(r: Request): Json = parse(serialize(r))
 
   "Request" can {
     "be empty" in {
@@ -24,9 +24,9 @@ class RequestSpec extends Specification with Mockito {
           "statements" : []
         }
         """
-      ).toOption.get
+      )
 
-      Request().asJson mustEqual jsonAst
+      reparse(Request()) mustEqual jsonAst
     }
 
     "contain a statement" in {
@@ -35,9 +35,9 @@ class RequestSpec extends Specification with Mockito {
         "statements" : [ {
           "statement" : "CREATE (n) RETURN id(n)"
         } ]
-      }""").toOption.get
+      }""")
 
-      Request(List(Statement("CREATE (n) RETURN id(n)"))).asJson mustEqual jsonAst
+      reparse(Request(List(Statement("CREATE (n) RETURN id(n)")))) mustEqual jsonAst
     }
 
     "contain two statements" in {
@@ -47,12 +47,12 @@ class RequestSpec extends Specification with Mockito {
           {"statement" : "CREATE (n) RETURN id(n)"},
           {"statement" : "CREATE (n) RETURN n"}
          ]
-      }""").toOption.get
+      }""")
 
-      Request(List(
+      reparse(Request(List(
         Statement("CREATE (n) RETURN id(n)"),
         Statement("CREATE (n) RETURN n")
-      )).asJson mustEqual jsonAst
+      ))) mustEqual jsonAst
     }
 
     "contain statement with parameters (string literal)" in {
@@ -62,12 +62,12 @@ class RequestSpec extends Specification with Mockito {
           "statement" : "MATCH (n) WHERE n.name = { name } RETURN n",
           "parameters" : {"name" : "Glaab"}
         } ]
-      }""").toOption.get
+      }""")
 
-      Request(List(Statement(
+      reparse(Request(List(Statement(
         statement = "MATCH (n) WHERE n.name = { name } RETURN n",
         parameters = Some(Map("name" -> "Glaab"))
-      ))).asJson mustEqual jsonAst
+      )))) mustEqual jsonAst
     }
 
     "contain statement with result data contents" in {
@@ -77,12 +77,12 @@ class RequestSpec extends Specification with Mockito {
           "statement" : "CREATE (n) RETURN n",
           "resultDataContents" : [ "row", "graph" ]
         } ]
-      }""").toOption.get
+      }""")
 
-      Request(List(Statement(
+      reparse(Request(List(Statement(
         "CREATE (n) RETURN n",
         resultDataContents = Some(List("row", "graph"))
-      ))).asJson mustEqual jsonAst
+      )))) mustEqual jsonAst
     }
   }
 

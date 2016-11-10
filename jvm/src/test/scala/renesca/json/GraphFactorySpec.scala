@@ -17,7 +17,6 @@ import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 class GraphFactorySpec extends Specification with Mockito {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson
-  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   trait ExampleGraph extends Scope {

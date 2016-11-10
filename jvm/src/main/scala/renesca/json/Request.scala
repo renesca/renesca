@@ -1,27 +1,30 @@
-package renesca.json
-// TODO: move out of json package
+package renesca
 
-import io.circe.Json
-import renesca.ParameterMap
+package object json {
+  import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-case class Request(
-  statements: List[Statement] = Nil
-)
+  val printer = Printer.noSpaces.copy(dropNullKeys = true)
+  def serialize(r: Request) = r.asJson.pretty(printer)
 
-case class Statement(
-  statement: String,
-  parameters: Option[ParameterMap] = None,
-  resultDataContents: Option[List[String]] = None
-)
+  case class Request(
+    statements: List[Statement] = Nil
+  )
 
-object Statement {
-  import renesca.Query
+  case class Statement(
+    statement: String,
+    parameters: Option[ParameterMap] = None,
+    resultDataContents: Option[List[String]] = None
+  )
 
-  def apply(query: Query, resultDataContents: List[String]): Statement = {
-    new Statement(
-      query.statement,
-      if (query.parameters.nonEmpty) Some(query.parameters) else None,
-      if (resultDataContents.nonEmpty) Some(resultDataContents) else None
-    )
+  object Statement {
+    import renesca.Query
+
+    def apply(query: Query, resultDataContents: List[String]): Statement = {
+      new Statement(
+        query.statement,
+        if (query.parameters.nonEmpty) Some(query.parameters) else None,
+        if (resultDataContents.nonEmpty) Some(resultDataContents) else None
+      )
+    }
   }
 }

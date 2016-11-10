@@ -45,7 +45,7 @@ class RestService(
     // http://neo4j.com/docs/2.2.3/rest-api-streaming.html
     headers += RawHeader("X-Stream", "true")
 
-    val jsonRequest = request.asJson.noSpaces
+    val jsonRequest: String = json.serialize(request)
 
     val httpRequest = HttpRequest(
       method = HttpMethods.POST,

@@ -4,6 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.Scope
 import renesca.graph._
 import renesca.table.Table
@@ -16,7 +17,9 @@ import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import cats.syntax.either._
 
 @RunWith(classOf[JUnitRunner])
-class QueryHandlerSpec extends Specification with Mockito {
+class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
+
+  implicit val executionEnv: ExecutionEnv = ExecutionEnv.fromGlobalExecutionContext
 
   implicit def intToJson(x: Int) = x.asJson
   implicit def stringToJson(x: String) = x.asJson
@@ -73,7 +76,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       graph.changes returns Nil
 
       val result = queryHandler.persistChanges(graph)
-      Await.result(result, 10 seconds) must throwAn[Exception](message = "meh")
+      result must fail("meh").await
 
       there was no(graph).clearChanges()
     }
@@ -91,7 +94,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       graph.changes returns Nil
 
       val result = queryHandler.persistChanges(graph)
-      Await.result(result, 10 seconds) must throwAn[Exception](message = "muh")
+      result must fail("muh").await
 
       there was no(graph).clearChanges()
     }
@@ -147,7 +150,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val failure = queryHandler.persistChanges(schemaGraph)
-      Await.result(failure, 10 seconds) must throwA[Exception](message = "Validation for item '(1)' failed: nope")
+      failure must fail("Validation for item '(1)' failed: nope").await
 
       there was no(queryHandler.builder).generateQueries(Seq.empty)
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
@@ -208,7 +211,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       }
 
       val failure = queryHandler.persistChanges(schemaNode)
-      Await.result(failure, 10 seconds) must throwA[Exception](message = "Validation for item '(1)' failed: nope")
+      failure must fail("Validation for item '(1)' failed: nope").await
 
       there was no(queryHandler.builder).generateQueries(Seq.empty)
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)

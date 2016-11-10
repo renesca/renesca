@@ -161,7 +161,7 @@ class QueryPatterns(resolvedItems: mutable.Map[Item,Origin]) {
     val QueryPathPattern(queryPattern, parameters, variableMap) = queryPathPattern(path)
     val reverseVariableMap = variableMap.map { case (k, v) => (v, k) }.toMap
 
-    val returnClause = "return " + variableMap.map {
+    val returnClause = "return " + variableMap.toSeq.sortBy(_._2).map {
       case (k, variable) => k match {
         case _: Node     => s"{id: id($variable), properties: $variable, labels: labels($variable)} as $variable"
         case _: Relation => s"{id: id($variable), properties: $variable} as $variable"

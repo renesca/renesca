@@ -5,7 +5,8 @@ import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import renesca.graph.Graph
-import concurrent.Future
+import concurrent.{Future, Await}
+import concurrent.duration._
 
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
@@ -105,7 +106,8 @@ class TransactionSpec extends Specification with Mockito {
     tx.restService = mock[RestService]
     tx.restService.openTransaction(jsonRequest) returns Future.successful((TransactionId("1"), jsonResponseWithError))
 
-    tx.queryGraph(statement) must throwA[RuntimeException]
+    val result = tx.queryGraph(statement)
+    Await.result(result, 10 seconds) must throwA[RuntimeException]
 
     tx.isValid mustEqual false
     there was one(tx.restService).rollbackTransaction(TransactionId("1"))
@@ -161,8 +163,8 @@ class TransactionSpec extends Specification with Mockito {
     graph.changes returns Nil
 
     val result = transaction.commit.persistChanges(graph)
+    Await.result(result, 10 seconds) must throwAn[Exception](message = "meh")
 
-    result mustEqual Some("meh")
     there was no(graph).clearChanges()
     rollbacked mustEqual 1
     //      there was one(transaction).rollback()
@@ -188,8 +190,8 @@ class TransactionSpec extends Specification with Mockito {
     graph.changes returns Nil
 
     val result = transaction.commit.persistChanges(graph)
+    Await.result(result, 10 seconds)
 
-    result mustEqual Future.successful(Unit)
     there was one(graph).clearChanges()
     committed mustEqual 1
   }

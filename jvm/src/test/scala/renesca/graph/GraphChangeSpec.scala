@@ -17,8 +17,8 @@ class GraphChangeSpec extends Specification with Mockito {
   implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
-  "GraphChange" should {
-    "fail when emitting AddItem/AddPath with non local item" in {
+  "GraphChange" >> {
+    "fail when emitting AddItem/AddPath with non local item" >> {
       val node = Node(1)
       AddItem(node) must throwA[IllegalArgumentException]
       val relation = Relation.create(node, "r", node)
@@ -27,7 +27,7 @@ class GraphChangeSpec extends Specification with Mockito {
       AddPath(path) must throwA[IllegalArgumentException]
     }
 
-    "fail when emitting ContentChange with local item" in {
+    "fail when emitting ContentChange with local item" >> {
       val node = Node.create
       DeleteItem(node).isValid mustEqual true
       DeleteItem(Node(1)).isValid mustEqual true
@@ -37,14 +37,14 @@ class GraphChangeSpec extends Specification with Mockito {
       RemoveLabel(node, "a") must throwA[IllegalArgumentException]
     }
 
-    "allow emitting DeleteItem with local item" in {
+    "allow emitting DeleteItem with local item" >> {
       DeleteItem(Node.create).isValid mustEqual true
       DeleteItem(Node(1)).isValid mustEqual true
     }
   }
 
-  "Graph" should {
-    "collect all changes in one collection and clear it" in {
+  "Graph" >> {
+    "collect all changes >> one collection and clear it" >> {
       val graphChange = mock[GraphChange]
 
       val nodesChange = mock[GraphChange]
@@ -87,7 +87,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.changes must beEmpty
     }
 
-    "emit change when adding node to nodes" in {
+    "emit change when adding node to nodes" >> {
       val graph = Graph.empty
       val node = Node.create
 
@@ -98,7 +98,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit changes for nonexistent nodes when adding relation" in {
+    "emit changes for nonexistent nodes when adding relation" >> {
       val graph = Graph.empty
       val start = Node.create
       val end = Node.create
@@ -115,7 +115,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit change when deleting node from nodes" in {
+    "emit change when deleting node from nodes" >> {
       val A = Node(1)
       val graph = Graph(List(A), Nil)
 
@@ -126,7 +126,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit change when clearing nodes" in {
+    "emit change when clearing nodes" >> {
       val A = Node(1)
       val graph = Graph(List(A), Nil)
 
@@ -139,7 +139,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit changes when deleting node with relations from nodes" in {
+    "emit changes when deleting node with relations from nodes" >> {
       val A = Node(1)
       val B = Node(2)
       val C = Node(4)
@@ -155,7 +155,7 @@ class GraphChangeSpec extends Specification with Mockito {
       graph.changes must not contain DeleteItem(BrC)
     }
 
-    "emit change when deleting relation" in {
+    "emit change when deleting relation" >> {
       val A = Node(1)
       val B = Node(2)
       val ArB = Relation(3, A, B, "r")
@@ -168,7 +168,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit change when clearing relations" in {
+    "emit change when clearing relations" >> {
       val A = Node(1)
       val B = Node(2)
       val ArB = Relation(3, A, B, "r")
@@ -183,7 +183,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit change when adding local node with properties/labels" in {
+    "emit change when adding local node with properties/labels" >> {
       val graph = Graph.empty
       val node = Node.create
 
@@ -196,7 +196,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when adding local node and then properties/labels" in {
+    "emit change when adding local node and then properties/labels" >> {
       val graph = Graph.empty
       val node = Node.create
 
@@ -209,7 +209,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when adding local relation with properties" in {
+    "emit change when adding local relation with properties" >> {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
@@ -223,7 +223,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when adding local relation and then properties" in {
+    "emit change when adding local relation and then properties" >> {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
@@ -237,7 +237,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when using Graph apply for local nodes/relations" in {
+    "emit change when using Graph apply for local nodes/relations" >> {
       val node1 = Node(1)
       val node2 = Node.create
       val relation = Relation.create(node1, "nagut", node2)
@@ -249,7 +249,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )).inOrder
     }
 
-    "emit change when adding a path" in {
+    "emit change when adding a path" >> {
       val node1 = Node(1)
       val node2 = Node(2)
       val graph = Graph(List(node1, node2))
@@ -265,8 +265,8 @@ class GraphChangeSpec extends Specification with Mockito {
     }
   }
 
-  "Node" should {
-    "emit change when setting property" in {
+  "Node" >> {
+    "emit change when setting property" >> {
       val node = Node(1)
       val properties = new Properties(node)
 
@@ -279,7 +279,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "emit change when setting property" in {
+    "emit change when setting property" >> {
       val node = Node.create
       val properties = new Properties(node)
 
@@ -289,7 +289,7 @@ class GraphChangeSpec extends Specification with Mockito {
       properties.localChanges.size mustEqual 0
     }
 
-    "emit change when removing property" in {
+    "emit change when removing property" >> {
       val node = Node(1)
       val properties = new Properties(node)
 
@@ -300,7 +300,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "not emit change when removing property on local node" in {
+    "not emit change when removing property on local node" >> {
       val node = Node.create
       val properties = new Properties(node)
 
@@ -309,7 +309,7 @@ class GraphChangeSpec extends Specification with Mockito {
       properties.localChanges.size mustEqual 0
     }
 
-    "emit change when setting label" in {
+    "emit change when setting label" >> {
       val node = Node(1)
       val labels = new NodeLabels(node)
       val label = Label("hans")
@@ -321,7 +321,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "not emit change when setting label on local node" in {
+    "not emit change when setting label on local node" >> {
       val node = Node.create
       val labels = new NodeLabels(node)
       val label = Label("hans")
@@ -331,7 +331,7 @@ class GraphChangeSpec extends Specification with Mockito {
       labels.localChanges.size mustEqual 0
     }
 
-    "emit change when removing label" in {
+    "emit change when removing label" >> {
       val node = Node(1)
       val labels = new NodeLabels(node)
       val label = Label("hans")
@@ -343,7 +343,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ))
     }
 
-    "not emit change when removing label on local node" in {
+    "not emit change when removing label on local node" >> {
       val node = Node.create
       val labels = new NodeLabels(node)
       val label = Label("312")
@@ -354,8 +354,8 @@ class GraphChangeSpec extends Specification with Mockito {
     }
   }
 
-  "Relation" should {
-    "emit change when setting property" in {
+  "Relation" >> {
+    "emit change when setting property" >> {
       val relation = Relation(1, Node(2), Node(3), "r")
       relation.properties += ("key" -> "value")
       relation.properties -= "key"
@@ -365,7 +365,7 @@ class GraphChangeSpec extends Specification with Mockito {
       )
     }
 
-    "not emit change when setting property on local relation" in {
+    "not emit change when setting property on local relation" >> {
       val relation = Relation.create(Node(2), "r", Node(3))
       relation.properties += ("key" -> "value")
       relation.properties -= "key"
@@ -373,7 +373,7 @@ class GraphChangeSpec extends Specification with Mockito {
       relation.changes.size mustEqual 0
     }
 
-    "emit change when removing property" in {
+    "emit change when removing property" >> {
       val relation = Relation(1, Node(2), Node(3), "r")
       relation.properties += ("key" -> "value")
       relation.properties -= "key"
@@ -384,7 +384,7 @@ class GraphChangeSpec extends Specification with Mockito {
       ).inOrder
     }
 
-    "not emit change when removing property on local relation" in {
+    "not emit change when removing property on local relation" >> {
       val relation = Relation.create(Node(2), "r", Node(3))
       relation.properties += ("key" -> "value")
       relation.properties -= "key"

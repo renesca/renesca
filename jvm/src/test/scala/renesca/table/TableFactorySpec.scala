@@ -15,8 +15,8 @@ class TableFactorySpec extends Specification with Mockito {
   implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
-  "Table" should {
-    "create Table from json classes" in {
+  "Table" >> {
+    "create Table from json classes" >> {
       val table = json.TableFactory(json.Result(List("x", "y", "z"), List(
         json.Data(row = Some(List(1, 2, 3))),
         json.Data(row = Some(List(4, 5, 6)))

@@ -6,34 +6,34 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class DistinctBufferSpec extends Specification {
-  "DistinctBuffer" should {
-    "provide factory" in {
+  "DistinctBuffer" >> {
+    "provide factory" >> {
       val b = DistinctBuffer(1, 2, 3)
       b must beAnInstanceOf[DistinctBuffer[Int]]
       b must contain(exactly(1, 2, 3).inOrder)
     }
 
-    "provide empty factory" in {
+    "provide empty factory" >> {
       val b = DistinctBuffer.empty
       b must beAnInstanceOf[DistinctBuffer[Int]]
       b must beEmpty
     }
 
-    "discard double elements in factory" in {
+    "discard double elements in factory" >> {
       val b = DistinctBuffer(1, 2, 3, 2)
       b must contain(exactly(1, 2, 3).inOrder)
     }
 
-    "override methods" in {
+    "override methods" >> {
 
-      "apply" in {
+      "apply" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.apply(-1) must throwAn[IndexOutOfBoundsException]
         b.apply(3) must throwAn[IndexOutOfBoundsException]
         b.apply(1) mustEqual 2
       }
 
-      "update" in {
+      "update" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.update(-1, 4) must throwAn[IndexOutOfBoundsException]
         b.update(3, 4) must throwAn[IndexOutOfBoundsException]
@@ -41,7 +41,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(1, 4, 3).inOrder)
       }
 
-      "remove, -=" in {
+      "remove, -=" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.remove(-1) must throwAn[IndexOutOfBoundsException]
         b.remove(3) must throwAn[IndexOutOfBoundsException]
@@ -51,7 +51,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(1).inOrder)
       }
 
-      "clear" in {
+      "clear" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.clear()
         b must beEmpty
@@ -61,7 +61,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(2).inOrder)
       }
 
-      "+=" in {
+      "+=" >> {
         val b = DistinctBuffer(1, 2)
         (b += 3) must beAnInstanceOf[DistinctBuffer[Int]]
         b must contain(exactly(1, 2, 3).inOrder)
@@ -70,7 +70,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(1, 2, 3).inOrder)
       }
 
-      "+=:" in {
+      "+=:" >> {
         val b = DistinctBuffer(1, 2)
         (3 +=: b) must beAnInstanceOf[DistinctBuffer[Int]]
         b must contain(exactly(3, 1, 2).inOrder)
@@ -79,7 +79,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(3, 1, 2).inOrder)
       }
 
-      "insertAll" in {
+      "insertAll" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.insertAll(-1, Nil) must throwAn[IndexOutOfBoundsException]
         b.insertAll(3, Nil) must throwAn[IndexOutOfBoundsException]
@@ -87,7 +87,7 @@ class DistinctBufferSpec extends Specification {
         b must contain(exactly(1, 4, 5, 2, 3).inOrder)
       }
 
-      "iterator" in {
+      "iterator" >> {
         val b = DistinctBuffer(1, 2, 3)
         val it = b.iterator
         it.next mustEqual 1
@@ -96,20 +96,20 @@ class DistinctBufferSpec extends Specification {
         it.hasNext mustEqual false
       }
 
-      "length" in {
+      "length" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.length mustEqual 3
       }
     }
 
-    "inherit methods" in {
-      "take" in {
+    "inherit methods" >> {
+      "take" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.take(2) must contain(exactly(1, 2).inOrder)
         b.take(2) must beAnInstanceOf[DistinctBuffer[Int]]
       }
 
-      "map" in {
+      "map" >> {
         import DistinctBuffer.canBuildFrom
 
         //TODO why do we have to do import canBuildFrom?
@@ -128,12 +128,12 @@ class DistinctBufferSpec extends Specification {
         b.map(_.toString) must beAnInstanceOf[DistinctBuffer[String]]
       }
 
-      "clone" in {
+      "clone" >> {
         val b = DistinctBuffer(1, 2, 3)
         b.clone() must beAnInstanceOf[DistinctBuffer[Int]]
       }
 
-      "equals" in {
+      "equals" >> {
         DistinctBuffer(1, 2, 3) mustEqual DistinctBuffer(1, 2, 3)
         DistinctBuffer(1, 2, 3, 2) mustEqual DistinctBuffer(1, 2, 3, 3)
 

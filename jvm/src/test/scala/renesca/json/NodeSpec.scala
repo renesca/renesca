@@ -14,8 +14,8 @@ class NodeSpec extends Specification with Mockito {
   implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
-  "Node" can {
-    "be empty" in {
+  "Node" >> {
+    "be empty" >> {
       val json = """
        {
          "id" : "1",
@@ -26,7 +26,7 @@ class NodeSpec extends Specification with Mockito {
       node mustEqual Right(Node("1"))
     }
   }
-  "have properties" in {
+  "have properties" >> {
     val json = """
        {
          "id" : "1",
@@ -43,7 +43,7 @@ class NodeSpec extends Specification with Mockito {
     )))
   }
 
-  "have properties of different types" in {
+  "have properties of different types" >> {
     val json = """
        {
          "id" : "1",
@@ -60,7 +60,7 @@ class NodeSpec extends Specification with Mockito {
     )))
   }
 
-  "have labels" in {
+  "have labels" >> {
     val json = """
        {
          "id" : "1",

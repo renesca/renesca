@@ -22,14 +22,14 @@ class PropertiesSpec extends Specification with Mockito {
     val graph = mock[Graph]
   }
 
-  "Properties" should {
-    "store property" in new MockNode {
+  "Properties" >> {
+    "store property" >> new MockNode {
       A.properties("key") = "value"
 
       A.properties("key").asString.get mustEqual "value"
     }
 
-    "remove property" in new MockNode {
+    "remove property" >> new MockNode {
       A.properties("key") = "value"
 
       A.properties -= "key"
@@ -37,23 +37,23 @@ class PropertiesSpec extends Specification with Mockito {
       A.properties.isDefinedAt("key") must beFalse
     }
 
-    "get non-existing element" in new MockNode {
+    "get non-existing element" >> new MockNode {
       A.properties.get("key") mustEqual None
     }
 
-    "get existing element" in new MockNode {
+    "get existing element" >> new MockNode {
       A.properties("key") = "value"
 
       A.properties.get("key").flatMap(_.asString) mustEqual Some("value")
     }
 
-    "provide iterator" in new MockNode {
+    "provide iterator" >> new MockNode {
       A.properties("key") = "value"
 
       A.properties.iterator must contain(exactly(PropertyKey("key") -> "value".asJson))
     }
 
-    "provide empty" in new MockNode {
+    "provide empty" >> new MockNode {
       A.properties("key") = "value"
 
       A.properties.empty must beEmpty

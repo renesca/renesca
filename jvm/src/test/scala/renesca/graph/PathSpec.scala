@@ -8,8 +8,8 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class PathSpec extends Specification with Mockito {
 
-  "Path" should {
-    "fail on inconsistent path origin" in {
+  "Path" >> {
+    "fail on inconsistent path origin" >> {
       val a = Node.matches
       val b = Node.create
       val c = Node.merge
@@ -20,7 +20,7 @@ class PathSpec extends Specification with Mockito {
       p mustEqual Left("Relations have inconsistent origin")
     }
 
-    "fail on disconnected path" in {
+    "fail on disconnected path" >> {
       val a = Node.matches
       val b = Node.create
       val c = Node.merge
@@ -31,7 +31,7 @@ class PathSpec extends Specification with Mockito {
       p mustEqual Left("Relations do not form a path")
     }
 
-    "path equals same path" in {
+    "path equals same path" >> {
       val a = Node.matches
       val b = Node.create
       val c = Node.merge
@@ -43,7 +43,7 @@ class PathSpec extends Specification with Mockito {
       p.equals(q) mustEqual true
     }
 
-    "path is not equal to something else" in {
+    "path is not equal to something else" >> {
       val a = Node.matches
       val b = Node.create
       val c = Node.merge
@@ -58,4 +58,3 @@ class PathSpec extends Specification with Mockito {
     }
   }
 }
-

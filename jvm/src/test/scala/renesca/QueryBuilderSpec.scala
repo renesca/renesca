@@ -89,8 +89,8 @@ class QueryBuilderSpec extends Specification with Mockito {
   def failQueriesLike(s: String) = failMatcher(StringMatchers.matching(s.r))
   val successQueries = beEqualTo(())
 
-  "QueryBuilder" should {
-    "have non-constant variables" in {
+  "QueryBuilder" >> {
+    "have non-constant variables" >> {
       val gen = new QueryPatterns(scala.collection.mutable.Map.empty)
       val a = gen.randomVariable
       val b = gen.randomVariable
@@ -98,13 +98,13 @@ class QueryBuilderSpec extends Specification with Mockito {
       a mustNotEqual b
     }
 
-    "work with empty list of changes" in {
+    "work with empty list of changes" >> {
       val queries = exq(builder.generateQueries(Seq.empty))
 
       queries.size mustEqual 0
     }
 
-    "reject invalid changes" in {
+    "reject invalid changes" >> {
       val node = Node.create
       val changes = Seq(
         AddItem(node)
@@ -118,8 +118,8 @@ class QueryBuilderSpec extends Specification with Mockito {
       result.left.get startsWith "Found invalid graph change: "
     }
 
-    "node" should {
-      "create only once" in {
+    "node" >> {
+      "create only once" >> {
         val n = Node.create
         val changes = Seq(
           AddItem(n),
@@ -136,7 +136,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "not delete create node" in {
+      "not delete create node" >> {
         val n = Node.create
         val changes = Seq(
           DeleteItem(n)
@@ -147,7 +147,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries.size mustEqual 0
       }
 
-      "node deletion after node" in {
+      "node deletion after node" >> {
         val a = Node.create
 
         val changes = Seq(
@@ -160,7 +160,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries.size mustEqual 0
       }
 
-      "node deletion before node" in {
+      "node deletion before node" >> {
         val a = Node.create
 
         val changes = Seq(
@@ -178,7 +178,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "create" in {
+      "create" >> {
         val changes = Seq(
           AddItem(Node.create(Seq("v", "f", "l"), ParameterMap("18" -> 48)))
         )
@@ -193,7 +193,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "merge" in {
+      "merge" >> {
         val changes = Seq(
           AddItem(Node.merge(Seq("v", "f", "l"), ParameterMap("18" -> 48, "B" -> 0, "o" -> 1), Set("18"), Set("B")))
         )
@@ -208,7 +208,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "match" in {
+      "match" >> {
         val changes = Seq(
           AddItem(Node.matches(Seq("v", "f", "l"), ParameterMap("18" -> true, "48" -> true), Set("18")))
         )
@@ -223,7 +223,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete id node" in {
+      "delete id node" >> {
         val changes = Seq(
           DeleteItem(Node(1))
         )
@@ -238,7 +238,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete matches node" in {
+      "delete matches node" >> {
         val a = Node.matches(Seq("l"), ParameterMap("18" -> 48, "B" -> 0), Set("B"))
 
         val changes = Seq(
@@ -252,7 +252,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete merge node" in {
+      "delete merge node" >> {
         val a = Node.merge(Seq("l"), ParameterMap("18" -> 48, "B" -> 0), Set("B"), Set("18"))
 
         val changes = Seq(
@@ -266,7 +266,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "create with properties and labels" in {
+      "create with properties and labels" >> {
         val changes = Seq(
           AddItem(Node.create(Seq("labello"), ParameterMap("prop" -> "erty")))
         )
@@ -281,7 +281,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "set and remove properties and labels" in {
+      "set and remove properties and labels" >> {
         // create non-local node with positive id
         val node = Node(1)
         val changes = Seq(
@@ -307,7 +307,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with no results" >> { implicit ee: ExecutionEnv =>
         val node = Node.create
         val changes = Seq(
           AddItem(node)
@@ -321,7 +321,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         node.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with more than one result" >> { implicit ee: ExecutionEnv =>
         val a = Node.create
         val b = Node.matches
         val changes = Seq(
@@ -338,7 +338,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         b.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in { implicit ee: ExecutionEnv =>
+      "query result interpretation" >> { implicit ee: ExecutionEnv =>
         val node = Node.matches(matches = Set("z"))
         val changes = Seq(
           AddItem(node)
@@ -357,8 +357,8 @@ class QueryBuilderSpec extends Specification with Mockito {
       }
     }
 
-    "Relation" should {
-      "fail on delete of relation node" in {
+    "Relation" >> {
+      "fail on delete of relation node" >> {
         val n = Node(1)
         val m = Node(2)
         val r = Relation.create(n, "a", m)
@@ -373,7 +373,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.left.get startsWith "Cannot delete start- or endnode of a new relation: "
       }
 
-      "not delete local relation" in {
+      "not delete local relation" >> {
         val n = Node(1)
         val m = Node(2)
         val r = Relation.create(n, "a", m)
@@ -386,7 +386,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries.size mustEqual 0
       }
 
-      "fail on node deletion after relation" in {
+      "fail on node deletion after relation" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -403,7 +403,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Cannot delete start- or endnode of a new relation: (Match(Set()))")
       }
 
-      "node deletion before relation" in {
+      "node deletion before relation" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -431,7 +431,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "relation deletion after relation" in {
+      "relation deletion after relation" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -453,7 +453,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "relation deletion before relation" in {
+      "relation deletion before relation" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -481,7 +481,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "create" in {
+      "create" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b, ParameterMap("a" -> 1))
@@ -508,7 +508,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "create with non local nodes" in {
+      "create with non local nodes" >> {
         val a = Node(1)
         val b = Node(2)
         val c = Node.create
@@ -532,7 +532,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "merge" in {
+      "merge" >> {
         val a = Node.matches
         val b = Node.merge
         val r = Relation.merge(a, "kicks", b, ParameterMap("a" -> 0, "b" -> 1, "c" -> 2), Set("a"), Set("b"))
@@ -562,7 +562,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "match" in {
+      "match" >> {
         val a = Node.matches
         val b = Node.matches
         val r = Relation.matches(a, "kicks", b, ParameterMap("a" -> 1), Set("a"))
@@ -589,7 +589,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete id relation" in {
+      "delete id relation" >> {
         val a = Node(1)
         val b = Node(2)
         val r = Relation(3, a, b, "r")
@@ -608,7 +608,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete node and relation" in {
+      "delete node and relation" >> {
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -628,7 +628,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete create node and relation" in {
+      "delete create node and relation" >> {
         val a = Node(1)
         val b = Node.create
         val r = Relation.matches(a, "r", b)
@@ -643,7 +643,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries.size mustEqual 0
       }
 
-      "delete matches node and relation" in {
+      "delete matches node and relation" >> {
         val a = Node(1)
         val b = Node.matches
         val r = Relation.matches(a, "r", b)
@@ -660,7 +660,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete matches relation" in {
+      "delete matches relation" >> {
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -676,7 +676,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "delete create relation" in {
+      "delete create relation" >> {
         val a = Node(1)
         val b = Node(2)
         val r = Relation.create(a, "r", b)
@@ -690,7 +690,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         queries.size mustEqual 0
       }
 
-      "delete matches relation with local nodes" in {
+      "delete matches relation with local nodes" >> {
         val a = Node.merge
         val b = Node.matches
         val r = Relation.matches(a, "r", b)
@@ -711,7 +711,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "create with properties" in {
+      "create with properties" >> {
         val a = Node(1)
         val b = Node.create(Seq("the kicked one"), ParameterMap("hurt" -> false))
         val r = Relation.create(a, "kicks", b, ParameterMap("really?" -> "no!"))
@@ -739,7 +739,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "set and remove properties" in {
+      "set and remove properties" >> {
         val r = Relation(3, Node(1), Node(2), "r")
         val changes = Seq(
           SetProperty(r, "edit", true),
@@ -759,7 +759,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         ))
       }
 
-      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with no results" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -775,7 +775,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with more than one result" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node.create
         val r = Relation.matches(a, "r", b)
@@ -796,7 +796,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in { implicit ee: ExecutionEnv =>
+      "query result interpretation" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -816,8 +816,8 @@ class QueryBuilderSpec extends Specification with Mockito {
       }
     }
 
-    "Path" should {
-      "fail on same node in paths" in {
+    "Path" >> {
+      "fail on same node in paths" >> {
         val a = Node(1)
         val a2 = Node(2)
         val b = Node.create
@@ -838,7 +838,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Paths cannot resolve the same nodes")
       }
 
-      "fail on same relation in paths" in {
+      "fail on same relation in paths" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -856,7 +856,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Paths cannot resolve the same relations")
       }
 
-      "fail on circular dependency between paths" in {
+      "fail on circular dependency between paths" >> {
         val a = Node.create(Set("a"))
         val b = Node.create(Set("b"))
         val c = Node.matches
@@ -879,7 +879,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.left.get startsWith "Circular dependency between paths: "
       }
 
-      "overlapping produce paths" in {
+      "overlapping produce paths" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.merge
@@ -941,7 +941,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "overlapping produce and relation paths" in {
+      "overlapping produce and relation paths" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.create
@@ -987,7 +987,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "allow same start/end for paths" in {
+      "allow same start/end for paths" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.create
@@ -1033,7 +1033,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "fail on node deletion after path" in {
+      "fail on node deletion after path" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1052,7 +1052,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result mustEqual Left("Cannot delete start- or endnode of a new relation: (Match(Set()))")
       }
 
-      "node deletion before path" in {
+      "node deletion before path" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1082,7 +1082,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "do not fail on relation deletion after path" in {
+      "do not fail on relation deletion after path" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1101,7 +1101,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.right.toOption.isDefined mustEqual true
       }
 
-      "relation deletion before path" in {
+      "relation deletion before path" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1131,7 +1131,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "create single relation" in {
+      "create single relation" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1160,7 +1160,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "create" in {
+      "create" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.merge
@@ -1196,7 +1196,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "create with non local nodes" in {
+      "create with non local nodes" >> {
         val a = Node(1)
         val b = Node(2)
         val c = Node(3)
@@ -1225,7 +1225,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "merge" in {
+      "merge" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.merge
@@ -1262,7 +1262,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "merge with merged middle node" in {
+      "merge with merged middle node" >> {
         val a = Node.matches
         val b = Node.merge(Seq("MIDDLE"))
         val c = Node.create
@@ -1295,7 +1295,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "match" in {
+      "match" >> {
         val a = Node.matches
         val b = Node.matches
         val c = Node.matches
@@ -1328,7 +1328,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "match with merge and create node" in {
+      "match with merge and create node" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.merge
@@ -1365,7 +1365,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete match path without middle node" in {
+      "delete match path without middle node" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.matches
@@ -1398,7 +1398,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete match path" in {
+      "delete match path" >> {
         val a = Node.matches
         val b = Node.matches
         val c = Node.matches
@@ -1431,7 +1431,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete merge path" in {
+      "delete merge path" >> {
         val a = Node.matches
         val b = Node.merge
         val c = Node.matches
@@ -1464,7 +1464,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "delete create path" in {
+      "delete create path" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.matches
@@ -1494,7 +1494,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         )
       }
 
-      "fail on partial relation deletion of path" in {
+      "fail on partial relation deletion of path" >> {
         val a = Node.matches
         val b = Node.create
         val r = Relation.create(a, "kicks", b)
@@ -1512,7 +1512,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.left.get startsWith "Cannot partially match paths, will not delete parts of a path: "
       }
 
-      "fail on partial node deletion of path" in {
+      "fail on partial node deletion of path" >> {
         val a = Node.matches
         val b = Node.create
         val c = Node.matches
@@ -1531,7 +1531,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         result.left.get startsWith "Cannot partially match paths, will not delete parts of a path: "
       }
 
-      "query result interpretation should fail with no results" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with no results" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -1549,7 +1549,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation should fail with more than one result" in { implicit ee: ExecutionEnv =>
+      "query result interpretation should fail with more than one result" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node(2)
         val r = Relation.matches(a, "r", b)
@@ -1572,7 +1572,7 @@ class QueryBuilderSpec extends Specification with Mockito {
         r.origin.isLocal mustEqual true
       }
 
-      "query result interpretation" in { implicit ee: ExecutionEnv =>
+      "query result interpretation" >> { implicit ee: ExecutionEnv =>
         val a = Node(1)
         val b = Node.matches
         val c = Node(2)

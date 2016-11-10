@@ -39,8 +39,8 @@ class TransactionSpec extends Specification with Mockito {
     tx
   }
 
-  "Transaction" should {
-    "open transaction on first request" in {
+  "Transaction" >> {
+    "open transaction on first request" >> {
       val tx = newTransaction
 
       tx.query(statement)
@@ -52,7 +52,7 @@ class TransactionSpec extends Specification with Mockito {
     }
   }
 
-  "open transaction on first, resume on second request" in {
+  "open transaction on first, resume on second request" >> {
     val tx = newTransaction
 
     tx.query(statement)
@@ -64,7 +64,7 @@ class TransactionSpec extends Specification with Mockito {
     there was one(tx.restService).commitTransaction(TransactionId("1"))
   }
 
-  "open transaction on commit" in {
+  "open transaction on commit" >> {
     val tx = newTransaction
 
     tx.commit.queryGraphs(statement)
@@ -75,7 +75,7 @@ class TransactionSpec extends Specification with Mockito {
     there was no(tx.restService).resumeTransaction(TransactionId("1"), jsonRequest)
   }
 
-  "invalidate transaction on commit" in {
+  "invalidate transaction on commit" >> {
     val tx = newTransaction
 
     tx.commit()
@@ -83,7 +83,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.isValid mustEqual false
   }
 
-  "invalidate transaction on commit with query" in {
+  "invalidate transaction on commit with query" >> {
     val tx = newTransaction
 
     tx.commit.queryGraphs(statement)
@@ -91,7 +91,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.isValid mustEqual false
   }
 
-  "throw exception when using invalidated transaction" in {
+  "throw exception when using invalidated transaction" >> {
     val tx = newTransaction
     tx.invalidate()
 
@@ -100,7 +100,7 @@ class TransactionSpec extends Specification with Mockito {
     tx.commit.queryGraphs(statement) must throwA[RuntimeException]
   }
 
-  "error in transaction rollbacks transaction and throws exception" in {
+  "error in transaction rollbacks transaction and throws exception" >> {
     val tx = new Transaction
     tx.restService = mock[RestService]
     tx.restService.openTransaction(jsonRequest) returns Future.successful((TransactionId("1"), jsonResponseWithError))
@@ -111,7 +111,7 @@ class TransactionSpec extends Specification with Mockito {
     there was one(tx.restService).rollbackTransaction(TransactionId("1"))
   }
 
-  "don't commit when doing nothing in transaction" in {
+  "don't commit when doing nothing in transaction" >> {
     val tx = newTransaction
     tx.commit()
 
@@ -122,7 +122,7 @@ class TransactionSpec extends Specification with Mockito {
     there was no(tx.restService).rollbackTransaction(any)
   }
 
-  "rollback transaction on exception with enclosing syntax" in {
+  "rollback transaction on exception with enclosing syntax" >> {
     val dbService = new DbService
 
     var trans: Transaction = null
@@ -142,14 +142,14 @@ class TransactionSpec extends Specification with Mockito {
     thrown mustEqual ex
   }
 
-  "transaction persistChanges should rollback on error" in {
+  "transaction persistChanges should rollback on error" >> {
     //TODO: why does it not work with spy?
     var rollbacked = 0
     class MehTransaction extends Transaction {
       override val builder = mock[QueryBuilder]
       builder.generateQueries(Seq.empty) returns Right(Seq.empty)
       builder.applyQueries(Seq.empty, queryGraphsAndTables) returns Future.failed(new Exception("meh"))
-      override def rollback() = {rollbacked += 1;Future.successful(Unit)}
+      override def rollback() = { rollbacked += 1; Future.successful(Unit) }
       override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
       override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
     }
@@ -168,7 +168,7 @@ class TransactionSpec extends Specification with Mockito {
     //      there was one(transaction).rollback()
   }
 
-  "transaction persistChanges should commit on success" in {
+  "transaction persistChanges should commit on success" >> {
     var committed = 0
     class MehTransaction extends Transaction {
       override val builder = mock[QueryBuilder]

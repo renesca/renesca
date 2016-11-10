@@ -16,8 +16,8 @@ class RequestSpec extends Specification with Mockito {
   def parse(s: String): Json = parser.parse(s).toOption.get
   def reparse(r: Request): Json = parse(serialize(r))
 
-  "Request" can {
-    "be empty" in {
+  "Request" >> {
+    "be empty" >> {
       val jsonAst = parse(
         """
         {
@@ -29,7 +29,7 @@ class RequestSpec extends Specification with Mockito {
       reparse(Request()) mustEqual jsonAst
     }
 
-    "contain a statement" in {
+    "contain a statement" >> {
       val jsonAst = parse("""
       {
         "statements" : [ {
@@ -40,7 +40,7 @@ class RequestSpec extends Specification with Mockito {
       reparse(Request(List(Statement("CREATE (n) RETURN id(n)")))) mustEqual jsonAst
     }
 
-    "contain two statements" in {
+    "contain two statements" >> {
       val jsonAst = parse("""
       {
         "statements" : [
@@ -55,7 +55,7 @@ class RequestSpec extends Specification with Mockito {
       ))) mustEqual jsonAst
     }
 
-    "contain statement with parameters (string literal)" in {
+    "contain statement with parameters (string literal)" >> {
       val jsonAst = parse("""
       {
         "statements" : [ {
@@ -70,7 +70,7 @@ class RequestSpec extends Specification with Mockito {
       )))) mustEqual jsonAst
     }
 
-    "contain statement with result data contents" in {
+    "contain statement with result data contents" >> {
       val jsonAst = parse("""
       {
         "statements" : [ {

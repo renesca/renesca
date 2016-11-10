@@ -6,14 +6,14 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class NonBacktickNameSpec extends Specification {
-  "NonBacktickName" should {
-    "disallow backticks in names" in {
+  "NonBacktickName" >> {
+    "disallow backticks in names" >> {
       NonBacktickName("foo`bar") must throwA[IllegalArgumentException]
       Label("foo`bar") must throwA[IllegalArgumentException]
       PropertyKey("foo`bar") must throwA[IllegalArgumentException]
       RelationType("foo`bar") must throwA[IllegalArgumentException]
     }
-    "allow names without backticks" in {
+    "allow names without backticks" >> {
       NonBacktickName("foobar") must not(throwA[IllegalArgumentException])
       Label("foobar") must not(throwA[IllegalArgumentException])
       PropertyKey("foobar") must not(throwA[IllegalArgumentException])

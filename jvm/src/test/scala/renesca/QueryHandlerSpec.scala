@@ -35,7 +35,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     }
   }
 
-  //TODO: RestServiceSpec: Throw Exception on authorization Error
+  //TODO: RestServiceSpec: Throw Exception on authorization Error -- isnt this handled by handleErrors already?
   /*
   {
     "errors" : [ {
@@ -45,8 +45,8 @@ class QueryHandlerSpec extends Specification with Mockito {
   }
   */
 
-  "QueryHandler" should {
-    "clear changes after persisting raw graph" in {
+  "QueryHandler" >> {
+    "clear changes after persisting raw graph" >> {
       val queryHandler = new QueryHandler() {
         override protected def queryService(jsonRequest: json.Request): Future[json.Response] = Future.successful(json.Response())
         override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
@@ -60,7 +60,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(graph).clearChanges()
     }
 
-    "pass failure from builder.generateQueries" in {
+    "pass failure from builder.generateQueries" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Left("meh")
@@ -77,7 +77,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was no(graph).clearChanges()
     }
 
-    "pass failure from builder.applyQueries" in {
+    "pass failure from builder.applyQueries" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -95,7 +95,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was no(graph).clearChanges()
     }
 
-    "overloaded persistChanges for schema graph" in {
+    "overloaded persistChanges for schema graph" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -119,7 +119,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "fail persistChanges if schema graph cannot be validated" in {
+    "fail persistChanges if schema graph cannot be validated" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -151,7 +151,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "overloaded persistChanges for item" in {
+    "overloaded persistChanges for item" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -167,7 +167,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "overloaded persistChanges for schema item" in {
+    "overloaded persistChanges for schema item" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -188,7 +188,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "fail persistChanges if schema item cannot be validated" in {
+    "fail persistChanges if schema item cannot be validated" >> {
       val queryHandler = new QueryHandler() {
         override val builder = mock[QueryBuilder]
         builder.generateQueries(Seq.empty) returns Right(Seq.empty)
@@ -211,7 +211,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       there was no(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
     }
 
-    "create no graph data as an empty graph" in new GraphQuery {
+    "create no graph data as an empty graph" >> new GraphQuery {
 
       respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
@@ -219,7 +219,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       graphs.head.isEmpty mustEqual true
     }
 
-    "create an empty graph" in new GraphQuery {
+    "create an empty graph" >> new GraphQuery {
 
       respond("""
           {
@@ -231,7 +231,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       graphs.head.isEmpty mustEqual true
     }
 
-    "create a graph" in new GraphQuery {
+    "create a graph" >> new GraphQuery {
 
       respond("""
        {
@@ -256,7 +256,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       graphs.head.relations must contain(exactly(Relation(9, Node(1), Node(2), RelationType("HAS"))))
     }
 
-    "create multiple graphs from multiple results" in new GraphQuery {
+    "create multiple graphs from multiple results" >> new GraphQuery {
 
       respond("""
        {
@@ -306,7 +306,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       ))
     }
 
-    "create a graph from multiple graph datas" in new GraphQuery {
+    "create a graph from multiple graph datas" >> new GraphQuery {
 
       respond("""
        {
@@ -348,7 +348,7 @@ class QueryHandlerSpec extends Specification with Mockito {
       ))
     }
 
-    "create a graph from multiple datas - allow data without graph data" in new GraphQuery {
+    "create a graph from multiple datas - allow data without graph data" >> new GraphQuery {
 
       respond("""
         {
@@ -391,7 +391,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     }
   }
 
-  "create no table data as an empty table" in new TableQuery {
+  "create no table data as an empty table" >> new TableQuery {
 
     respond("""{"results": [{ "columns": ["n"], "data": [ ] }], "errors": [ ] }""")
 
@@ -399,7 +399,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     tables.head.isEmpty mustEqual true
   }
 
-  "create a table" in new TableQuery {
+  "create a table" >> new TableQuery {
     respond("""
     {
       "results": [
@@ -426,7 +426,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     )
   }
 
-  "create multiple graphs from multiple results" in new TableQuery {
+  "create multiple graphs from multiple results" >> new TableQuery {
     respond("""
     {
       "results": [
@@ -465,7 +465,7 @@ class QueryHandlerSpec extends Specification with Mockito {
     )
   }
 
-  "create a table from multiple datas - ignore data without row data" in new TableQuery {
+  "create a table from multiple datas - ignore data without row data" >> new TableQuery {
 
     respond("""
     {

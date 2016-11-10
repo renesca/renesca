@@ -15,14 +15,14 @@ class NodeLabelsSpec extends Specification {
     val label = Label("some_label")
   }
 
-  "NodeLabels" should {
-    "store label" in new MockNode {
+  "NodeLabels" >> {
+    "store label" >> new MockNode {
       A.labels += label
 
       A.labels must contain(exactly(label))
     }
 
-    "remove label" in new MockNode {
+    "remove label" >> new MockNode {
       A.labels += label
 
       A.labels -= label
@@ -30,29 +30,29 @@ class NodeLabelsSpec extends Specification {
       A.labels must beEmpty
     }
 
-    "not contain label" in new MockNode {
+    "not contain label" >> new MockNode {
       A.labels.contains(label) must beFalse
     }
 
-    "contain label" in new MockNode {
+    "contain label" >> new MockNode {
       A.labels += label
 
       A.labels.contains(label) must beTrue
     }
 
-    "provide iterator" in new MockNode {
+    "provide iterator" >> new MockNode {
       A.labels += label
 
       A.labels.iterator must contain(exactly(label))
     }
 
-    "provide empty" in new MockNode {
+    "provide empty" >> new MockNode {
       A.labels += label
 
       A.labels.empty must beEmpty
     }
 
-    "clear" in new MockNode {
+    "clear" >> new MockNode {
       A.labels ++= Set(Label("POST"), Label("TIMESTAMP"), Label("CONNECTABLE"), Label("EXPOSEDNODE"), Label("UUIDNODE"), Label("HIDEABLE"))
 
       A.labels.clear()

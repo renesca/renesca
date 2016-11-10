@@ -17,8 +17,8 @@ class ResponseSpec extends Specification with Mockito {
   implicit def mapToJson[T: Encoder](xs: Map[String, T]) = xs.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
-  "Response" can {
-    "be empty" in {
+  "Response" >> {
+    "be empty" >> {
       val json = """
         {
           "results" : [ ],
@@ -30,7 +30,7 @@ class ResponseSpec extends Specification with Mockito {
       response mustEqual Response()
     }
 
-    "contain one result" in {
+    "contain one result" >> {
       val json = """
         {
           "results" : [ {
@@ -44,7 +44,7 @@ class ResponseSpec extends Specification with Mockito {
       response mustEqual Response(results = List(Result(List("col1", "col2"), Nil)))
     }
 
-    "contain data" in {
+    "contain data" >> {
       val json = """
            {
            "results" : [ {
@@ -58,7 +58,7 @@ class ResponseSpec extends Specification with Mockito {
       response mustEqual Response(results = List(Result(List("col1"), List(Data()))))
     }
 
-    "contain error" in {
+    "contain error" >> {
       val json = """
           {
             "results" : [ ],
@@ -76,7 +76,7 @@ class ResponseSpec extends Specification with Mockito {
       ))
     }
 
-    "contain transaction information" in {
+    "contain transaction information" >> {
       val json = """
           {
             "commit": "http:\/\/localhost:7474\/db\/data\/transaction\/29\/commit",
@@ -95,7 +95,7 @@ class ResponseSpec extends Specification with Mockito {
       )
     }
 
-    "handle null" in {
+    "handle null" >> {
       val json = """
           {
             "results": [
@@ -120,7 +120,7 @@ class ResponseSpec extends Specification with Mockito {
       )))))
     }
 
-    "parse complicated result" in {
+    "parse complicated result" >> {
       val json = """
           {
             "results" : [ {

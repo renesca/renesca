@@ -298,7 +298,7 @@ class SchemaSpec extends Specification with Mockito {
     hyperRelations.head.rawItem mustEqual relation.rawItem
   }
 
-  "correct start/end node accessors" in {
+  "correct start/end node accessors" >> {
     val a = TheNode()
     val b = TheNode()
     val relation = TheRelation(a, b)
@@ -309,7 +309,7 @@ class SchemaSpec extends Specification with Mockito {
     relation.endNode.rawItem mustEqual b.rawItem
   }
 
-  "set graph in filterNodes" in {
+  "set graph in filterNodes" >> {
     val g = mock[raw.Graph]
     val filter = new Filter { override val graph = g }
     val node = TheNode()
@@ -317,7 +317,7 @@ class SchemaSpec extends Specification with Mockito {
     filtered.head.graph mustEqual g
   }
 
-  "set graph in filterHyperRelations" in {
+  "set graph in filterHyperRelations" >> {
     val g = mock[raw.Graph]
     val filter = new Filter { override val graph = g }
     val node = TheHyperRelation()
@@ -325,7 +325,7 @@ class SchemaSpec extends Specification with Mockito {
     filtered.head.graph mustEqual g
   }
 
-  "node.relationsAs" in {
+  "node.relationsAs" >> {
     val graph = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -338,7 +338,7 @@ class SchemaSpec extends Specification with Mockito {
     node2.outRelationsAs(TheRelation) must contain(exactly(relation2))
   }
 
-  "node.relationsAs (hyperrelations)" in {
+  "node.relationsAs (hyperrelations)" >> {
     val graph = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -351,7 +351,7 @@ class SchemaSpec extends Specification with Mockito {
     node2.outRelationsAs(TheHyperRelation) must contain(exactly(relation2))
   }
 
-  "node equality" in {
+  "node equality" >> {
     val node = TheNode()
     val node2 = TheNode.wrap(node.rawItem)
     val node3 = TheNode()
@@ -361,7 +361,7 @@ class SchemaSpec extends Specification with Mockito {
     node.equals("hi") mustEqual false
   }
 
-  "relation equality" in {
+  "relation equality" >> {
     val node = TheNode()
     val node2 = TheNode()
     val relation = TheRelation(node, node2)
@@ -373,7 +373,7 @@ class SchemaSpec extends Specification with Mockito {
     relation.equals("hi") mustEqual false
   }
 
-  "hyperrelation equality" in {
+  "hyperrelation equality" >> {
     val node = TheNode()
     val node2 = TheNode()
     val relation = TheHyperRelation(node, node2)
@@ -385,7 +385,7 @@ class SchemaSpec extends Specification with Mockito {
     relation.equals("hi") mustEqual false
   }
 
-  "keep graph when wrapping relation" in {
+  "keep graph when wrapping relation" >> {
     val schema = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -398,7 +398,7 @@ class SchemaSpec extends Specification with Mockito {
     node2.graph mustEqual node.relationsAs(TheRelation).head.endNode.graph
   }
 
-  "keep graph when wrapping hyperrelation" in {
+  "keep graph when wrapping hyperrelation" >> {
     val schema = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -413,7 +413,7 @@ class SchemaSpec extends Specification with Mockito {
     node2.graph mustEqual node.relationsAs(TheHyperRelation).head.endNodeOpt.get.graph
   }
 
-  "recursively add start- and endnode of relation" in {
+  "recursively add start- and endnode of relation" >> {
     val schema = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -426,7 +426,7 @@ class SchemaSpec extends Specification with Mockito {
     Seq(node, node2, hyperrelation, node3).map(_.graph).distinct must contain(exactly(schema.graph))
   }
 
-  "hyperrelation keeps start- and endnode if wrapped with relation" in {
+  "hyperrelation keeps start- and endnode if wrapped with relation" >> {
     val schema = new TheGraph
     val node = TheNode()
     val node2 = TheNode()
@@ -440,7 +440,7 @@ class SchemaSpec extends Specification with Mockito {
     conHyper.endNodeOpt.get.rawItem mustEqual node2.rawItem
   }.pendingUntilFixed
 
-  "hyperrelation keeps start- and endnode if wrapped as neighbour" in {
+  "hyperrelation keeps start- and endnode if wrapped as neighbour" >> {
     val schema = new TheGraph
     val node = TheNode()
     val node2 = TheNode()

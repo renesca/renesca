@@ -14,8 +14,8 @@ import spray.json._
 
 @RunWith(classOf[JUnitRunner])
 class DbServiceWithMockDbSpec extends HttpMockSpecification {
-  "DbService" should {
-    "execute graph query" in new DbMock(this) {
+  "DbService" >> {
+    "execute graph query" >> { DbMock(this) {
       val A = json.Node("1")
       val B = json.Node("2")
       val ArB = json.Relationship("3", "hopfen", A.id, B.id)

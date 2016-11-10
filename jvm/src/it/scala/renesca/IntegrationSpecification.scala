@@ -11,10 +11,10 @@ import scala.concurrent.duration._
 case class DbState(serverAvailable: Boolean, dbEmpty: Boolean, errorMsg: Option[String] = None) {
   def isAvailableAndEmpty = serverAvailable && dbEmpty
   def notReadyMessage: String = {
-    if(!isAvailableAndEmpty) {
-      (if(!serverAvailable)
-         "Cannot connect to Database Server."
-       else if(!dbEmpty) {
+    if (!isAvailableAndEmpty) {
+      (if (!serverAvailable)
+        "Cannot connect to Database Server."
+      else if (!dbEmpty) {
         "Test database is not empty."
       }) + errorMsg.map(" (" + _ + ")").getOrElse("")
     } else ""
@@ -23,7 +23,7 @@ case class DbState(serverAvailable: Boolean, dbEmpty: Boolean, errorMsg: Option[
 
 object IntegrationTestSetup {
   val testDb = new DbService
-  testDb.restService = new RestService(// TODO: don't hardcode, configure in environment
+  testDb.restService = new RestService( // TODO: don't hardcode, configure in environment
     server = "http://localhost:7474",
     timeout = Timeout(60.seconds), // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
     credentials = Some(BasicHttpCredentials("neo4j", "testingpw"))
@@ -33,10 +33,9 @@ object IntegrationTestSetup {
     try {
       val graph = testDb.queryGraph("MATCH (n) RETURN n LIMIT 1")
       DbState(serverAvailable = true, dbEmpty = graph.isEmpty)
-    }
-    catch {
+    } catch {
       case e: Exception =>
-        DbState(serverAvailable = false, dbEmpty = false, Some(s"Exception: ${ e.getMessage }"))
+        DbState(serverAvailable = false, dbEmpty = false, Some(s"Exception: ${e.getMessage}"))
     }
   }
 
@@ -60,7 +59,7 @@ object IntegrationTestSetup {
 
 class IntegrationTestSetupSpec extends Specification {
   // Fails the whole run if testing db is not set up
-  "Database should be available and empty" in {
+  "Database should be available and empty" >> {
     IntegrationTestSetup.dbIsReady mustEqual true
   }
 }
@@ -74,23 +73,22 @@ trait IntegrationSpecification extends Specification with AroundEach {
   def around[T: AsResult](t: => T): Result = {
     import IntegrationTestSetup._
     val db = dbState
-    if(db.isAvailableAndEmpty) {
+    if (db.isAvailableAndEmpty) {
       val result = ResultExecution.execute(AsResult(t))
-      if(cleanupDb())
+      if (cleanupDb())
         result
       else {
         // cleanUp succeeded with warning
-        if(result.isFailure)
+        if (result.isFailure)
           result.mapMessage(oldMessage =>
             s"$cleanupFailedMsg\n$oldMessage")
         else
           result.mapExpected(_ => s"    $cleanupFailedMsg")
       }
     } else {
-      new Skipped(s"\n    WARNING: ${ db.notReadyMessage }")
+      new Skipped(s"\n    WARNING: ${db.notReadyMessage}")
     }
   }
 
   implicit val db = IntegrationTestSetup.testDb
 }
-

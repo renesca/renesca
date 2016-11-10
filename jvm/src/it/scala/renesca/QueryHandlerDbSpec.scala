@@ -47,12 +47,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     resultRelation.properties("key") mustEqual data
   }
 
-  "QueryHandler" should {
-    "throw exception on Neo4j Error" in {
+  "QueryHandler" >> {
+    "throw exception on Neo4j Error" >> {
       db.query("this is invalid cypher syntax") must throwA[RuntimeException]
     }
 
-    "query table" in {
+    "query table" >> {
       db.query("create (n {a:1}),(m {a:2})")
       val table = db.queryTable("match (x) return x.a order by x.a")
 
@@ -70,19 +70,19 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "return no json data on query" in todo
   }
 
-  "QueryHandler.persist" should {
+  "QueryHandler.persist" >> {
 
-    "set long property on node" in { testNodeSetProperty(123) }
-    "set double property on node" in { testNodeSetProperty(1.337) }
-    "set string property on node" in { testNodeSetProperty("schnipp") }
-    "set boolean property on node" in { testNodeSetProperty(true) }
+    "set long property on node" >> { testNodeSetProperty(123) }
+    "set double property on node" >> { testNodeSetProperty(1.337) }
+    "set string property on node" >> { testNodeSetProperty("schnipp") }
+    "set boolean property on node" >> { testNodeSetProperty(true) }
 
-    "set long array property on node" in { testNodeSetProperty(List(1, 3)) }
-    "set double array property on node" in { testNodeSetProperty(List(1.7, 2.555555)) }
-    "set string array property on node" in { testNodeSetProperty(List("schnipp", "schnapp")) }
-    "set boolean array property on node" in { testNodeSetProperty(List(true, false)) }
+    "set long array property on node" >> { testNodeSetProperty(List(1, 3)) }
+    "set double array property on node" >> { testNodeSetProperty(List(1.7, 2.555555)) }
+    "set string array property on node" >> { testNodeSetProperty(List("schnipp", "schnapp")) }
+    "set boolean array property on node" >> { testNodeSetProperty(List(true, false)) }
 
-    "remove property from node" in {
+    "remove property from node" >> {
       val graph = Graph.empty
       val node = Node.create(properties = Map("yes" -> 0))
       graph.nodes += node
@@ -94,7 +94,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.properties must beEmpty
     }
 
-    "set label on node" in {
+    "set label on node" >> {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
@@ -106,7 +106,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.labels must contain(exactly(Label("BEER")))
     }
 
-    "remove label from node" in {
+    "remove label from node" >> {
       val graph = Graph.empty
       val node = Node.create(Set("WINE"))
       graph.nodes += node
@@ -118,7 +118,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.labels must beEmpty
     }
 
-    "delete node" in {
+    "delete node" >> {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
@@ -131,7 +131,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.nodes must beEmpty
     }
 
-    "delete match node" in {
+    "delete match node" >> {
       val graph = Graph.empty
       val node = Node.create(Set("BEER"))
       val node2 = Node.create(Set("WINE"))
@@ -149,7 +149,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.nodes.head.labels mustEqual Set(Label("BEER"))
     }
 
-    "delete node with relations" in {
+    "delete node with relations" >> {
       // 1. create (m)-r->(n)<-l-(q)
       // 2. query (m)-r->(n)
       // 3. delete n (implicitly deletes relation r from graph and relation l which is only in the database)
@@ -184,17 +184,17 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.relations must beEmpty
     }
 
-    "set long property on relation" in { testRelationSetProperty(123) }
-    "set double property on relation" in { testRelationSetProperty(1.337) }
-    "set string property on relation" in { testRelationSetProperty("schnipp") }
-    "set boolean property on relation" in { testRelationSetProperty(true) }
+    "set long property on relation" >> { testRelationSetProperty(123) }
+    "set double property on relation" >> { testRelationSetProperty(1.337) }
+    "set string property on relation" >> { testRelationSetProperty("schnipp") }
+    "set boolean property on relation" >> { testRelationSetProperty(true) }
 
-    "set long array property on relation" in { testRelationSetProperty(List(1, 3)) }
-    "set double array property on relation" in { testRelationSetProperty(List(1.7, 2.555555)) }
-    "set string array property on relation" in { testRelationSetProperty(List("schnipp", "schnapp")) }
-    "set boolean array property on relation" in { testRelationSetProperty(List(true, false)) }
+    "set long array property on relation" >> { testRelationSetProperty(List(1, 3)) }
+    "set double array property on relation" >> { testRelationSetProperty(List(1.7, 2.555555)) }
+    "set string array property on relation" >> { testRelationSetProperty(List("schnipp", "schnapp")) }
+    "set boolean array property on relation" >> { testRelationSetProperty(List(true, false)) }
 
-    "remove property from relation" in {
+    "remove property from relation" >> {
       val graph = Graph.empty
       val start = Node.create
       val end = Node.create
@@ -210,7 +210,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.properties must beEmpty
     }
 
-    "delete relation" in {
+    "delete relation" >> {
       val graph = Graph.empty
       val start = Node.create
       val end = Node.create
@@ -228,7 +228,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.relations must beEmpty
     }
 
-    "delete match relation" in {
+    "delete match relation" >> {
       val graph = Graph.empty
       val start = Node.create
       val end = Node.create
@@ -251,7 +251,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.relations.head.relationType mustEqual RelationType("DRINKS")
     }
 
-    "add node" in {
+    "add node" >> {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
@@ -264,7 +264,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.properties must beEmpty
     }
 
-    "add merge node" in {
+    "add merge node" >> {
       def createNode: (Graph, Node) = {
         val graph = Graph.empty
         val node = Node.merge(Seq("merge"), Map("me" -> "be"), Set("me"))
@@ -285,7 +285,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       node2.properties("you") must beEqualTo(node.properties("you"))
     }
 
-    "add merge node with onMatch setter" in {
+    "add merge node with onMatch setter" >> {
       val graph = Graph.empty
       val node = Node.create(Seq("merge"))
       graph.nodes += node
@@ -300,7 +300,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       node2.properties("new") must beEqualTo(StringPropertyValue("yes"))
     }
 
-    "add match node" in {
+    "add match node" >> {
       val graph = Graph.empty
       val node = Node.create(Seq("matsch"), Map("me" -> "be", "you" -> "not"))
       graph.nodes += node
@@ -323,7 +323,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       node2.properties("foo") must beEqualTo(StringPropertyValue("bar"))
     }
 
-    "fail on missing match node results" in {
+    "fail on missing match node results" >> {
       val graph = Graph.empty
       val node = Node.matches(Seq("matsch"), Map("me" -> "be"))
       graph.nodes += node
@@ -334,7 +334,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "Query result is missing desired node: "
     }
 
-    "fail on multiple match node results" in {
+    "fail on multiple match node results" >> {
       val graph = Graph.empty
       graph.nodes += Node.create
       graph.nodes += Node.create
@@ -348,7 +348,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "More than one query result for node: "
     }
 
-    "add properties and labels after NodeAdd" in {
+    "add properties and labels after NodeAdd" >> {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
@@ -360,7 +360,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
 
-    "set properties and labels in NodeAdd" in {
+    "set properties and labels in NodeAdd" >> {
       val graph = Graph.empty
       val node = Node.create(Set("foo", "bar"), Map("test" -> 5))
       graph.nodes += node
@@ -370,7 +370,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
     }
 
-    "add relation" in {
+    "add relation" >> {
       val graph = Graph.empty
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
@@ -388,7 +388,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.relationType mustEqual RelationType("can haz")
     }
 
-    "add merge relation" in {
+    "add merge relation" >> {
       val (nodeA, nodeB) = (Node.create, Node.create)
 
       def createRelation: (Graph, Relation) = {
@@ -413,7 +413,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation2.properties("you") must beEqualTo(relation.properties("you"))
     }
 
-    "add merge relation with onMatch setter" in {
+    "add merge relation with onMatch setter" >> {
       val (nodeA, nodeB) = (Node.create, Node.create)
 
       def createRelation(graph: Graph, relation: Relation) {
@@ -436,7 +436,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation2.properties("new") must beEqualTo(StringPropertyValue("yes"))
     }
 
-    "add match relation" in {
+    "add match relation" >> {
       val graph = Graph.empty
       val (nodeA, nodeB) = (Node.create, Node.create)
       val relation = Relation.create(nodeA, "matsch", nodeB, Map("me" -> "be", "you" -> "not"))
@@ -463,7 +463,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation2.properties("you") must beEqualTo(relation.properties("you"))
     }
 
-    "fail on missing match relation results" in {
+    "fail on missing match relation results" >> {
       val graph = Graph.empty
       val (nodeA, nodeB) = (Node.create, Node.create)
       val relation = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"))
@@ -476,7 +476,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "Query result is missing desired relation: "
     }
 
-    "fail on multiple match relation results" in {
+    "fail on multiple match relation results" >> {
       val graph = Graph.empty
       val a = Node.create(Seq("a"))
       val b = Node.create(Seq("b"))
@@ -495,7 +495,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "More than one query result for relation: "
     }
 
-    "add properties after RelationAdd" in {
+    "add properties after RelationAdd" >> {
       val graph = Graph.empty
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
@@ -509,7 +509,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
 
-    "set properties in RelationAdd" in {
+    "set properties in RelationAdd" >> {
       val graph = Graph.empty
       val start = Node.create
       val end = Node.create
@@ -522,7 +522,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
 
-    "fail on missing match path results" in {
+    "fail on missing match path results" >> {
       val graph = Graph.empty
       val (nodeA, nodeB) = (Node.create, Node.create)
       val relation = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"))
@@ -534,7 +534,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "Query result is missing desired path: "
     }
 
-    "fail on multiple match path results" in {
+    "fail on multiple match path results" >> {
       val graph = Graph.empty
       val a = Node.create(Seq("a"))
       val b = Node.create(Seq("b"))
@@ -557,7 +557,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       failure.get startsWith "More than one query result for path: "
     }
 
-    "add merge Path" in {
+    "add merge Path" >> {
       val graph = Graph.empty
       val start = Node.merge(Seq("START"))
       val middle = Node.merge(Seq("MIDDLE"))
@@ -589,7 +589,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       r2 mustEqual r22
     }
 
-    "add match Path" in {
+    "add match Path" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val middle = Node.create(Seq("MIDDLE"))
@@ -621,7 +621,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       r2 mustEqual r22
     }
 
-    "add merge Path with matched middle node" in {
+    "add merge Path with matched middle node" >> {
       val graph = Graph.empty
       val middle = Node.create(Seq("MIDDLE"))
       graph.nodes += middle
@@ -644,7 +644,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       middle mustEqual middle2
     }
 
-    "add merge Path with matched start and end node" in {
+    "add merge Path with matched start and end node" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -669,7 +669,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       end mustEqual end2
     }
 
-    "delete match path" in {
+    "delete match path" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -709,7 +709,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.nodes.map(_.labels) contains Set(Label("MIDDLE2"))
     }
 
-    "add path with removed middle node" in {
+    "add path with removed middle node" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -728,7 +728,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.nodes.size mustEqual 2
     }
 
-    "fail on add path with removed end node" in {
+    "fail on add path with removed end node" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -748,7 +748,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.nodes.size mustEqual 0
     }
 
-    "fail on add path with removed relation" in {
+    "fail on add path with removed relation" >> {
       val graph = Graph.empty
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
@@ -768,7 +768,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       wholeGraph.nodes.size mustEqual 0
     }
 
-    "duplicate nodes" in {
+    "duplicate nodes" >> {
       val graphA = Graph(Seq(Node.create(Seq("MEH"))))
       db.persistChanges(graphA)
 
@@ -781,7 +781,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes.head mustEqual graphA.nodes.head
     }
 
-    "duplicate nodes with relation" in {
+    "duplicate nodes with relation" >> {
       val graphA = Graph(Seq(Node.create(Seq("MEH"))))
       db.persistChanges(graphA)
 
@@ -796,7 +796,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes.head mustEqual graphA.nodes.head
     }
 
-    "directly persist nodes" in {
+    "directly persist nodes" >> {
       val a = Node.create(Set("I"))
       val b = Node.merge(Set("cheezburger"))
       db.persistChanges(a, b).isDefined mustEqual false
@@ -805,7 +805,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       b.origin.isLocal mustEqual false
     }
 
-    "directly persist relations with nodes" in {
+    "directly persist relations with nodes" >> {
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
       val relation = Relation.create(start, "can haz", end)
@@ -816,7 +816,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       relation.origin.isLocal mustEqual false
     }
 
-    "directly persist relations without nodes" in {
+    "directly persist relations without nodes" >> {
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
       val relation = Relation.create(start, "can haz", end)
@@ -826,7 +826,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       end.origin.isLocal mustEqual false
       relation.origin.isLocal mustEqual false
     }
-    "order by in query returns ordered nodes in graph" in {
+    "order by in query returns ordered nodes in graph" >> {
       val g = Graph.empty
       for (i <- List(9, 7, 3, 2, 4, 6, 1, 10, 0, 5, 8))
         g.nodes += Node.create(properties = Map("i" -> i))
@@ -836,7 +836,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       resultGraph.nodes.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
     }
 
-    "order by in query returns ordered nodes in node neighbours" in {
+    "order by in query returns ordered nodes in node neighbours" >> {
       val g = Graph.empty
       val n = Node.create(List("A"))
       g.nodes += n

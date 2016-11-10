@@ -12,9 +12,8 @@ import cats.syntax.either._
 class GraphDataSpec extends Specification with Mockito {
   def decodeGraph(s: String): Graph = decode[Graph](s).toOption.get
 
-  //TODO: use modern specs syntax: >> instead of can/in/should ...
-  "GraphData" can {
-    "be empty" in {
+  "GraphData" >> {
+    "be empty" >> {
       val json = """
         {
           "nodes": [],
@@ -24,7 +23,7 @@ class GraphDataSpec extends Specification with Mockito {
       decodeGraph(json) mustEqual Graph()
     }
 
-    "have nodes" in {
+    "have nodes" >> {
       val json = """
           {
            "nodes": [{
@@ -42,7 +41,7 @@ class GraphDataSpec extends Specification with Mockito {
       decodeGraph(json) mustEqual Graph(List(Node("1"), Node("2")))
     }
 
-    "have relationships" in {
+    "have relationships" >> {
       val json = """
            {
            "nodes": [{

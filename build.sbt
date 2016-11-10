@@ -3,12 +3,12 @@
 
 name := "renesca"
 
-// also change the version in README.md
+// don't forget to change the version in README.md
 version in ThisBuild := "1.0.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.11.8"
 
-crossScalaVersions in ThisBuild := Seq("2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.11.8", "2.12.0")
 
 lazy val root = project.in(file(".")).
   aggregate(renescaJS, renescaJVM).
@@ -38,20 +38,6 @@ lazy val renesca = crossProject.in(file("."))
   )
   .settings(
     name := "renesca",
-    // Specs2
-    scalacOptions in Test ++= Seq("-Yrangepos"),
-
-    // scalaxy (faster collection operations)
-    // scalacOptions += "-Xplugin-require:scalaxy-streams",
-    // scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
-    // scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
-    // autoCompilerPlugins := true,
-    // addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4"),
-
-    // publishing
-    pgpSecretRing := file("local.secring.gpg"),
-    pgpPublicRing := file("local.pubring.gpg"),
-    organization := "com.github.renesca",
 
     libraryDependencies ++= (
       "io.circe" %% "circe-core" % circeVersion ::
@@ -59,6 +45,11 @@ lazy val renesca = crossProject.in(file("."))
       "io.circe" %% "circe-parser" % circeVersion ::
       Nil
     ),
+
+    // publishing
+    pgpSecretRing := file("local.secring.gpg"),
+    pgpPublicRing := file("local.pubring.gpg"),
+    organization := "com.github.renesca",
 
     pomExtra := {
       <url>https://github.com/renesca/renesca</url>
@@ -91,12 +82,27 @@ lazy val renesca = crossProject.in(file("."))
       </developers>
     },
 
+    // Specs2
+    scalacOptions in Test ++= Seq("-Yrangepos"),
+
+    // TODO: only works for 2.11
+    // scalaxy (faster collection operations)
+    // scalacOptions += "-Xplugin-require:scalaxy-streams",
+    // scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
+    // scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
+    // autoCompilerPlugins := true,
+    // addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4"),
+
     initialCommands in console := """
       import renesca.graph._
-      import renesca.parameter._
-      import renesca.parameter.implicits._
       import renesca._
-      import spray.http.BasicHttpCredentials
+
+      import akka.stream.ActorMaterializer
+      import akka.actor.ActorSystem
+      import akka.http.scaladsl.model.headers.BasicHttpCredentials
+
+      implicit val actorSystem: ActorSystem = ActorSystem()
+      implicit val materializer = ActorMaterializer()
 
       val credentials = BasicHttpCredentials("neo4j", "neo4j")
       val restService = new RestService("http://localhost:7474", Some(credentials))
@@ -104,11 +110,13 @@ lazy val renesca = crossProject.in(file("."))
       val db = new DbService
       db.restService = restService
     """,
+
     resolvers ++= Seq(
       "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
       "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases", // to fix specs2 dependency
       "Sonatype" at "https://oss.sonatype.org/content/repositories/releases"
     ),
+
     scalacOptions ++= (
       "-encoding" :: "UTF-8" ::
       "-unchecked" ::

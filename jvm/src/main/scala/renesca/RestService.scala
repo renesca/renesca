@@ -24,12 +24,7 @@ case class TransactionId(id: String) extends AnyVal {
 // implicit val actorSystem: ActorSystem = ActorSystem()
 // implicit val materializer = ActorMaterializer()
 
-class RestService(
-  val server: String,
-  credentials: Option[BasicHttpCredentials] = None,
-  implicit val actorSystem: ActorSystem,
-  implicit val materializer: ActorMaterializer
-) {
+class RestService(val server: String, credentials: Option[BasicHttpCredentials] = None)(implicit val actorSystem: ActorSystem, implicit val materializer: ActorMaterializer) {
   // dispatcher provides execution context
   import actorSystem.dispatcher
 

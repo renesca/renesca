@@ -32,12 +32,12 @@ trait QueryInterface {
   def queryGraphs(queries: Query*): Future[Seq[Graph]]
   def queryTables(queries: Query*): Future[Seq[Table]]
   def queryGraphsAndTables(queries: Query*): Future[Seq[(Graph, Table)]]
-  def query(queries: Query*): Unit
+  def query(queries: Query*): Future[Unit]
 
   def queryGraph(statement: String, parameters: ParameterMap = Map.empty): Future[Graph] = queryGraph(Query(statement, parameters))
   def queryTable(statement: String, parameters: ParameterMap = Map.empty): Future[Table] = queryTable(Query(statement, parameters))
   def queryGraphAndTable(statement: String, parameters: ParameterMap = Map.empty): Future[(Graph, Table)] = queryGraphAndTable(Query(statement, parameters))
-  def query(statement: String, parameters: ParameterMap = Map.empty): Unit = query(Query(statement, parameters))
+  def query(statement: String, parameters: ParameterMap = Map.empty): Future[Unit] = query(Query(statement, parameters))
 
   def persistChanges(graph: Graph): Future[Unit]
 
@@ -121,7 +121,7 @@ trait QueryHandler extends QueryInterface {
     results map (r => extractGraphs(r) zip extractTables(r))
   }
 
-  def query(queries: Query*) { executeQueries(queries, Nil) }
+  def query(queries: Query*): Future[Unit] = { executeQueries(queries, Nil) map { _ => Unit } }
 
   //TODO: persist changes should ONLY work on transactions!
   def persistChanges(graph: Graph): Future[Unit] = {
@@ -180,7 +180,7 @@ class Transaction extends QueryHandler { thisTransaction =>
   private var valid = true
   def isValid = valid
   def invalidate() { valid = false } // TODO: use promise?
-  private def throwIfNotValid() {
+  private def throwIfNotValid() { //TODO: refactor for use with futures
     if (!valid)
       throw new RuntimeException("Transaction is not valid anymore.")
   }
@@ -204,8 +204,7 @@ class Transaction extends QueryHandler { thisTransaction =>
     } else Future.successful(Unit)
   }
 
-  def rollback():Future[Unit] = {
-    //TODO: return future
+  def rollback(): Future[Unit] = {
     val f = id match {
       case Some(transactionId) => restService.rollbackTransaction(transactionId)
       case None => Future.failed(new Exception("Cannot rollback. No running transaction found."))
@@ -222,13 +221,16 @@ class Transaction extends QueryHandler { thisTransaction =>
     // This means that methods like persistChanges which are firing multiple queries and thus calling querySerice
     // multiple times need to be modified or wrapped.
 
-    def apply() {
+    def apply(): Future[Unit] = Future {
       throwIfNotValid()
+      // TODO: assert(id.isDefined) if this is always the case when valid, then why not encode valid in option[transactionid]?
       for (transactionId <- id) {
+        //TODO: error from this future is discarded:
         for (jsonResponse <- restService.commitTransaction(transactionId)) yield handleError(exceptionFromErrors(jsonResponse))
       }
 
       invalidate()
+      Unit
     }
 
     override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {

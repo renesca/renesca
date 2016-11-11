@@ -18,7 +18,9 @@ import cats.syntax.either._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 //TODO: type alias?
-case class TransactionId(id: String) extends AnyVal {
+// TransactionId cannot be a value class, because value classes cannot be used for mocking method parameters in tests. (e.g. TransactionSpec)
+// https://stackoverflow.com/questions/28111015/mockito-stubbing-method-with-value-class-argument-fails-with-nullpointerexceptio
+case class TransactionId(id: String) {
   override def toString = id
 }
 // implicit val actorSystem: ActorSystem = ActorSystem()

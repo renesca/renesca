@@ -45,7 +45,8 @@ class TransactionSpec extends Specification with Mockito {
       val tx = newTransaction
 
       tx.query(statement)
-      tx.commit()
+      val result = tx.commit()
+      Await.ready(result, 10 seconds)
 
       there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
       there was one(tx.restService).commitTransaction(TransactionId("1"))
@@ -56,9 +57,9 @@ class TransactionSpec extends Specification with Mockito {
   "open transaction on first, resume on second request" >> {
     val tx = newTransaction
 
-    tx.query(statement)
-    tx.query(statement)
-    tx.commit()
+    Await.ready(tx.query(statement), 10 seconds)
+    Await.ready(tx.query(statement), 10 seconds)
+    Await.ready(tx.commit(), 10 seconds)
 
     there was one(tx.restService).openTransaction(jsonRequestWithoutResult)
     there was one(tx.restService).resumeTransaction(TransactionId("1"), jsonRequestWithoutResult)
@@ -87,7 +88,8 @@ class TransactionSpec extends Specification with Mockito {
   "invalidate transaction on commit with query" >> {
     val tx = newTransaction
 
-    tx.commit.queryGraphs(statement)
+    val result = tx.commit.queryGraphs(statement)
+    Await.ready(result, 10 seconds)
 
     tx.isValid mustEqual false
   }
@@ -96,9 +98,9 @@ class TransactionSpec extends Specification with Mockito {
     val tx = newTransaction
     tx.invalidate()
 
-    tx.queryGraph(statement) must throwA[RuntimeException]
-    tx.commit() must throwA[RuntimeException]
-    tx.commit.queryGraphs(statement) must throwA[RuntimeException]
+    Await.result(tx.queryGraph(statement), 10 seconds) must throwA[RuntimeException]
+    Await.result(tx.commit(), 10 seconds) must throwA[RuntimeException]
+    Await.result(tx.commit.queryGraphs(statement), 10 seconds) must throwA[RuntimeException]
   }
 
   "error in transaction rollbacks transaction and throws exception" >> {
@@ -180,7 +182,7 @@ class TransactionSpec extends Specification with Mockito {
       override protected def handleError(exceptions: Option[Exception]): Future[Unit] = Future.successful(Unit)
 
       override val commit = new CommitTransaction {
-        override def apply() = committed += 1
+        override def apply() = { committed += 1; Future.successful(Unit) }
       }
     }
 

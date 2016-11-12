@@ -12,9 +12,7 @@ import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 @RunWith(classOf[JUnitRunner])
 class GraphChangeSpec extends Specification with Mockito {
 
-  implicit def intToJson(x: Int) = x.asJson
-  implicit def stringToJson(x: String) = x.asJson
-  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   "GraphChange" >> {

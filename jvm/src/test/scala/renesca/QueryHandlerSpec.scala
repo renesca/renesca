@@ -21,9 +21,8 @@ class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
 
   implicit val executionEnv: ExecutionEnv = ExecutionEnv.fromGlobalExecutionContext
 
-  implicit def intToJson(x: Int) = x.asJson
-  implicit def stringToJson(x: String) = x.asJson
-  implicit def listToJson[T: Encoder](xs: List[T]) = xs.asJson
+  implicit def toJson[T: Encoder](x: T) = x.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
 
   trait GraphQuery extends Scope {
     val dbService = new DbService

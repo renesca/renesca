@@ -3,20 +3,24 @@ package renesca
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import renesca.graph._
-import renesca.parameter._
-import renesca.parameter.implicits._
 import renesca.table.Table
+import concurrent.Await
+import concurrent.duration._
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 @RunWith(classOf[JUnitRunner])
 class QueryHandlerDbSpec extends IntegrationSpecification {
 
+  implicit def toJson[T: Encoder](x: T) = x.asJson
+  implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
+
   def resultNode: Node = {
-    val resultGraph = db.queryGraph("match (n) return n")
+    val resultGraph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
     resultGraph.nodes.head
   }
 
   def resultRelation: Relation = {
-    val resultGraph = db.queryGraph("match ()-[r]-() return r")
+    val resultGraph = Await.result(db.queryGraph("match ()-[r]-() return r"), 60 seconds)
     resultGraph.relations.head
   }
 
@@ -27,7 +31,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     graph.nodes += node
 
     node.properties("key") = data
-    db.persistChanges(graph).isDefined mustEqual false
+    Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
     resultNode.properties("key") mustEqual data
   }
@@ -42,14 +46,14 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     graph.relations += relation
 
     relation.properties("key") = data
-    db.persistChanges(graph).isDefined mustEqual false
+    Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
     resultRelation.properties("key") mustEqual data
   }
 
   "QueryHandler" >> {
     "throw exception on Neo4j Error" >> {
-      db.query("this is invalid cypher syntax") must throwA[RuntimeException]
+      Await.result(db.query("this is invalid cypher syntax"), 60 seconds) must throwA[RuntimeException]
     }
 
     "query table" >> {
@@ -86,10 +90,10 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create(properties = Map("yes" -> 0))
       graph.nodes += node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       node.properties -= "yes"
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultNode.properties must beEmpty
     }
@@ -98,10 +102,10 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       node.labels += Label("BEER")
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultNode.labels must contain(exactly(Label("BEER")))
     }
@@ -110,10 +114,10 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create(Set("WINE"))
       graph.nodes += node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       node.labels -= Label("WINE")
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultNode.labels must beEmpty
     }
@@ -122,12 +126,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create
       graph.nodes += node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       graph.nodes -= node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
-      val resultGraph = db.queryGraph("match (n) return n")
+      val resultGraph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       resultGraph.nodes must beEmpty
     }
 
@@ -137,14 +141,14 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val node2 = Node.create(Set("WINE"))
       graph.nodes += node
       graph.nodes += node2
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val del = Node.matches(Set("WINE"))
       graph2.nodes -= del
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
-      val resultGraph = db.queryGraph("match (n) return n")
+      val resultGraph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       resultGraph.nodes.size mustEqual 1
       resultGraph.nodes.head.labels mustEqual Set(Label("BEER"))
     }
@@ -163,22 +167,22 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val rel1 = Relation.create(m, "INTERNAL", n)
       val rel2 = Relation.create(n, "EXTERNAL", o)
       graph.relations ++= List(rel1, rel2)
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
-      db.queryWholeGraph.nodes must haveSize(3)
+      Await.result(db.queryWholeGraph, 60 seconds).nodes must haveSize(3)
 
-      val reducedGraph = db.queryGraph(Query(
+      val reducedGraph = Await.result(db.queryGraph(Query(
         "match (m)-[r:INTERNAL]->(n) where id(m) = {mid} and id(n) = {nid} return n,r,m",
         Map("mid" -> m.origin.asInstanceOf[Id].id, "nid" -> n.origin.asInstanceOf[Id].id)
-      ))
+      )), 60 seconds)
 
       reducedGraph.nodes must haveSize(2) // m, n
       reducedGraph.relations must haveSize(1) // r
 
       reducedGraph.nodes -= n // deletes node n and relations l,r
-      db.persistChanges(reducedGraph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
-      val resultGraph = db.queryWholeGraph
+      val resultGraph = Await.result(db.queryWholeGraph, 60 seconds)
       resultGraph.nodes must haveSize(2)
       resultGraph.nodes must not contain n
       resultGraph.relations must beEmpty
@@ -202,10 +206,10 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += end
       val relation = Relation.create(start, "EATS", end, Map("yes" -> 100))
       graph.relations += relation
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) mustEqual false
 
       relation.properties -= "yes"
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) mustEqual false
 
       resultRelation.properties must beEmpty
     }
@@ -218,12 +222,12 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += end
       val relation = Relation.create(start, "EATS", end)
       graph.relations += relation
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) mustEqual false
 
       graph.relations -= relation
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) mustEqual false
 
-      val resultGraph = db.queryWholeGraph
+      val resultGraph = Await.result(db.queryWholeGraph, 60 seconds)
       resultGraph.nodes must haveSize(2)
       resultGraph.relations must beEmpty
     }
@@ -238,14 +242,14 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val relation2 = Relation.create(start, "DRINKS", end)
       graph.relations += relation
       graph.relations += relation2
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val relation3 = Relation.matches(start, "EATS", end)
       graph2.relations -= relation3
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
-      val resultGraph = db.queryWholeGraph
+      val resultGraph = Await.result(db.queryWholeGraph, 60 seconds)
       resultGraph.nodes must haveSize(2)
       resultGraph.relations must haveSize(1)
       resultGraph.relations.head.relationType mustEqual RelationType("DRINKS")
@@ -256,7 +260,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val node = Node.create
       graph.nodes += node
       node.origin.kind mustEqual Create.kind
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
       node.origin.kind mustEqual Id.kind
 
       resultNode.origin mustEqual node.origin
@@ -297,7 +301,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       db.persistChanges(graph2)
 
       node2.origin must beEqualTo(node.origin)
-      node2.properties("new") must beEqualTo(StringPropertyValue("yes"))
+      node2.properties("new") must beEqualTo("yes")
     }
 
     "add match node" >> {
@@ -320,7 +324,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph2.nodes.size must beEqualTo(1)
       node2.origin must beEqualTo(node.origin)
       node2.properties("you") must beEqualTo(node.properties("you"))
-      node2.properties("foo") must beEqualTo(StringPropertyValue("bar"))
+      node2.properties("foo") must beEqualTo("bar")
     }
 
     "fail on missing match node results" >> {
@@ -328,24 +332,24 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val node = Node.matches(Seq("matsch"), Map("me" -> "be"))
       graph.nodes += node
       val failure = db.persistChanges(graph)
+      Await.result(failure, 60 seconds) must throwAn[Exception]
 
       graph.changes.size mustEqual 1
-      failure.isDefined mustEqual true
-      failure.get startsWith "Query result is missing desired node: "
+      //TODO: failure.get startsWith "Query result is missing desired node: "
     }
 
     "fail on multiple match node results" >> {
       val graph = Graph.empty
       graph.nodes += Node.create
       graph.nodes += Node.create
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val node = Node.matches
       graph.nodes += node
       val failure = db.persistChanges(graph)
 
-      failure.isDefined mustEqual true
-      failure.get startsWith "More than one query result for node: "
+      Await.result(failure, 60 seconds) must throwAn[Exception]
+      //TODO: failure.get startsWith "More than one query result for node: "
     }
 
     "add properties and labels after NodeAdd" >> {
@@ -354,7 +358,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += node
       node.properties += ("test" -> 5)
       node.labels ++= Set("foo", "bar")
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
@@ -364,7 +368,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val node = Node.create(Set("foo", "bar"), Map("test" -> 5))
       graph.nodes += node
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultNode.properties mustEqual Map("test" -> 5)
       resultNode.labels must contain(exactly(Label("foo"), Label("bar")))
@@ -379,7 +383,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val relation = Relation.create(start, "can haz", end)
       graph.relations += relation
       relation.origin.kind mustEqual Create.kind
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
       relation.origin.kind mustEqual Id.kind
 
       resultRelation mustEqual relation
@@ -402,11 +406,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
       val (graph, relation) = createRelation
       relation.properties += ("you" -> "not")
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val (graph2, relation2) = createRelation
       relation2.origin.kind mustEqual Merge.kind
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
       relation2.origin.kind mustEqual Id.kind
 
       relation2.origin must beEqualTo(relation.origin)
@@ -425,15 +429,15 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val relation = Relation.create(nodeA, "merge", nodeB)
       createRelation(graph, relation)
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val relation2 = Relation.merge(nodeA, "merge", nodeB, Map("new" -> "yes"), onMatch = Set("new"))
       createRelation(graph2, relation2)
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
       relation2.origin must beEqualTo(relation.origin)
-      relation2.properties("new") must beEqualTo(StringPropertyValue("yes"))
+      relation2.properties("new") must beEqualTo("yes")
     }
 
     "add match relation" >> {
@@ -447,7 +451,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val propertyDistraction = Relation.create(nodeA, "sand", nodeB, Map("me" -> "be"))
       graph.relations += labelDistraction
       graph.relations += propertyDistraction
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val relation2 = Relation.matches(nodeA, "matsch", nodeB, Map("me" -> "be"), Set("me"))
@@ -455,7 +459,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph2.nodes += nodeB
       graph2.relations += relation2
       relation2.origin.kind mustEqual Match.kind
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
       relation2.origin.kind mustEqual Id.kind
 
       graph2.relations.size must beEqualTo(1)
@@ -472,8 +476,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.relations += relation
       val failure = db.persistChanges(graph)
 
-      failure.isDefined mustEqual true
-      failure.get startsWith "Query result is missing desired relation: "
+      Await.result(failure, 60 seconds) must throwAn[Exception]
+      //TODO: failure.get startsWith "Query result is missing desired relation: "
     }
 
     "fail on multiple match relation results" >> {
@@ -483,7 +487,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r = Relation.create(a, "r", b)
       val q = Relation.create(a, "r", b)
       graph.relations ++= Seq(r, q)
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val a2 = Node.matches(Seq("a"))
       val b2 = Node.matches(Seq("b"))
@@ -491,8 +495,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.relations += rq
       val failure = db.persistChanges(graph)
 
-      failure.isDefined mustEqual true
-      failure.get startsWith "More than one query result for relation: "
+      Await.result(failure, 60 seconds) must throwAn[Exception]
+      //TODO: failure.get startsWith "More than one query result for relation: "
     }
 
     "add properties after RelationAdd" >> {
@@ -504,7 +508,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val relation = Relation.create(start, "can haz", end)
       graph.relations += relation
       relation.properties += ("one" -> "yes")
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
@@ -517,7 +521,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += end
       val relation = Relation.create(start, "can haz", end, Map("one" -> "yes"))
       graph.relations += relation
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       resultRelation.properties mustEqual Map("one" -> "yes")
     }
@@ -530,8 +534,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph += path
       val failure = db.persistChanges(graph)
 
-      failure.isDefined mustEqual true
-      failure.get startsWith "Query result is missing desired path: "
+      Await.result(failure, 60 seconds) must throwAn[Exception]
+      //TODO: failure.get startsWith "Query result is missing desired path: "
     }
 
     "fail on multiple match path results" >> {
@@ -544,7 +548,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val Right(pq) = Path(q)
       graph += pr
       graph += pq
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val a2 = Node.matches(Seq("a"))
       val b2 = Node.matches(Seq("b"))
@@ -553,8 +557,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph += prq
       val failure = db.persistChanges(graph)
 
-      failure.isDefined mustEqual true
-      failure.get startsWith "More than one query result for path: "
+      Await.result(failure, 60 seconds) must throwAn[Exception]
+      //TODO: failure.get startsWith "More than one query result for path: "
     }
 
     "add merge Path" >> {
@@ -566,7 +570,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r2 = Relation.merge(middle, "r2", end)
       val Right(path) = Path(r1, r2)
       graph += path
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val start2 = Node.merge(Seq("START"))
@@ -576,9 +580,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r22 = Relation.merge(middle2, "r2", end2)
       val Right(path2) = Path(r12, r22)
       graph2 += path2
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 2
       wholeGraph.nodes.size mustEqual 3
@@ -598,7 +602,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r2 = Relation.create(middle, "r2", end)
       val Right(path) = Path(r1, r2)
       graph += path
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val start2 = Node.matches(Seq("START"))
@@ -608,9 +612,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r22 = Relation.matches(middle2, "r2", end2)
       val Right(path2) = Path(r12, r22)
       graph2 += path2
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 2
       wholeGraph.nodes.size mustEqual 3
@@ -625,7 +629,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val graph = Graph.empty
       val middle = Node.create(Seq("MIDDLE"))
       graph.nodes += middle
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val start2 = Node.merge(Seq("START"))
@@ -635,9 +639,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r22 = Relation.merge(middle2, "r2", end2)
       val Right(path2) = Path(r12, r22)
       graph2 += path2
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 2
       wholeGraph.nodes.size mustEqual 3
@@ -649,7 +653,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val start = Node.create(Seq("START"))
       val end = Node.create(Seq("END"))
       graph.nodes ++= Seq(start, end)
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val graph2 = Graph.empty
       val start2 = Node.matches(Seq("START"))
@@ -659,9 +663,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val r22 = Relation.merge(middle2, "r2", end2)
       val Right(path2) = Path(r12, r22)
       graph2 += path2
-      db.persistChanges(graph2).isDefined mustEqual false
+      Await.result(db.persistChanges(graph2), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 2
       wholeGraph.nodes.size mustEqual 3
@@ -688,7 +692,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes += middle
       graph.relations += r1
       graph.relations += r2
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
       val matchGraph = Graph.empty
       val matchMiddle = Node.matches(Seq("MIDDLE"))
@@ -700,9 +704,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       matchGraph.nodes -= matchMiddle
       matchGraph.relations -= matchr1
       matchGraph.relations -= matchr2
-      db.persistChanges(matchGraph).isDefined mustEqual false
+      Await.result(db.persistChanges(matchGraph), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 2
       wholeGraph.nodes.size mustEqual 3
@@ -720,9 +724,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val Right(path) = Path(r1, r2)
       graph += path
       graph.nodes -= middle
-      db.persistChanges(graph).isDefined mustEqual false
+      Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
       wholeGraph.relations.size mustEqual 0
       wholeGraph.nodes.size mustEqual 2
@@ -741,9 +745,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.nodes -= end
       val failure = db.persistChanges(graph)
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
-      failure.isDefined mustEqual true
+      Await.result(failure, 60 seconds) must throwAn[Exception]
       wholeGraph.relations.size mustEqual 0
       wholeGraph.nodes.size mustEqual 0
     }
@@ -761,9 +765,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       graph.relations -= r1
       val failure = db.persistChanges(graph)
 
-      val wholeGraph = db.queryWholeGraph
+      val wholeGraph = Await.result(db.queryWholeGraph, 60 seconds)
 
-      failure.isDefined mustEqual true
+      Await.result(failure, 60 seconds) must throwAn[Exception]
       wholeGraph.relations.size mustEqual 0
       wholeGraph.nodes.size mustEqual 0
     }
@@ -799,7 +803,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     "directly persist nodes" >> {
       val a = Node.create(Set("I"))
       val b = Node.merge(Set("cheezburger"))
-      db.persistChanges(a, b).isDefined mustEqual false
+      Await.result(db.persistChanges(a, b), 60 seconds) must not(throwAn[Exception])
 
       a.origin.isLocal mustEqual false
       b.origin.isLocal mustEqual false
@@ -809,7 +813,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
       val relation = Relation.create(start, "can haz", end)
-      db.persistChanges(start, relation, end).isDefined mustEqual false
+      Await.result(db.persistChanges(start, relation, end), 60 seconds) must not(throwAn[Exception])
 
       start.origin.isLocal mustEqual false
       end.origin.isLocal mustEqual false
@@ -820,7 +824,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
       val start = Node.create(Set("I"))
       val end = Node.create(Set("cheezburger"))
       val relation = Relation.create(start, "can haz", end)
-      db.persistChanges(relation).isDefined mustEqual false
+
+      Await.result(db.persistChanges(relation), 60 seconds) must not(throwAn[Exception])
 
       start.origin.isLocal mustEqual false
       end.origin.isLocal mustEqual false
@@ -832,8 +837,8 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
         g.nodes += Node.create(properties = Map("i" -> i))
       db.persistChanges(g)
 
-      val resultGraph = db.queryGraph("match (n) return n order by n.i")
-      resultGraph.nodes.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
+      val resultGraph = Await.result(db.queryGraph("match (n) return n order by n.i"), 60 seconds)
+      resultGraph.nodes.map(_.properties("i").asNumber.get.toLong.get).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
     }
 
     "order by in query returns ordered nodes in node neighbours" >> {
@@ -844,9 +849,9 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
         g.relations += Relation.create(n, "r", Node.create(properties = Map("i" -> i)))
       db.persistChanges(g)
 
-      implicit val resultGraph = db.queryGraph("match (a:A)-[r]->(n) return a,r,n order by n.i")
+      implicit val resultGraph = Await.result(db.queryGraph("match (a:A)-[r]->(n) return a,r,n order by n.i"), 60 seconds)
       val a = resultGraph.nodes.find(_.labels contains "A").get
-      a.neighbours.map(_.properties("i").asInstanceOf[LongPropertyValue].value).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
+      a.neighbours.map(_.properties("i").asNumber.get.toLong.get).toSeq must contain(exactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L).inOrder)
     }
   }
 }

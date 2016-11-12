@@ -1,5 +1,7 @@
 package renesca
 
+import akka.stream.ActorMaterializer
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.util.Timeout
 import org.specs2.execute.{AsResult, Result, ResultExecution, Skipped}
@@ -7,6 +9,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification._
 
 import scala.concurrent.duration._
+import scala.concurrent.Await
 
 case class DbState(serverAvailable: Boolean, dbEmpty: Boolean, errorMsg: Option[String] = None) {
   def isAvailableAndEmpty = serverAvailable && dbEmpty
@@ -22,16 +25,19 @@ case class DbState(serverAvailable: Boolean, dbEmpty: Boolean, errorMsg: Option[
 }
 
 object IntegrationTestSetup {
+  implicit val actorSystem: ActorSystem = ActorSystem()
+  implicit val materializer = ActorMaterializer()
+  implicit val timeout = Timeout(60.seconds) // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
+
   val testDb = new DbService
-  testDb.restService = new RestService( // TODO: don't hardcode, configure in environment
+  testDb.restService = new RestService( // TODO: don't hardcode, configure in environment variable
     server = "http://localhost:7474",
-    timeout = Timeout(60.seconds), // timeout needs to be longer than Neo4j transaction timeout (currently 3 seconds)
     credentials = Some(BasicHttpCredentials("neo4j", "testingpw"))
   )
 
   def dbState = {
     try {
-      val graph = testDb.queryGraph("MATCH (n) RETURN n LIMIT 1")
+      val graph = Await.result(testDb.queryGraph("MATCH (n) RETURN n LIMIT 1"), 60 seconds)
       DbState(serverAvailable = true, dbEmpty = graph.isEmpty)
     } catch {
       case e: Exception =>

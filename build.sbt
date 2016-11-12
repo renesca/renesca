@@ -31,8 +31,6 @@ lazy val renesca = crossProject.in(file("."))
       "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion ::
       "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion ::
       "org.specs2" %% "specs2-core" % "3.8.6" % "it,test" ::
-      ("com.github.httpmock" % "mock-http-server-webapp" % "1.1.9" artifacts (Artifact("mock-http-server-webapp", "jar", "jar")) classifier "") ::
-      "com.github.httpmock" %% "httpmock-specs" % "0.6.1" % "it,test" ::
       Nil
     )
   )

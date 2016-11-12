@@ -13,7 +13,7 @@ package object renesca {
   type ParameterKey = NonBacktickName
   val ParameterKey = NonBacktickName
 
-  class NonBacktickName private(val name: String) extends AnyVal {
+  class NonBacktickName private (val name: String) extends AnyVal {
     override def toString = name
   }
   object NonBacktickName {
@@ -38,17 +38,17 @@ package object renesca {
   type ParameterMap = Map[ParameterKey, ParameterValue]
   type MutableParameterMap = mutable.Map[ParameterKey, ParameterValue]
 
-  type PropertyValue = ParameterValue
-  type PropertyMap = ParameterMap
-  type MutablePropertyMap = MutableParameterMap
+  type PropertyValue = Json
+  type PropertyMap = Map[PropertyKey, PropertyValue]
+  type MutablePropertyMap = mutable.Map[PropertyKey, PropertyValue]
 
   object ParameterMap {
     def apply(tuples: (String, ParameterValue)*): ParameterMap = {
-      tuples.map { case (k,v) => ParameterKey(k) -> v }(breakOut[Seq[(String,ParameterValue)], (ParameterKey, ParameterValue), Map[ParameterKey, ParameterValue]])
+      tuples.map { case (k, v) => ParameterKey(k) -> v }(breakOut[Seq[(String, ParameterValue)], (ParameterKey, ParameterValue), Map[ParameterKey, ParameterValue]])
     }
 
     def mutable(tuples: (String, ParameterValue)*): MutableParameterMap = {
-      tuples.map { case (k,v) => ParameterKey(k) -> v }(breakOut[Seq[(String,ParameterValue)], (ParameterKey, ParameterValue), collection.mutable.Map[ParameterKey, ParameterValue]])
+      tuples.map { case (k, v) => ParameterKey(k) -> v }(breakOut[Seq[(String, ParameterValue)], (ParameterKey, ParameterValue), collection.mutable.Map[ParameterKey, ParameterValue]])
     }
     def empty = Map.empty[ParameterKey, ParameterValue]
   }

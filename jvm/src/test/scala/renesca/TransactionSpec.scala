@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class TransactionSpec extends Specification with Mockito {
 
-  val statement = "match n return n"
+  val statement = "match (n) return n"
   val jsonRequest = json.Request(List(json.Statement(statement, List("graph"))))
   val jsonRequestWithoutResult = json.Request(List(json.Statement(statement)))
   val jsonResponse = json.Response(
@@ -69,7 +69,7 @@ class TransactionSpec extends Specification with Mockito {
   "open transaction on commit" >> {
     val tx = newTransaction
 
-    tx.commit.queryGraphs(statement)
+    Await.ready(tx.commit.queryGraphs(statement), 60 seconds)
 
     there was one(tx.restService).singleRequest(jsonRequest)
     there was no(tx.restService).openTransaction(jsonRequest)

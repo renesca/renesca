@@ -5,8 +5,9 @@ import renesca.table.Table
 import concurrent.Await
 import concurrent.duration._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import org.specs2.concurrent.ExecutionEnv
 
-class QueryHandlerDbSpec extends IntegrationSpecification {
+class QueryHandlerDbSpec(implicit ee: ExecutionEnv) extends IntegrationSpecification {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
@@ -28,7 +29,7 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
     graph.nodes += node
 
     node.properties("key") = data
-    Await.result(db.persistChanges(graph), 60 seconds) must not(throwAn[Exception])
+    db.persistChanges(graph) must not(throwAn[Exception]).await
 
     resultNode.properties("key") mustEqual data
   }
@@ -50,20 +51,20 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
   "QueryHandler" >> {
     "throw exception on Neo4j Error" >> {
-      Await.result(db.query("this is invalid cypher syntax"), 60 seconds) must throwA[RuntimeException]
+      db.query("this is invalid cypher syntax") must throwA[RuntimeException].await
     }
 
     "query table" >> {
       db.query("create (n {a:1}),(m {a:2})")
       val table = db.queryTable("match (x) return x.a order by x.a")
 
-      table mustEqual Table(
+      table must beEqualTo(Table(
         columns = List("x.a"),
         data = List(
           List[ParameterValue](1),
           List[ParameterValue](2)
         )
-      )
+      )).await
     }
 
     "return only graphs in json data on queryGraphs" in todo
@@ -275,11 +276,11 @@ class QueryHandlerDbSpec extends IntegrationSpecification {
 
       val (graph, node) = createNode
       node.properties += ("you" -> "not")
-      db.persistChanges(graph)
+      db.persistChanges(graph) must beEqualTo(Unit).await
 
       val (graph2, node2) = createNode
       node2.origin.kind mustEqual Merge.kind
-      db.persistChanges(graph2)
+      db.persistChanges(graph2) must beEqualTo(Unit).await
       node2.origin.kind mustEqual Id.kind
 
       node2.origin must beEqualTo(node.origin)

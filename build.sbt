@@ -20,6 +20,7 @@ lazy val root = project.in(file(".")).
 val akkaVersion = "2.4.12"
 val akkaHttpVersion = "2.4.11"
 val circeVersion = "0.6.0"
+val specsVersion = "3.8.6"
 
 lazy val renesca = crossProject.in(file("."))
   .configs(IntegrationTest)
@@ -30,7 +31,8 @@ lazy val renesca = crossProject.in(file("."))
       "com.typesafe.akka" %% "akka-actor" % akkaVersion ::
       "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion ::
       "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion ::
-      "org.specs2" %% "specs2-core" % "3.8.6" % "it,test" ::
+      "org.specs2" %% "specs2-core" % specsVersion % "it,test" ::
+      "org.specs2" %% "specs2-mock" % specsVersion % "it,test" ::
       Nil
     )
   )

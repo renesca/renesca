@@ -1,14 +1,11 @@
 package renesca
 
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import renesca.graph._
 import renesca.table.Table
 import concurrent.Await
 import concurrent.duration._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-@RunWith(classOf[JUnitRunner])
 class QueryHandlerDbSpec extends IntegrationSpecification {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson

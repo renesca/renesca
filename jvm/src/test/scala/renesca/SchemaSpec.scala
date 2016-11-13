@@ -1,13 +1,10 @@
 package renesca
 
-import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import renesca.schema._
 import renesca.{graph => raw}
 
-@RunWith(classOf[JUnitRunner])
 class SchemaSpec extends Specification with Mockito {
 
   object TheSchema {

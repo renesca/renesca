@@ -1,9 +1,7 @@
 package renesca
 
-import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import renesca.graph._
 import renesca.table.Table
 import org.specs2.concurrent.ExecutionEnv
@@ -15,7 +13,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-@RunWith(classOf[JUnitRunner])
 class QueryBuilderSpec extends Specification with Mockito with FutureMatchers {
   sequential
 

@@ -1,15 +1,12 @@
 package renesca
 
-import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import renesca.graph.Graph
 import concurrent.{Future, Await}
 import concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-@RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
 
   val statement = "match n return n"

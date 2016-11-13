@@ -1,9 +1,7 @@
 package renesca.json
 
-import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.graph
 import renesca.graph.Id
@@ -13,7 +11,6 @@ import scala.collection.mutable
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-@RunWith(classOf[JUnitRunner])
 class GraphFactorySpec extends Specification with Mockito {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson

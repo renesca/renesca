@@ -1,12 +1,9 @@
 package renesca.graph
 
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import org.specs2.specification.Scope
 import renesca.Label
 
-@RunWith(classOf[JUnitRunner])
 class NodeLabelsSpec extends Specification {
 
   trait MockNode extends Scope {

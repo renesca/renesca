@@ -1,13 +1,10 @@
 package renesca.json
 
-import org.junit.runner.RunWith
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.runner.JUnitRunner
 import renesca._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-@RunWith(classOf[JUnitRunner])
 class NodeSpec extends Specification with Mockito {
   implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)

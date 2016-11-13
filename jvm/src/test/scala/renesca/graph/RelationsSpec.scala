@@ -1,11 +1,8 @@
 package renesca.graph
 
-import org.junit.runner.RunWith
 import org.specs2.mock._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
 class RelationsSpec extends Specification with Mockito {
   val graph = mock[Graph].smart
   graph.nodes returns mock[Nodes]

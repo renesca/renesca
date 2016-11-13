@@ -172,6 +172,7 @@ trait QueryHandler extends QueryInterface {
 }
 
 class Transaction extends QueryHandler { thisTransaction =>
+  //TODO: make transaction immutable
 
   var restService: RestService = null //TODO: inject
 
@@ -186,14 +187,16 @@ class Transaction extends QueryHandler { thisTransaction =>
   }
 
   override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {
-    throwIfNotValid()
-    id match {
-      case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
-      case None =>
-        for ((transactionId, jsonResponse) <- restService.openTransaction(jsonRequest)) yield {
-          id = Some(transactionId)
-          jsonResponse
-        }
+    val fvalid = Future[Unit] { throwIfNotValid() }
+    fvalid.flatMap { _ =>
+      id match {
+        case Some(transactionId) => restService.resumeTransaction(transactionId, jsonRequest)
+        case None =>
+          for ((transactionId, jsonResponse) <- restService.openTransaction(jsonRequest)) yield {
+            id = Some(transactionId)
+            jsonResponse
+          }
+      }
     }
   }
 
@@ -205,12 +208,13 @@ class Transaction extends QueryHandler { thisTransaction =>
   }
 
   def rollback(): Future[Unit] = {
-    val f = id match {
-      case Some(transactionId) => restService.rollbackTransaction(transactionId)
-      case None => Future.failed(new Exception("Cannot rollback. No running transaction found."))
+    val fvalid = Future[Unit] { throwIfNotValid(); invalidate() }
+    fvalid.flatMap { _ =>
+      id match {
+        case Some(transactionId) => restService.rollbackTransaction(transactionId)
+        case None => Future.failed(new Exception("Cannot rollback. No running transaction found."))
+      }
     }
-    invalidate()
-    f
   }
 
   val commit = new CommitTransaction
@@ -221,28 +225,25 @@ class Transaction extends QueryHandler { thisTransaction =>
     // This means that methods like persistChanges which are firing multiple queries and thus calling querySerice
     // multiple times need to be modified or wrapped.
 
-    def apply(): Future[Unit] = Future {
-      throwIfNotValid()
-      // TODO: assert(id.isDefined) if this is always the case when valid, then why not encode valid in option[transactionid]?
-      for (transactionId <- id) {
-        //TODO: error from this future is discarded:
-        for (jsonResponse <- restService.commitTransaction(transactionId)) yield handleError(exceptionFromErrors(jsonResponse))
+    def apply(): Future[Unit] = {
+      val fvalid = Future[Unit] { throwIfNotValid(); invalidate() }
+      fvalid.flatMap { _ =>
+        id match {
+          case Some(transactionId) => (for (jsonResponse <- restService.commitTransaction(transactionId)) yield handleError(exceptionFromErrors(jsonResponse))) map { _ => Unit }
+          case None => Future.successful(Unit)
+        }
       }
-
-      invalidate()
-      Unit
     }
 
     override protected def queryService(jsonRequest: json.Request): Future[json.Response] = {
       // TODO: share code with this.Transaction.queryService
-      throwIfNotValid()
-      val jsonResponse = id match {
-        case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
-        case None => restService.singleRequest(jsonRequest)
+      val fvalid = Future[Unit] { throwIfNotValid(); invalidate() }
+      fvalid.flatMap { _ =>
+        id match {
+          case Some(transactionId) => restService.commitTransaction(transactionId, jsonRequest)
+          case None => restService.singleRequest(jsonRequest)
+        }
       }
-
-      invalidate()
-      jsonResponse
     }
 
     override def persistChanges(graph: Graph): Future[Unit] = {

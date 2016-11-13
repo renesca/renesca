@@ -7,6 +7,7 @@ import org.specs2.runner.JUnitRunner
 import renesca.graph.Graph
 import concurrent.{Future, Await}
 import concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @RunWith(classOf[JUnitRunner])
 class TransactionSpec extends Specification with Mockito {
@@ -44,8 +45,10 @@ class TransactionSpec extends Specification with Mockito {
     "open transaction on first request" >> {
       val tx = newTransaction
 
-      tx.query(statement)
-      val result = tx.commit()
+      val result = for (
+        _ <- tx.query(statement);
+        r <- tx.commit()
+      ) yield r
       Await.ready(result, 10 seconds)
 
       there was one(tx.restService).openTransaction(jsonRequestWithoutResult)

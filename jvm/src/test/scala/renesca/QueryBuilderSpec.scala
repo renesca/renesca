@@ -13,10 +13,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-class QueryBuilderSpec extends Specification with Mockito with FutureMatchers {
+class QueryBuilderSpec(implicit ee: ExecutionEnv) extends Specification with Mockito with ExceptionMatchers {
   sequential
-
-  implicit val executionEnv: ExecutionEnv = ExecutionEnv.fromGlobalExecutionContext
 
   implicit def seqToJson[T: Encoder](is: Seq[T]): Json = is.map(i => toJson(i)(implicitly[Encoder[T]])).asJson
   implicit def toJson[T: Encoder](i: T): Json = i.asJson
@@ -342,7 +340,7 @@ class QueryBuilderSpec extends Specification with Mockito with FutureMatchers {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result must succeed(()).await
+        result must beEqualTo(()).await
         node.origin mustEqual Id(1)
         node.labels must contain(exactly(Label("foo")))
         node.properties("a").asNumber.flatMap(_.toLong).get mustEqual 1L
@@ -802,7 +800,7 @@ class QueryBuilderSpec extends Specification with Mockito with FutureMatchers {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result must succeed(()).await
+        result must beEqualTo(()).await
         r.origin mustEqual Id(3)
         r.properties("a").asNumber.flatMap(_.toLong).get mustEqual 1L
         r mustEqual r1
@@ -1594,7 +1592,7 @@ class QueryBuilderSpec extends Specification with Mockito with FutureMatchers {
         val Right(queries) = q.generateQueries(changes)
         val result = q.applyQueries(queries)
 
-        result must succeed(()).await
+        result must beEqualTo(()).await
         r1.origin mustEqual Id(3L)
         r2.origin mustEqual Id(4L)
         b.origin mustEqual Id(10L)

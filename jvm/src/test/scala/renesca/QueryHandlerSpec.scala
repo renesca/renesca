@@ -14,9 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import cats.syntax.either._
 
-class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
-
-  implicit val executionEnv: ExecutionEnv = ExecutionEnv.fromGlobalExecutionContext
+class QueryHandlerSpec(implicit ee: ExecutionEnv) extends Specification with Mockito with ExceptionMatchers {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
@@ -55,7 +53,7 @@ class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
       graph.changes returns Nil
 
       val result = queryHandler.persistChanges(graph)
-      Await.ready(result, 10 seconds)
+      result must beEqualTo(()).await
 
       there was one(graph).clearChanges()
     }
@@ -114,7 +112,7 @@ class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
       }
 
       val result = queryHandler.persistChanges(schemaGraph)
-      Await.ready(result, 10 seconds)
+      result must beEqualTo(()).await
 
       there was one(queryHandler.builder).generateQueries(Seq.empty)
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)
@@ -163,7 +161,7 @@ class QueryHandlerSpec extends Specification with Mockito with FutureMatchers {
 
       val node = Node(1)
       val result = queryHandler.persistChanges(node)
-      Await.ready(result, 10 seconds)
+      result must beEqualTo(()).await
 
       there was one(queryHandler.builder).generateQueries(Seq.empty)
       there was one(queryHandler.builder).applyQueries(Seq.empty, queryHandler.queryGraphsAndTables)

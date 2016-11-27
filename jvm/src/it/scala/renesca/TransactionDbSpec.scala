@@ -4,8 +4,9 @@ import renesca.graph._
 import concurrent.Await
 import concurrent.duration._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import org.specs2.concurrent.ExecutionEnv
 
-class TransactionDbSpec extends IntegrationSpecification {
+class TransactionDbSpec(implicit ee: ExecutionEnv) extends IntegrationSpecification {
 
   implicit def toJson[T: Encoder](x: T) = x.asJson
   implicit def keyValue[T: Encoder](t: (String, T)) = (NonBacktickName(t._1), t._2.asJson)
@@ -17,7 +18,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "singleRequest rollback on errors" >> {
-      db.query("create (n)", "blabla illegal query") must throwA[RuntimeException]
+      db.query("create (n)", "blabla illegal query") must throwA[RuntimeException].await
 
       val graph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       graph.isEmpty mustEqual true
@@ -29,7 +30,7 @@ class TransactionDbSpec extends IntegrationSpecification {
       transaction.query(
         "create (n)",
         "blabla illegal query"
-      ) must throwA[RuntimeException]
+      ) must throwA[RuntimeException].await
 
       val graph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       graph.isEmpty mustEqual true
@@ -38,11 +39,11 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Manual transaction success" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n),(m)")
+      transaction.query("create (n),(m)") must beEqualTo(()).await
       val graph = Await.result(transaction.queryGraph("match (n) return n"), 60 seconds)
       val List(first, second) = graph.nodes.toList
       transaction.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.origin.asInstanceOf[Id].id)))
-      transaction.commit()
+      transaction.commit() must beEqualTo(()).await
 
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       result.nodes must not contain (first)
@@ -52,12 +53,13 @@ class TransactionDbSpec extends IntegrationSpecification {
     "work with enclosing syntax" >> {
       var first, second: Node = null
       db.transaction { tx =>
-        tx.query("create (n),(m)")
-        val graph = Await.result(tx.queryGraph("match (n) return n"), 60 seconds)
-        first = graph.nodes.head
-        second = graph.nodes.last
-        tx.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.origin.asInstanceOf[Id].id)))
-      }
+        tx.query("create (n),(m)") must beEqualTo(()).await
+        tx.queryGraph("match (n) return n").flatMap { graph =>
+          first = graph.nodes.head
+          second = graph.nodes.last
+          tx.query(Query("match (n) where id(n) = {id} delete n", Map("id" -> first.origin.asInstanceOf[Id].id)))
+        }
+      } must beEqualTo(()).await
 
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       result.nodes must not contain (first)
@@ -67,12 +69,12 @@ class TransactionDbSpec extends IntegrationSpecification {
     "property change with enclosing syntax" >> {
       var node: Node = null
       db.transaction { tx =>
-        tx.query("create (n)")
+        tx.query("create (n)") must beEqualTo(()).await
         val graph = Await.result(tx.queryGraph("match (n) return n"), 60 seconds)
         node = graph.nodes.head
         node.properties("tut es?") = "ja"
         tx.persistChanges(graph)
-      }
+      } must beEqualTo(()).await
 
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       result.nodes.head.properties("tut es?") mustEqual "ja"
@@ -81,7 +83,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Persist graph changes in transaction" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n),(m)")
+      transaction.query("create (n),(m)") must beEqualTo(()).await
       val graph = Await.result(transaction.queryGraph("match (n) return n"), 60 seconds)
       val List(first, second) = graph.nodes.toList
       graph.nodes -= first
@@ -96,7 +98,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Persist and commit graph changes in transaction (delete node)" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n),(m)")
+      transaction.query("create (n),(m)") must beEqualTo(()).await
       val graph = Await.result(transaction.queryGraph("match (n) return n"), 60 seconds)
       val List(first, second) = graph.nodes.toList
       graph.nodes -= first
@@ -110,7 +112,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Persist and commit graph changes in transaction - add node" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n),(m)")
+      transaction.query("create (n),(m)") must beEqualTo(()).await
       val graph = Await.result(transaction.queryGraph("match (n) return n"), 60 seconds)
       val node = Node.create
       graph.nodes += node
@@ -123,7 +125,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Persist and commit graph changes in transaction - add relation" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n),(m)")
+      transaction.query("create (n),(m)") must beEqualTo(()).await
       val graph = Await.result(transaction.queryGraph("match (n) return n"), 60 seconds)
       val List(first, second) = graph.nodes.toList
       val relation = Relation.create(first, "likes", second)
@@ -139,7 +141,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "Submit last query on commit" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n) return n")
+      transaction.query("create (n) return n") must beEqualTo(()).await
       transaction.commit.queryGraphs("create (y) return y")
 
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
@@ -149,7 +151,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "only commit with a query" >> {
       val transaction = db.newTransaction()
 
-      transaction.commit.queryGraphs("create (n) return n")
+      transaction.commit.queryGraphs("create (n) return n") must beEqualTo(()).await
 
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       result.nodes must haveSize(1)
@@ -158,7 +160,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "error on openTransaction is thrown by Transaction" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("boom") must throwA[RuntimeException]
+      transaction.query("boom") must throwA[RuntimeException].await
 
       transaction.isValid mustEqual false
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
@@ -168,8 +170,8 @@ class TransactionDbSpec extends IntegrationSpecification {
     "error on resumeTransaction is thrown by Transaction" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n) return n")
-      transaction.query("boom") must throwA[RuntimeException]
+      transaction.query("create (n) return n") must beEqualTo(()).await
+      transaction.query("boom") must throwA[RuntimeException].await
 
       transaction.isValid mustEqual false
       val result = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
@@ -177,17 +179,17 @@ class TransactionDbSpec extends IntegrationSpecification {
     }
 
     "throw error exception on transaction commit" >> {
-      db.queryGraph("""create (n:N)-[r:R]->(m)""")
+      db.queryGraph("""create (n:N)-[r:R]->(m)""") must beEqualTo(()).await
 
       val transaction = db.newTransaction()
       transaction.query("""MATCH (n:N) DELETE n""") // invalid delete, because (n) has a relation
-      transaction.commit() must throwA[RuntimeException]
+      transaction.commit() must throwA[RuntimeException].await
     }
 
     "do a manual rollback" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n) return n")
+      transaction.query("create (n) return n") must beEqualTo(()).await
       transaction.rollback()
 
       transaction.isValid mustEqual false
@@ -198,7 +200,7 @@ class TransactionDbSpec extends IntegrationSpecification {
     "be isolated" >> {
       val transaction = db.newTransaction()
 
-      transaction.query("create (n) return n")
+      transaction.query("create (n) return n") must beEqualTo(()).await
       val graph = Await.result(db.queryGraph("match (n) return n"), 60 seconds)
       transaction.rollback()
 
